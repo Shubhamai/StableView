@@ -1,20 +1,28 @@
-use onnxruntime::{
-    environment::Environment, ndarray::Array, tensor::OrtOwnedTensor, GraphOptimizationLevel,
-};
+use onnxruntime;
 
 pub mod use_onnxruntime {
 
-    pub fn initialize_model(
-        file_path: String,
-        num_threads: u32,
-    ) -> Result<Environment, Box<dyn std::error::Error>> {
+    use super::onnxruntime::{
+        environment::Environment, session::Session, GraphOptimizationLevel, LoggingLevel, OrtError,
+    };
 
-        let environment = Environment::builder().build()?;
+    pub fn get_environment(name: &str) -> Result<Environment, OrtError> {
+        Environment::builder()
+            .with_name(name)
+            .with_log_level(LoggingLevel::Verbose)
+            .build()
+    }
 
-        environment
+    pub fn initialize_model<'env, 'a>(
+        environment: &'env Environment,
+        model_path: String,
+        num_threads: i16,
+    ) -> Result<Session<'env>, OrtError> {
+        let model = environment
             .new_session_builder()?
             .with_optimization_level(GraphOptimizationLevel::All)?
             .with_number_threads(num_threads)?
-            .with_model_from_file(file_path)?
+            .with_model_from_file(model_path)?;
+        Ok(model)
     }
 }

@@ -9,12 +9,14 @@ publish = false # To prevent accidental publish on crates.io
 [dependencies]
 
 nokhwa = {version = "0.10", git = "https://github.com/chriamue/nokhwa", branch = "feature/input-libcamera", features = ["input-opencv"]}
+#nokhwa = {version = "0.9.4", features = ["input-msmf"]}
 
+
+[target.'cfg(windows)'.dependencies]
+onnxruntime-sys = "0.0.12"
+onnxruntime = "0.0.12"
+
+
+[target.'cfg(unix)'.dependencies]
 onnxruntime-sys = "0.0.14"
 onnxruntime = "0.0.14"
-
-
-# Windows
-#nokhwa = {version = "0.9.4", features = ["input-msmf"]}
-#onnxruntime-sys = "0.0.12"
-#onnxruntime = "0.0.12"
