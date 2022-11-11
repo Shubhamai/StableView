@@ -1,0 +1,20 @@
+[package]
+name = "lobo"
+version = "0.1.0"
+edition = "2021"
+publish = false # To prevent accidental publish on crates.io
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+nokhwa = {version = "0.10", git = "https://github.com/chriamue/nokhwa", branch = "feature/input-libcamera", features = ["input-opencv"]}
+
+onnxruntime-sys = "0.0.14"
+onnxruntime = "0.0.14"
+
+
+# Windows
+#nokhwa = {version = "0.9.4", features = ["input-msmf"]}
+#onnxruntime-sys = "0.0.12"
+#onnxruntime = "0.0.12"
