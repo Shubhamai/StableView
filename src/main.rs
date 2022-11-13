@@ -1,48 +1,77 @@
 mod model;
-mod webcam;
 
-use image::{imageops::resize, ImageBuffer, Rgb};
 use model::use_onnxruntime;
-use webcam::{initialize_nokhwa_camera, initialize_camera_capture, frame2ndarray};
-
+use onnxruntime::ndarray::Array;
 use onnxruntime::tensor::OrtOwnedTensor;
-
-use std::time::{Instant};
-
+use opencv::{core, highgui, imgproc, prelude::*, videoio};
+use std::time::Instant;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Camera
-    // let mut camera = initialize_nokhwa_camera(0, 120, 120, 30)?;
-    let mut camera = initialize_camera_capture(0, 720, 1280, 30.0)?;
-
-    // Model
     let env = use_onnxruntime::get_environment(&"Landmark Detection")?;
     let mut model =
-        use_onnxruntime::initialize_model(&env, "./assets/mb1_120x120.onnx".to_string(), 1)?;
+        use_onnxruntime::initialize_model(&env, "./assets/mb05_120x120.onnx".to_string(), 1)?;
+
+    // let window = "video capture";
+    // highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
+
+    let mut cam = videoio::VideoCapture::new(0, videoio::CAP_V4L2)?; // videoio::CAP_ANY, CAP_V4L2, // 0 is the default camera
+    let opened = videoio::VideoCapture::is_opened(&cam)?;
+
+    if !opened {
+        panic!("Unable to open default camera!");
+    }
 
     loop {
         let start_time = Instant::now();
+        
+        // Reading frame
+        let mut frame = Mat::default();
+        cam.read(&mut frame)?;
 
-        // New frame
-        // let frame = camera.frame()?;
-        let frame = camera.next().unwrap();
+        // If frame is valid
+        if frame.size()?.width > 0 {
 
-        // Resize
-        let frame_buffer:ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::from_vec(120, 120, frame.to_vec()).unwrap();
-        let resized_frame = resize(&frame_buffer, 120, 120, image::imageops::FilterType::Nearest); 
+            // Resizingt he frame
+            let mut resized_frame = Mat::default();
+            imgproc::resize(
+                &frame,
+                &mut resized_frame,
+                core::Size {
+                    width: 120,
+                    height: 120,
+                },
+                0.0,
+                0.0,
+                imgproc::INTER_AREA, // https://stackoverflow.com/a/51042104 | Speed -> https://stackoverflow.com/a/44278268
+            )?;
 
-        // Processing the inputs
-        let input = frame2ndarray(
-            resized_frame.to_vec(),
-            model.inputs[0].dimensions().map(|d| d.unwrap()).collect(),
-        )?;
+            // Processing the frame into a valid input of model
+            // TODO : Inefficient
+            let frame_data_bytes = Mat::data_bytes(&resized_frame)?;
+            let float_image_vector: Vec<f32> = frame_data_bytes
+                .to_vec()
+                .iter()
+                .map(|&e| e as f32)
+                .collect();
+            let array = Array::from_vec(float_image_vector).into_shape([1, 3, 120, 120])?;
+            let input_tensor_values = vec![array];
 
-        // Generating the outputs
-        let outputs: Vec<OrtOwnedTensor<f32, _>> = model.run(vec![input])?;
+            // Inference
+            let outputs: Vec<OrtOwnedTensor<f32, _>> = model.run(input_tensor_values)?;
+            assert_eq!(outputs[0].shape(), [1, 62].as_slice());
 
-        // println!("{:?}", outputs)
+            // Showing the output
+            // highgui::imshow(window, &mut frame)?;
+        }
 
-        let elapsed_time = start_time.elapsed();
-        println!("delay : {}", elapsed_time.as_millis());
+        // let key = highgui::wait_key(10)?;
+        // if key > 0 && key != 255 {
+        //     break;
+        // }
+
+        // let elapsed_time = start_time.elapsed();
+        // let fps = cam.get(opencv::videoio::CAP_PROP_FPS).unwrap();
+        // println!("{}x{} @ {} FPS @ {} ms", frame.cols(), frame.rows(), fps, elapsed_time.as_millis());
     }
+    Ok(())
 }
