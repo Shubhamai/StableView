@@ -7,8 +7,9 @@ publish = false # To prevent accidental publish on crates.io
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
-opencv = "0.73.0"
+opencv =  "0.74.1"
+#image = "0.24.5"
+gnuplot = "0.0.37"
 
 # 0.0.14 seems to be giving error on windows
 [target.'cfg(windows)'.dependencies]

@@ -6,6 +6,7 @@ pub mod use_onnxruntime {
         environment::Environment, session::Session, GraphOptimizationLevel, LoggingLevel, OrtError,
     };
 
+    // Setting up the environment 
     pub fn get_environment(name: &str) -> Result<Environment, OrtError> {
         Environment::builder()
             .with_name(name)
@@ -13,6 +14,7 @@ pub mod use_onnxruntime {
             .build()
     }
 
+    // Setting up the session, logging levels, optimization levels and threads.
     pub fn initialize_model<'env, 'a>(
         environment: &'env Environment,
         model_path: String,
