@@ -1,6 +1,6 @@
 use onnxruntime;
 
-pub mod use_onnxruntime {
+pub mod OnnxSessionsManager {
 
     use super::onnxruntime::{
         environment::Environment, session::Session, GraphOptimizationLevel, LoggingLevel, OrtError,

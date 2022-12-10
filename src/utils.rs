@@ -1,7 +1,17 @@
 // Importing Libraries
 // use onnxruntime::ndarray::{Array, Array1, Array2, ArrayView, ArrayViewMut, Axis};
 // use ndarray_linalg::Norm;
-use opencv::core::{Mat}; // , MatTrait, Scalar
+// use opencv::core::{Mat}; // , MatTrait, Scalar
+
+use opencv::{
+    core::{Mat, Rect, CV_32F},
+    imgcodecs,
+    highgui,
+    imgproc,
+    prelude::*,
+};
+
+
 // use std::error::Error;
 // use onnxruntime::ndarray::{Array, ArrayView};
 // use opencv::prelude::*;
@@ -20,9 +30,9 @@ use std::f64::consts::{FRAC_PI_2, PI};
 //////////////////////////////////////////////////// TDDFA ////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn _parse_param(
-    param: &[f64],
-) -> Result<([[f64; 3]; 3], [[f64; 1]; 3], [[f64; 1]; 40], [[f64; 1]; 10]), &'static str> {
+pub fn _parse_param(
+    param: &[f32;62],
+) -> Result<([[f32; 3]; 3], [[f32; 1]; 3], [[f32; 1]; 40], [[f32; 1]; 10]), &'static str> {
     let n = param.len();
 
     let (trans_dim, shape_dim, exp_dim) = match n {
@@ -169,21 +179,21 @@ fn test_parse_param() {
     assert_eq!(result, expected);
 }
 
-fn similar_transform(pts3d: &mut Vec<Vec<f64>>, roi_box: Vec<i32>, size: i32) -> &Vec<Vec<f64>> {
+pub fn similar_transform(mut pts3d: Vec<Vec<f32>>, roi_box: [f32; 4], size: i32) -> Vec<Vec<f32>> {
     // pts3d shape - ( 3, 68 )
     // roi_box example - [1, 2, 3, 4]
     // size example - 120
 
     pts3d[0].iter_mut().for_each(|p| *p -= 1.0);
     pts3d[2].iter_mut().for_each(|p| *p -= 1.0);
-    pts3d[1].iter_mut().for_each(|p| *p = size as f64 - *p);
+    pts3d[1].iter_mut().for_each(|p| *p = size as f32 - *p);
 
-    let sx = roi_box[0] as f64;
-    let sy = roi_box[1] as f64;
-    let ex = roi_box[2] as f64;
-    let ey = roi_box[3] as f64;
-    let scale_x = (ex - sx) / size as f64;
-    let scale_y = (ey - sy) / size as f64;
+    let sx = roi_box[0];
+    let sy = roi_box[1];
+    let ex = roi_box[2];
+    let ey = roi_box[3];
+    let scale_x = (ex - sx) / size as f32;
+    let scale_y = (ey - sy) / size as f32;
     pts3d[0].iter_mut().for_each(|p| *p = *p * scale_x + sx);
     pts3d[1].iter_mut().for_each(|p| *p = *p * scale_y + sy);
     let s = (scale_x + scale_y) / 2.0;
@@ -195,6 +205,29 @@ fn similar_transform(pts3d: &mut Vec<Vec<f64>>, roi_box: Vec<i32>, size: i32) ->
     pts3d
 }
 
+// use onnxruntime::ndarray::{ArrayBase, OwnedRepr, Dim};
+
+// fn similar_transform(
+//     pts3d: ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>>,
+//     roi_box: [f32; 4],
+//     size: i32,
+// ) -> ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>> {
+//     pts3d[[0, ..]] -= 1;
+//     pts3d[[2, ..]] -= 1;
+//     pts3d[[1, ..]] = size - pts3d[1, ..];
+
+//     let (sx, sy, ex, ey) = roi_box;
+//     let scale_x = (ex - sx) / size;
+//     let scale_y = (ey - sy) / size;
+//     pts3d[[0, ..]] = pts3d[0, ..] * scale_x + sx;
+//     pts3d[[1, ..]] = pts3d[1, ..] * scale_y + sy;
+//     let s = (scale_x + scale_y) / 2;
+//     pts3d[[2, ..]] *= s;
+//     pts3d[[2, ..]] -= pts3d[2, ..].min();
+//     pts3d
+// }
+
+
 #[test]
 fn test_similar_transform() {
     let mut pts3d = vec![
@@ -202,11 +235,12 @@ fn test_similar_transform() {
         vec![3.0, 4.0, 5.0],
         vec![6.0, 7.0, 8.0],
     ];
-    let roi_box = vec![1, 2, 3, 4];
+    let roi_box = [1., 2., 3., 4.];
     let size = 120;
 
-    let result = similar_transform(&mut pts3d, roi_box, size);
+    let result = similar_transform(pts3d, roi_box, size);
 
+    println!("{:?}", result);
     // assert_eq!(
     //     result,
     //     &vec![
@@ -246,18 +280,18 @@ fn test_similar_transform() {
 //     roi_box
 // }
 
-fn parse_roi_box_from_landmark(pts: Vec<Vec<i32>>) -> Vec<f32> {
+pub fn parse_roi_box_from_landmark(pts: Vec<Vec<f32>>) -> [f32; 4] {
     let bbox = vec![
-    pts[0][..].iter().min().unwrap(),
-    pts[1][..].iter().min().unwrap(),
-    pts[0][..].iter().max().unwrap(),
-    pts[1][..].iter().max().unwrap(),
+        pts[0].iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap(),
+        pts[1].iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap(),
+        pts[0].iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap(),
+        pts[1].iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap(),
     ];
     let center = vec![
-    (bbox[0] + bbox[2]) / 2,
-    (bbox[1] + bbox[3]) / 2,
+    (bbox[0] + bbox[2]) / 2.,
+    (bbox[1] + bbox[3]) / 2.,
     ];
-    let radius = std::cmp::max(bbox[2] - bbox[0], bbox[3] - bbox[1]) / 2;
+    let radius = f32::max(bbox[2] - bbox[0], bbox[3] - bbox[1]) / 2.;
     let bbox = vec![
     center[0] - radius,
     center[1] - radius,
@@ -266,26 +300,25 @@ fn parse_roi_box_from_landmark(pts: Vec<Vec<i32>>) -> Vec<f32> {
     ];
     
 
-    let llength = (((bbox[2] - bbox[0]).pow(2) + (bbox[3] - bbox[1]).pow(2)) as f32).sqrt();
+    let llength = (((bbox[2] - bbox[0]).powf(2.) + (bbox[3] - bbox[1]).powf(2.)) as f32).sqrt();
 
-    // Converting integers to float 
-    // let llength_sqrt = (llength as f32).sqrt();
 
-    let center_x = ((bbox[2] + bbox[0]) / 2) as f32;
-    let center_y = ((bbox[3] + bbox[1]) / 2) as f32;
+    let center_x = ((bbox[2] + bbox[0]) / 2.) as f32;
+    let center_y = ((bbox[3] + bbox[1]) / 2.) as f32;
     
-    let mut roi_box = vec![0.; 4];
+    let mut roi_box = [0.0; 4];
     roi_box[0] = center_x - llength / 2.;
     roi_box[1] = center_y - llength / 2.;
     roi_box[2] = roi_box[0] + llength;
     roi_box[3] = roi_box[1] + llength;
     
     return roi_box;
+
     }
 
 #[test]
 fn test_parse_roi_box_from_landmark() {
-    let pts = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]];
+    let pts = vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]];
     let result = parse_roi_box_from_landmark(pts);
     
     assert_eq!(
@@ -294,7 +327,7 @@ fn test_parse_roi_box_from_landmark() {
         );
 }
 
-fn parse_roi_box_from_bbox(bbox: [f32; 4]) -> [f32; 4] {
+pub fn parse_roi_box_from_bbox(bbox: [f32; 4]) -> [f32; 4] {
     let left = bbox[0];
     let top = bbox[1];
     let right = bbox[2];
@@ -303,7 +336,6 @@ fn parse_roi_box_from_bbox(bbox: [f32; 4]) -> [f32; 4] {
     let center_x = right - (right - left) / 2.;
     let center_y = bottom - (bottom - top) / 2. + old_size * 0.14;
     let size = (old_size * 1.58).round();
-    println!("{}", size);
 
     let mut roi_box = [0.; 4];
     roi_box[0] = center_x - size / 2.;
@@ -352,6 +384,58 @@ fn test_parse_roi_box_from_bbox() {
 
 //     res
 // }
+
+
+
+pub fn crop_img(img: &Mat, roi_box: [f32; 4]) -> Mat {
+    let h = img.size().unwrap().height;
+    let w = img.size().unwrap().width;
+
+    let sx = roi_box[0].round() as i32;
+    let sy = roi_box[1].round() as i32;
+    let ex = roi_box[2].round() as i32;
+    let ey = roi_box[3].round() as i32;
+
+    let dh = ey - sy;
+    let dw = ex - sx;
+
+
+    let (sx, dsx) = if sx < 0 { (0, -sx) } else { (sx, 0) };
+    let (ex, dex) = if ex > w { (w, dw - (ex - w)) } else { (ex, dw) };
+    let (sy, dsy) = if sy < 0 { (0, -sy) } else { (sy, 0) };
+    let (ey, dey) = if ey > h { (h, dh - (ey - h)) } else { (ey, dh) };
+
+
+    let roi = Rect::new(sx, sy,ex-sx , ey-sy);
+    let res = Mat::roi(&img, roi).unwrap();
+
+    res
+}
+
+
+#[test]
+fn test_crop_img() {
+
+    let mut frame = Mat::default();
+        // cam.read(&mut frame)?;
+
+    imgcodecs::imread("test.jpg", 1)
+    .map(|m| frame = m)
+    .unwrap();
+    let roi_box = [77.5, 112.5, 472.5, 507.5];
+
+    let mut result = crop_img(&frame, roi_box);
+
+
+    let window = "video capture";
+    highgui::named_window(window, highgui::WINDOW_AUTOSIZE).unwrap();
+
+    highgui::imshow(window, &mut result).unwrap();
+
+    let key = highgui::wait_key(100000).unwrap();
+
+}
+
 
 // use opencv::{
 //     core::{
@@ -424,13 +508,13 @@ fn test_parse_roi_box_from_bbox() {
 // }
 
 
-fn P2sRt(P: &[[f64; 4]]) -> (f64, [[f64; 3]; 3], [f64; 3]) {
+fn P2sRt(P: &[[f32; 4]]) -> (f32, [[f32; 3]; 3], [f32; 3]) {
     let t3d = [P[0][3], P[1][3], P[2][3]];
     let R1 = [P[0][0], P[0][1], P[0][2]];
     let R2 = [P[1][0], P[1][1], P[1][2]];
-    let s = (R1.iter().map(|&x| x * x).sum::<f64>().sqrt() + R2.iter().map(|&x| x * x).sum::<f64>().sqrt()) / 2.0;
-    let r1 = [R1[0] / R1.iter().map(|&x| x * x).sum::<f64>().sqrt(), R1[1] / R1.iter().map(|&x| x * x).sum::<f64>().sqrt(), R1[2] / R1.iter().map(|&x| x * x).sum::<f64>().sqrt()];
-    let r2 = [R2[0] / R2.iter().map(|&x| x * x).sum::<f64>().sqrt(), R2[1] / R2.iter().map(|&x| x * x).sum::<f64>().sqrt(), R2[2] / R2.iter().map(|&x| x * x).sum::<f64>().sqrt()];
+    let s = (R1.iter().map(|&x| x * x).sum::<f32>().sqrt() + R2.iter().map(|&x| x * x).sum::<f32>().sqrt()) / 2.0;
+    let r1 = [R1[0] / R1.iter().map(|&x| x * x).sum::<f32>().sqrt(), R1[1] / R1.iter().map(|&x| x * x).sum::<f32>().sqrt(), R1[2] / R1.iter().map(|&x| x * x).sum::<f32>().sqrt()];
+    let r2 = [R2[0] / R2.iter().map(|&x| x * x).sum::<f32>().sqrt(), R2[1] / R2.iter().map(|&x| x * x).sum::<f32>().sqrt(), R2[2] / R2.iter().map(|&x| x * x).sum::<f32>().sqrt()];
     let r3 = [r1[1] * r2[2] - r1[2] * r2[1], r1[2] * r2[0] - r1[0] * r2[2], r1[0] * r2[1] - r1[1] * r2[0]];
     let R = [r1, r2, r3];
     (s, R, t3d)
@@ -444,9 +528,9 @@ fn test_P2sRt() {
              [9.0, 10.0, 11.0, 12.0]];
     let (s, R, t3d) = P2sRt(&P);
     assert_eq!(s, 7.114872934237728);
-    // assert_eq!(R, [[0.2672612419124244, 0.5345224838248488, 0.8017837257372732],
-    //                 [ 0.47673129, 0.57207755,  0.66742381],
-    //                 [-0.10192944,  0.20385888, -0.10192944]]);
+    assert_eq!(R, [[0.2672612419124244, 0.5345224838248488, 0.8017837257372732],
+                    [ 0.47673129, 0.57207755,  0.66742381],
+                    [-0.10192944,  0.20385888, -0.10192944]]);
     assert_eq!(t3d, [4.0, 8.0, 12.0]);
 }
 
@@ -467,15 +551,15 @@ fn test_P2sRt() {
 // }
 
 
-fn matrix2angle(R: &[[f64; 3]]) -> (f64, f64, f64) {
+fn matrix2angle(R: &[[f32; 3]]) -> (f32, f32, f32) {
     if R[2][0] > 0.998 {
         let z = 0.0;
-        let x = FRAC_PI_2;
+        let x = FRAC_PI_2 as f32;
         let y = z + -R[0][1].atan2(-R[0][2]);
         (x, y, z)
     } else if R[2][0] < -0.998 {
         let z = 0.0;
-        let x = -FRAC_PI_2;
+        let x = -FRAC_PI_2 as f32;
         let y = -z + R[0][1].atan2(R[0][2]);
         (x, y, z)
     } else {
@@ -514,7 +598,7 @@ fn test_matrix2angle() {
 // }
 
 
-fn calc_pose(param: &[f64]) ->([[f64; 4]; 3], [f64; 3]) { // ([[f64; 4]; 3], [f64; 3])
+pub fn calc_pose(param: &[f32; 62]) ->([[f32; 4]; 3], [f32; 3]) { // ([[f64; 4]; 3], [f64; 3])
     let P = [[param[0], param[1], param[2], param[3]],
     [param[4], param[5], param[6], param[7]],
     [param[8], param[9], param[10], param[11]]];
@@ -532,9 +616,9 @@ fn calc_pose(param: &[f64]) ->([[f64; 4]; 3], [f64; 3]) { // ([[f64; 4]; 3], [f6
     // let pose = [p * 180.0 / PI for p in pose];
     // pose.iter().map(|&p| p * 180 / PI);
 
-    let pose = [        pose.0 * 180.0 / PI,
-        pose.1 * 180.0 / PI,
-        pose.2 * 180.0 / PI,
+    let pose = [        pose.0 * 180.0 / PI as f32,
+        pose.1 * 180.0 / PI as f32,
+        pose.2 * 180.0 / PI as f32,
     ];
     
     (P, pose)
