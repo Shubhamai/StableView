@@ -9,7 +9,6 @@ struct OneEuroFilter {
     min_cutoff: f64,
     beta: f64,
     d_cutoff: f64,
-
     x_prev: f64,
     dx_prev: f64,
     t_prev: f64,
@@ -27,8 +26,8 @@ impl OneEuroFilter {
         }
     }
 
-    fn smoothing_factor(&self, t_e: f64) -> f64 {
-        let r = 2.0 * std::f64::consts::PI * self.d_cutoff * t_e;
+    fn smoothing_factor(&self, t_e: f64, cutoff:f64) -> f64 {
+        let r = 2.0 * std::f64::consts::PI * cutoff * t_e;
         r / (r + 1.0)
     }
 
@@ -39,14 +38,14 @@ impl OneEuroFilter {
     fn __call__(&mut self, t: f64, x: f64) -> f64 {
         let t_e = t - self.t_prev;
 
-        let a_d = self.smoothing_factor(t_e);
+        let a_d = self.smoothing_factor(t_e, self.d_cutoff);
         let dx = (x - self.x_prev) / t_e;
 
 
         let dx_hat = self.exponential_smoothing(a_d, dx, self.dx_prev);
 
         let cutoff = self.min_cutoff + self.beta * dx_hat.abs();
-        let a = self.smoothing_factor(t_e);
+        let a = self.smoothing_factor(t_e, cutoff);
         let x_hat = self.exponential_smoothing(a, x, self.x_prev);
 
         
@@ -64,16 +63,8 @@ fn test_euro_filter() {
     use std::f64::consts::PI;
     use gnuplot::{Figure, Caption, Color, Graph};
 
-    let min_cutoff = 1.0;
-    let beta = 1.0;
-    let d_cutoff = 1.0;
-
     // Create the filter with the initial values
-    let mut filter = OneEuroFilter::new(0.0, 0.0, 1.0, min_cutoff, beta, d_cutoff);
-
-    // Define the number of iterations and the timestep
-    let n_iter = 100;
-    let dt = 0.1;
+    let mut filter = OneEuroFilter::new(0.0, 1., 0.0, 1.0, 0.0, 1.0);
 
     // Create vectors to store the original and filtered sin values
     let mut t_values:Vec<f64> = Vec::new();
@@ -81,10 +72,10 @@ fn test_euro_filter() {
     let mut x_filtered_values:Vec<f64> = Vec::new();
 
     // Iterate over the sin values and apply the filter
-    for i in 0..n_iter {
+    for i in 1..100 {
         // Compute the sin value at the current time
-        let t = i as f64 * dt;
-        let x = (2.0 * PI * t).sin();
+        let t = i as f64; // ! If t == 0, then zero division occurs at dx = (x - self.x_prev) / t_e, resulting in all values becoming None
+        let x = (0.1*t).sin();
 
         // Filter the sin value
         let x_filtered = filter.__call__(t, x);
@@ -111,4 +102,3 @@ fn test_euro_filter() {
 
 
 }
-

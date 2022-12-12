@@ -26,3 +26,7 @@ onnxruntime-sys = {path = "onnxruntime-rs/onnxruntime-sys"}
 #[target.'cfg(unix)'.dependencies]
 #onnxruntime-sys = "0.0.14"
 #onnxruntime = "0.0.14"
+
+[dependencies.nokhwa]
+version = "0.9.4"
+features = ["input-msmf", "input-v4l"]
