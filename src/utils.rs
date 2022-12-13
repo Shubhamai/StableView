@@ -1,8 +1,4 @@
 // Importing Libraries
-// use onnxruntime::ndarray::{Array, Array1, Array2, ArrayView, ArrayViewMut, Axis};
-// use ndarray_linalg::Norm;
-// use opencv::core::{Mat}; // , MatTrait, Scalar
-
 use opencv::{
     core::{Mat, Rect, CV_32F},
     imgcodecs,
@@ -10,19 +6,8 @@ use opencv::{
     imgproc,
     prelude::*,
 };
+use onnxruntime::ndarray::{arr2, Array2, Axis, s};
 
-
-// use std::error::Error;
-// use onnxruntime::ndarray::{Array, ArrayView};
-// use opencv::prelude::*;
-// use opencv::{
-//     highgui, imgcodecs,
-//     imgproc::{self, resize, InterpolationFlags},
-// };
-// use std::cmp::{max, min};
-// use std::f32::consts::SQRT_2;
-
-// use std::f64::consts::PI;
 
 use std::f64::consts::{FRAC_PI_2, PI};
 
@@ -35,26 +20,26 @@ pub fn _parse_param(
 ) -> Result<([[f32; 3]; 3], [[f32; 1]; 3], [[f32; 1]; 40], [[f32; 1]; 10]), &'static str> {
     let n = param.len();
 
-    let (trans_dim, shape_dim, exp_dim) = match n {
+    let (trans_dim, shape_dim, _) = match n {
         62 => (12, 40, 10),
         72 => (12, 40, 20),
         141 => (12, 100, 29),
         _ => return Err("Undefined templated param parsing rule"),
     };
 
-    let R_ = [
+    let r_ = [
         [param[0], param[1], param[2], param[3]],
         [param[4], param[5], param[6], param[7]],
         [param[8], param[9], param[10], param[11]],
     ];
 
-    let R = [
-        [R_[0][0], R_[0][1], R_[0][2]],
-        [R_[1][0], R_[1][1], R_[1][2]],
-        [R_[2][0], R_[2][1], R_[2][2]],
+    let r = [
+        [r_[0][0], r_[0][1], r_[0][2]],
+        [r_[1][0], r_[1][1], r_[1][2]],
+        [r_[2][0], r_[2][1], r_[2][2]],
     ];
 
-    let offset = [[R_[0][3]], [R_[1][3]], [R_[2][3]]];
+    let offset = [[r_[0][3]], [r_[1][3]], [r_[2][3]]];
 
     let mut alpha_shp = [[0.0; 1]; 40];
     for i in 0..40 {
@@ -66,39 +51,9 @@ pub fn _parse_param(
         alpha_exp[i][0] = param[trans_dim + shape_dim + i];
     }
 
-    Ok((R, offset, alpha_shp, alpha_exp))
+    Ok((r, offset, alpha_shp, alpha_exp))
 }
 
-// fn _parse_param(param: &[f64]) -> Result<(Vec<Vec<f64>>, Vec<Vec<f64>>, Vec<Vec<f64>>, Vec<Vec<f64>>), &'static str> {
-//     let n = param.len();
-
-//     let (trans_dim, shape_dim, exp_dim) = match n {
-//         62 => (12, 40, 10),
-//         72 => (12, 40, 20),
-//         141 => (12, 100, 29),
-//         _ => return Err("Undefined templated param parsing rule")
-//     };
-
-//     let R_ = param[..trans_dim].chunks(4).map(|chunk| chunk.to_vec()).collect::<Vec<_>>();
-//     let R = R_.iter().map(|row| row[..3].to_vec()).collect::<Vec<_>>();
-//     let offset = R_.iter().map(|row| vec![row[3]]).collect::<Vec<_>>();
-
-//     let alpha_shp = param[trans_dim..trans_dim+shape_dim].chunks(1).map(|chunk| chunk.to_vec()).collect::<Vec<_>>();
-//     let alpha_exp = param[trans_dim+shape_dim..].chunks(1).map(|chunk| chunk.to_vec()).collect::<Vec<_>>();
-
-//     Ok((R, offset, alpha_shp, alpha_exp))
-//     }
-
-// #[test]
-// fn test_parse_param() {
-//     let param = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0, 32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0, 41.0, 42.0, 43.0, 44.0, 45.0, 46.0, 47.0, 48.0, 49.0, 50.0, 51.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0, 58.0, 59.0, 60.0, 61.0];
-//     let (R, offset, alpha_shp, alpha_exp) = _parse_param(&param).unwrap();
-
-//     assert_eq!(R, vec![vec![0.0, 1.0, 2.0], vec![4.0, 5.0, 6.0], vec![8.0, 9.0, 10.0]]);
-//     assert_eq!(offset, vec![vec![3.0], vec![7.0], vec![11.0]]);
-//     assert_eq!(alpha_shp, vec![vec![12.0], vec![13.0], vec![14.0], vec![15.0], vec![16.0], vec![17.0], vec![18.0], vec![19.0], vec![20.0], vec![21.0], vec![22.0], vec![23.0], vec![24.0], vec![25.0], vec![26.0], vec![27.0], vec![28.0], vec![29.0], vec![30.0], vec![31.0], vec![32.0], vec![33.0], vec![34.0], vec![35.0], vec![36.0], vec![37.0], vec![38.0], vec![39.0], vec![40.0], vec![41.0], vec![42.0], vec![43.0], vec![44.0], vec![45.0], vec![46.0], vec![47.0], vec![48.0], vec![49.0], vec![50.0], vec![51.0]]);
-//     assert_eq!(alpha_exp, vec![vec![52.0], vec![53.0], vec![54.0], vec![55.0], vec![56.0], vec![57.0], vec![58.0], vec![59.0], vec![60.0], vec![61.0]]);
-// }
 
 #[test]
 fn test_parse_param() {
@@ -109,12 +64,9 @@ fn test_parse_param() {
         47.0, 48.0, 49.0, 50.0, 51.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0, 58.0, 59.0, 60.0, 61.0,
     ];
 
-    // println!("{:?}", param);
     let result = _parse_param(&param);
 
     assert!(result.is_ok());
-
-    let (R, offset, alpha_shp, alpha_exp) = result.unwrap();
 
     let expected = Ok((
         [[0.0, 1.0, 2.0], [4.0, 5.0, 6.0], [8.0, 9.0, 10.0]],
@@ -180,9 +132,6 @@ fn test_parse_param() {
 }
 
 pub fn similar_transform(mut pts3d: Vec<Vec<f32>>, roi_box: [f32; 4], size: i32) -> Vec<Vec<f32>> {
-    // pts3d shape - ( 3, 68 )
-    // roi_box example - [1, 2, 3, 4]
-    // size example - 120
 
     pts3d[0].iter_mut().for_each(|p| *p -= 1.0);
     pts3d[2].iter_mut().for_each(|p| *p -= 1.0);
@@ -205,32 +154,10 @@ pub fn similar_transform(mut pts3d: Vec<Vec<f32>>, roi_box: [f32; 4], size: i32)
     pts3d
 }
 
-// use onnxruntime::ndarray::{ArrayBase, OwnedRepr, Dim};
-
-// fn similar_transform(
-//     pts3d: ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>>,
-//     roi_box: [f32; 4],
-//     size: i32,
-// ) -> ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>> {
-//     pts3d[[0, ..]] -= 1;
-//     pts3d[[2, ..]] -= 1;
-//     pts3d[[1, ..]] = size - pts3d[1, ..];
-
-//     let (sx, sy, ex, ey) = roi_box;
-//     let scale_x = (ex - sx) / size;
-//     let scale_y = (ey - sy) / size;
-//     pts3d[[0, ..]] = pts3d[0, ..] * scale_x + sx;
-//     pts3d[[1, ..]] = pts3d[1, ..] * scale_y + sy;
-//     let s = (scale_x + scale_y) / 2;
-//     pts3d[[2, ..]] *= s;
-//     pts3d[[2, ..]] -= pts3d[2, ..].min();
-//     pts3d
-// }
-
 
 #[test]
 fn test_similar_transform() {
-    let mut pts3d = vec![
+    let pts3d = vec![
         vec![0.0, 1.0, 2.0],
         vec![3.0, 4.0, 5.0],
         vec![6.0, 7.0, 8.0],
@@ -239,15 +166,14 @@ fn test_similar_transform() {
     let size = 120;
 
     let result = similar_transform(pts3d, roi_box, size);
-
-    println!("{:?}", result);
+    
+    // println!("{:?}", result[0]
+    //     .get(0)
+    //     .map(|first| result[0].iter().all(|x| x - first < f32::EPSILON))
+    //     .unwrap_or(true));
+    // println!("{:?}", result[0].iter().zip(&result[0]).filter(|&(a, b)| (a - b) < f32::EPSILON));
     // assert_eq!(
-    //     result,
-    //     &vec![
-    //         vec![0.9833333492279053, 1.0, 1.0166666507720947],
-    //         vec![3.950000047683716, 3.933333396911621, 3.9166667461395264],
-    //         vec![0.0, 0.01666666753590107, 0.03333333507180214]
-    //     ]
+    //     result[0].iter().zip(&result[0]).filter(|&(a, b)| (a - b) < f32::EPSILON), 3
     // );
 }
 
@@ -650,8 +576,9 @@ fn build_camera_box(rear_size: f32) -> Vec<[f32; 3]> {
     point_3d.push([rear_size, -rear_size, rear_depth]);
     point_3d.push([-rear_size, -rear_size, rear_depth]);
 
-    let front_size = (4. * rear_size) / 3.;
-    let front_depth = (4. * rear_size) / 3.;
+    // ? Subtracting by -1 because in python, the int conversion simplt returns the greatest integer instead of rounding the values to integer 
+    let front_size = (4./3. * rear_size).round() - 1.;
+    let front_depth = (4./3. * rear_size).round() - 1.;
     point_3d.push([-front_size, -front_size, front_depth]);
     point_3d.push([-front_size, front_size, front_depth]);
     point_3d.push([front_size, front_size, front_depth]);
@@ -696,8 +623,29 @@ fn test_build_camera_box() {
 // }
 
 
-fn calc_hypotenuse(pts: &[[f32; 20]])  -> f32 {
-    let bbox = [pts[0].iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap(),
+// fn calc_hypotenuse(pts: &[[f32; 20]])  -> f32 {
+//     let bbox = [pts[0].iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap(),
+//         pts[1].iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap(),
+//         pts[0].iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap(),
+//         pts[1].iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap(),
+//     ];
+
+//     let center = [(bbox[0] + bbox[2]) / 2.0, (bbox[1] + bbox[3]) / 2.0];
+//     let radius = f32::max(bbox[2] - bbox[0], bbox[3] - bbox[1]) / 2.0;
+//     let bbox = [        center[0] - radius,
+//         center[1] - radius,
+//         center[0] + radius,
+//         center[1] + radius,
+//     ];
+//     let llength = ((bbox[2] - bbox[0]).powi(2) + (bbox[3] - bbox[1]).powi(2)).sqrt();
+//     llength / 3.0
+// }
+
+fn calc_hypotenuse(pts: &Vec<Vec<f32>>) -> f32 {
+
+    
+    let bbox = vec![
+        pts[0].iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap(),
         pts[1].iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap(),
         pts[0].iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap(),
         pts[1].iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap(),
@@ -705,22 +653,23 @@ fn calc_hypotenuse(pts: &[[f32; 20]])  -> f32 {
 
     let center = [(bbox[0] + bbox[2]) / 2.0, (bbox[1] + bbox[3]) / 2.0];
     let radius = f32::max(bbox[2] - bbox[0], bbox[3] - bbox[1]) / 2.0;
-    let bbox = [        center[0] - radius,
+    let bbox = [
+        center[0] - radius,
         center[1] - radius,
         center[0] + radius,
         center[1] + radius,
     ];
-    let llength = ((bbox[2] - bbox[0]).powi(2) + (bbox[3] - bbox[1]).powi(2)).sqrt();
+    let llength = ((bbox[2] - bbox[0]).powf(2.0) + (bbox[3] - bbox[1]).powf(2.0)).sqrt();
     llength / 3.0
 }
 
 
 #[test]
 fn test_calc_hypotenuse() {
-    let pts = [
-        [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0],
-        [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0],
-        [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0],
+    let pts = vec![
+        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0],
+        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0],
+        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0],
     ];
     let expected = 8.95;
 
@@ -749,7 +698,7 @@ fn test_calc_hypotenuse() {
 //         point_3d_homo.push(homogeneous_point);
 //     }
 
-//     // println!("{:?}", point_3d_homo);
+//      println!("{:?}", point_3d_homo);
 
 //     let mut point_2d = Vec::new();
 //     for point in point_3d_homo {
@@ -779,7 +728,7 @@ fn test_calc_hypotenuse() {
 // }
 
 
-// fn gen_point2d(P: Vec<Vec<f32>>, ver: Vec<[f32; 20]>) -> (Vec<[f32; 2]>, f32) {
+// fn gen_point2d(P: Vec<Vec<f32>>, ver: Vec<Vec<f32>>) -> (Vec<[f32; 2]>, f32) {
 //     let llength = calc_hypotenuse(&ver);
 //     let point_3d = build_camera_box(llength);
 
@@ -834,30 +783,73 @@ fn test_calc_hypotenuse() {
 //             [-y, x]
 //         })
 //         .collect::<Vec<_>>();
-    // let point_2d = point_2d
-    //     .iter()
-    //     .map(|pt| {
-    //         let x = pt[0] - mean(&point_2d[0..4], 0) + mean(&ver[0..2], 1);
-    //         let y = pt[1] - mean(&point_2d[0..4], 0) + mean(&ver[0..2], 1);
-    //         [x, y]
-    //     })
-    //     .map(|pt| [pt[0] as i32, pt[1] as i32])
-    //     .collect::<Vec<_>>();
-    // (point_2d, llength)
+//     let point_2d = point_2d
+//         .iter()
+//         .map(|pt| {
+//             let x = pt[0] - mean(&point_2d[0..4], 0) + mean(&ver[0..2], 1);
+//             let y = pt[1] - mean(&point_2d[0..4], 0) + mean(&ver[0..2], 1);
+//             [x, y]
+//         })
+//         .map(|pt| [pt[0] as i32, pt[1] as i32])
+//         .collect::<Vec<_>>();
+//     (point_2d, llength)
 // }
 
-// #[test]
-// fn test_gen_point2d() {
-//     let P = [[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0], [9.0, 10.0, 11.0, 12.0]];
-// let ver = [[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0],
-// [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0]];
+pub fn gen_point2d(p: &[[f32; 4];3], ver:Vec<Vec<f32>>) -> (Vec<Vec<f32>>, f32) { // -> (Vec<[i32; 2]>, i32)
+        let llength = calc_hypotenuse(&ver);
+        let point_3d = build_camera_box(llength);
+        let point_3d_homo: Vec<[f32; 4]> = point_3d
+        .into_iter()
+        .map(|p| [p[0] as f32, p[1] as f32, p[2] as f32, 1.])
+        .collect();
 
-//                 gen_point2d(P, ver); //let (point_2d, llength) = 
+        let mut binding = arr2(&point_3d_homo).dot(&arr2(p).t());
+        let mut point_2d = binding.slice_mut(s![.., ..2]); //s![.., ..2]
+
+
+        let mut ver_array = Array2::<f32>::default((3, 20));
+        for (i, mut row) in ver_array.axis_iter_mut(Axis(0)).enumerate() {
+            for (j, col) in row.iter_mut().enumerate() {
+                *col = ver[i][j];
+            }
+        }
+        // let ver_array = Array::from_shape_vec((3, 20), ver);
+        // &point_2d.slice(s![.., 1])*-1.;
+        // point_2d.slice_mut(s![.., 1]).map_inplace(|x| *x = -*x);
+
+        // for (i, mut row) in point_2d.axis_iter_mut(Axis(0)).enumerate() {
+        //     // Perform calculations and assign to `row`; this is a trivial example:
+        //     row.fill(1.);
+        // }
+        // let clone = point_2d.cop;
+        point_2d.slice_mut(s![.., 1]).map_inplace(|x| *x = -*x);
+        // point_2d.slice_mut(s![.., ..2]) - point_2d.slice_mut(s![..4, ..2]).mean_axis(Axis(0)) + ver_array.slice_mut(s![..2, ..]).mean_axis(Axis(1))
+        // point_2d.slice_mut(s![.., ..2]).map_inplace(|x| *x = -*x - point_2d.slice_mut(s![..4, ..2]).mean_axis(Axis(0)));   
+        let mut point_2d_copy = point_2d.to_owned();
+        // point_2d.slice_mut(s![.., ..2]).assign(&(point_2d_copy.slice_mut(s![..4, ..2]) - point_2d_copy.slice_mut(s![..4, ..2]).mean_axis(Axis(0)).unwrap() + ver_array.slice_mut(s![..2, ..]).mean_axis(Axis(1)).unwrap()));
+        let point_2d = point_2d.slice_mut(s![.., ..2]).map_axis(Axis(1), |x| (&x - point_2d_copy.slice_mut(s![..4, ..2]).mean_axis(Axis(0)).unwrap() + ver_array.slice_mut(s![..2, ..]).mean_axis(Axis(1)).unwrap()).to_vec());
+        // 
+        // println!("{:?}", point_2d.to_vec());
+        // println!("{:?}", point_2d.slice_mut(s![..4, ..2]).mean_axis(Axis(0)).unwrap());
+        // println!("{:?}", ver_array.slice_mut(s![..2, ..]).mean_axis(Axis(1)).unwrap());
+
+        (point_2d.to_vec(), llength)
+}
+
+#[test]
+fn test_gen_point2d() {
+    let P = [[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0], [9.0, 10.0, 11.0, 12.0]];
+let ver = vec![vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0],
+vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0], vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0]];
+
+            println!("{:?}", gen_point2d(&P, ver));
+
+
+
+}
 
 //                 // println!("{:?}", point_2d);
 
 //                 // assert_eq!(point_2d, vec![[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]]);
 //                 // assert_eq!(llength, 17.0);
-                
-
-// }
+            

@@ -3,19 +3,17 @@ use crate::{model::OnnxSessionsManager, utils::{crop_img, parse_roi_box_from_bbo
 use std::sync::Mutex;
 
 use onnxruntime::{
-    environment::Environment, session::Session, GraphOptimizationLevel, LoggingLevel, OrtError,
+    environment::Environment, session::Session,
 };
 use serde::{Deserialize, Serialize};
 use onnxruntime::tensor::OrtOwnedTensor;
 
 use once_cell::sync::Lazy;
-use opencv::{core::{Size, Vec3b}, imgproc, prelude::*, videoio, imgcodecs};
+use opencv::{core::{Size, Vec3b}, imgproc, prelude::*, imgcodecs};
 
 
-use std::{
-    ops::Deref,
-};
-use onnxruntime::ndarray::{arr1, arr2, Array4, Array1, Array2, Axis, ArrayBase, OwnedRepr, Dim, Order, s};
+use std::ops::Deref;
+use onnxruntime::ndarray::{arr1, arr2, Array4, Array2, Axis, ArrayBase, OwnedRepr, Dim, Order, s};
 
 
 #[derive(Serialize, Deserialize)]
@@ -34,17 +32,14 @@ static ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
 
 
 pub struct TDDFA {
-    data:DataStruct,
+    // data:DataStruct,
     landmark_model:Mutex<Session<'static>>,
     size:i32,
     mean_array:[f32;62],
     std_array:[f32;62],
-    u_base_array:ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>>
-    ,
-    w_shp_base_array:ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>>
-    ,
+    u_base_array:ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>>,
+    w_shp_base_array:ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>>,
     w_exp_base_array:ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>>
-
 }
 
 impl TDDFA{
@@ -92,7 +87,7 @@ impl TDDFA{
 
 
         Ok(Self {
-            data,
+            // data,
             landmark_model,
             size,
             mean_array,
@@ -165,52 +160,35 @@ impl TDDFA{
 
             let processed_param =  arr1(&param) * arr1(&self.std_array) + arr1(&self.mean_array);
             let processed_param:[f32;62] = processed_param.as_slice().unwrap().try_into().unwrap();
-            // println!("{:?}", processed_param);
             Ok((processed_param, roi_box))
 
             }
 
 
-        pub fn recon_vers(&self, param: [f32;62], roi_box:[f32; 4]) -> Vec<Vec<f32>>        { // -> ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>> 
+        pub fn recon_vers(&self, param: [f32;62], roi_box:[f32; 4]) -> Vec<Vec<f32>> {
 
-                let (R, offset, alpha_shp, alpha_exp) = _parse_param(&param).unwrap();
-
+                let (r, offset, alpha_shp, alpha_exp) = _parse_param(&param).unwrap();
 
                 let pts3d = &self.u_base_array + (&self.w_shp_base_array.dot(&arr2(&alpha_shp))) + (&self.w_exp_base_array.dot(&arr2(&alpha_exp)));
-
-
                 let pts3d = pts3d.to_shape(((3, 68), Order::ColumnMajor)).unwrap(); // Note : the numbers are in different orders into_shape((3, 68)).unwrap()
-   
-
-                let pts3d = arr2(&R).dot(&pts3d) + arr2(&offset);
-
-                // pts3d.fla
-
-                // let mut processed_pts3d = pts3d;
+                let pts3d = arr2(&r).dot(&pts3d) + arr2(&offset);
                 let vec_pts_3d = vec![pts3d.slice(s![0, ..]).to_vec(), pts3d.slice(s![1, ..]).to_vec(), pts3d.slice(s![2, ..]).to_vec()];
+                let out_pts3d = similar_transform(vec_pts_3d, roi_box, self.size);                
 
-                // println!("{:?}", pts_3d);
-                let out_pts3d = similar_transform(vec_pts_3d, roi_box, self.size);
-
-                
                 out_pts3d
             }
-
 
 
         }
 
 #[test]
 pub fn test() {
-    use std::time::Instant;
-
-
+    
     let data_fp = "./assets/data.json";
     let landmark_model_path = "./assets/mb05_120x120.onnx";
     let size = 120;
   
     let bfm = TDDFA::new(
-        // bfm_onnx_fp,
         data_fp,
         landmark_model_path,
         size,
@@ -222,23 +200,12 @@ pub fn test() {
         .map(|m| frame = m)
         .unwrap();
 
-    // println!("{:?}", bfm.data.mean);
-
-    // loop {
-    //     let start_time = Instant::now();
-
+        
     let face_box = [150., 150., 400., 400.];
-        let (param, roi_box) = bfm.run(&frame, face_box, vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]], "box").unwrap();
-        let pts_3d = bfm.recon_vers(param, roi_box);
+    let (param, roi_box) = bfm.run(&frame, face_box, vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]], "box").unwrap();
+    let pts_3d = bfm.recon_vers(param, roi_box);
 
-        let (param, roi_box) = bfm.run(&frame, face_box, pts_3d, "landmark").unwrap();
-        let pts_3d = bfm.recon_vers(param, roi_box);
-
-    //     let elapsed_time = start_time.elapsed();
-    //     println!("{} ms", elapsed_time.as_millis());
-    // }
-    
-    // println!("{:?}", pts_3d);
-    
+    let (param, roi_box) = bfm.run(&frame, face_box, pts_3d, "landmark").unwrap();
+    let pts_3d = bfm.recon_vers(param, roi_box);
 
     }
