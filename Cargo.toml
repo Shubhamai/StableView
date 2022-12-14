@@ -2,6 +2,7 @@
 name = "lobo"
 version = "0.1.0"
 edition = "2021"
+authors = ["Shubhamai"]
 publish = false # To prevent accidental publish on crates.io
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -18,16 +19,14 @@ rand = "0.8.5"
 onnxruntime = {path = "onnxruntime-rs/onnxruntime"}
 onnxruntime-sys = {path = "onnxruntime-rs/onnxruntime-sys"}
 
-
-# 0.0.14 seems to be giving error on windows
-#[target.'cfg(windows)'.dependencies]
-#onnxruntime-sys = "0.0.14"
-#onnxruntime = "0.0.14"
-
-#[target.'cfg(unix)'.dependencies]
-#onnxruntime-sys = "0.0.14"
-#onnxruntime = "0.0.14"
-
 [dependencies.nokhwa]
 version = "0.9.4"
 features = ["input-msmf", "input-v4l"]
+
+[profile.release]
+debug = 0
+strip = "symbols"
+overflow-checks = false
+panic = "abort"
+opt-level = 3
+lto = "thin"

@@ -1,8 +1,7 @@
-use onnxruntime;
-
+#[allow(non_snake_case)]
 pub mod OnnxSessionsManager {
 
-    use super::onnxruntime::{
+    use onnxruntime::{
         environment::Environment, session::Session, GraphOptimizationLevel, LoggingLevel, OrtError,
     };
 
@@ -15,11 +14,11 @@ pub mod OnnxSessionsManager {
     }
 
     // Setting up the session, logging levels, optimization levels and threads.
-    pub fn initialize_model<'env, 'a>(
-        environment: &'env Environment,
+    pub fn initialize_model(
+        environment: &Environment,
         model_path: String,
         num_threads: i16,
-    ) -> Result<Session<'env>, OrtError> {
+    ) -> Result<Session, OrtError> {
         let model = environment
             .new_session_builder()?
             .with_optimization_level(GraphOptimizationLevel::All)?
