@@ -96,12 +96,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
                 distance += (pose[0] * 0.2).abs();
                 // println!("{}", distance);
+                // println!("{:?}", point2d);
                 let x = [point2d[0][0], point2d[1][0], point2d[2][0], point2d[3][0]];
                 let y = [point2d[0][1], point2d[1][1], point2d[2][1], point2d[3][1]];
-                // println!("{:?}, {:?}", x, y);
+                // println!("{:?}, {:?}", x);
                 let mut centroid = [
-                    x.iter().sum::<f32>() / (x.len() + 50) as f32,
-                    y.iter().sum::<f32>() / (y.len() + 50) as f32,
+                    x.iter().sum::<f32>() / (x.len()) as f32,
+                    y.iter().sum::<f32>() / (y.len()) as f32,
                 ];
                 // * disbling the multiplying pose with distance (pose[0]*(distance/31), pose[1]*(distance/27)), it seems to causing jitting even when blinking eyes or smiling
                 centroid[0] += pose[0]; // * When very close to the camera, the head pose invariant seems to does't work, to miltgate the issue, we use this
@@ -113,10 +114,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
 
                 let mut data = [
-                    // centroid[0] as f64,
-                    // -centroid[1] as f64,
-                    0.,
-                    0.,
+                    centroid[0] as f64,
+                    -centroid[1] as f64,
+                    // 0.,
+                    // 0.,
                     f64::from(distance),
                     // 0.,
                     f64::from(pose[0]),

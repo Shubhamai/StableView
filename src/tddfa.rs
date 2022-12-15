@@ -100,10 +100,11 @@ impl TDDFA {
         input_frame: &Mat,
         roi_box: [f32; 4],
     ) -> Vec<ArrayBase<OwnedRepr<f32>, Dim<[usize; 4]>>> {
-        let mut rgb_frame = Mat::default();
-        imgproc::cvt_color(&input_frame, &mut rgb_frame, imgproc::COLOR_BGR2RGB, 0).unwrap();
 
-        let cropped_image = crop_img(&rgb_frame, roi_box);
+        // let mut rgb_frame = Mat::default();
+        // imgproc::cvt_color(&input_frame, &mut rgb_frame, imgproc::COLOR_BGR2RGB, 0).unwrap();
+
+        let cropped_image = crop_img(input_frame, roi_box);
 
         // Resizing the frame
         let mut resized_frame = Mat::default();
