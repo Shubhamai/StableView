@@ -32,7 +32,7 @@ impl OneEuroFilter {
     }
 
     fn exponential_smoothing(&self, a: f64, x: f64, x_prev: f64) -> f64 {
-        a * x + (1.0 - a) * x_prev
+        a.mul_add(x, (1.0 - a) * x_prev)
     }
 
     fn __call__(&mut self, x: f64) -> f64 {
@@ -45,7 +45,7 @@ impl OneEuroFilter {
 
         let dx_hat = self.exponential_smoothing(a_d, dx, self.dx_prev);
 
-        let cutoff = self.min_cutoff + self.beta * dx_hat.abs();
+        let cutoff = self.beta.mul_add(dx_hat.abs(), self.min_cutoff);
         let a = self.smoothing_factor(t_e, cutoff);
         let x_hat = self.exponential_smoothing(a, x, self.x_prev);
 
@@ -102,8 +102,8 @@ fn test_euro_filter() {
     // Iterate over the sin values and apply the filter
     for i in 1..100 {
         // Compute the sin value at the current time
-        let t = i as f64; // ! If t == 0, then zero division occurs at dx = (x - self.x_prev) / t_e, resulting in all values becoming None
-        let x = (0.1 * t).sin() + rand::thread_rng().gen_range(0..2) as f64 / 10.0;
+        let t = f64::from(i); // ! If t == 0, then zero division occurs at dx = (x - self.x_prev) / t_e, resulting in all values becoming None
+        let x = (0.1 * t).sin() + f64::from(rand::thread_rng().gen_range(0..2)) / 10.0;
 
         // Filter the sin value
         let x_filtered = filter.__call__(x);

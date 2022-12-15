@@ -125,7 +125,7 @@ impl TDDFA {
         let array = Array4::from_shape_fn(
             (1, 3, self.size as usize, self.size as usize),
             |(_, c, y, x)| {
-                (Vec3b::deref(&vec[x + y * self.size as usize])[c] as f32 - 127.5) / 128.0
+                (f32::from(Vec3b::deref(&vec[x + y * self.size as usize])[c]) - 127.5) / 128.0
             },
         );
 
@@ -145,7 +145,7 @@ impl TDDFA {
         } else if crop_policy == "landmark" {
             roi_box = parse_roi_box_from_landmark(ver);
         } else {
-            println!("Invalid crop policy")
+            tracing::error!("Invalid crop policy : {crop_policy}");
         }
 
         let model_input = self.get_model_input(input_frame, roi_box);

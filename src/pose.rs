@@ -1,12 +1,12 @@
 use crate::tddfa::TDDFA;
-use crate::utils::gen_point2d;
-use crate::{camera::ThreadedCamera, utils::calc_pose};
+
+use crate::{utils::calc_pose};
 use opencv::prelude::Mat;
 use std::{
     sync::{
         self,
         atomic::{AtomicBool, Ordering},
-        mpsc::{self, Receiver, Sender},
+        mpsc::{Receiver},
     },
     thread,
 };
@@ -20,7 +20,7 @@ pub struct ProcessHeadPose {
 }
 
 impl ProcessHeadPose {
-    pub fn new(data_fp:String, model_fp:String, image_size:u8) -> Self {
+    pub fn new(_data_fp:String, _model_fp:String, _image_size:u8) -> Self {
         Self {
             tddfa_thread: None,
             alive: sync::Arc::new(AtomicBool::new(false)),
@@ -63,7 +63,7 @@ impl ProcessHeadPose {
                     .unwrap();
                 pts_3d = tddfa.recon_vers(param, roi_box); // ? Commenting this code still seems to output the pose perfectly
 
-                let (p, pose) = calc_pose(&param);
+                let (_p, _pose) = calc_pose(&param);
 
                 
             }
@@ -82,10 +82,10 @@ impl ProcessHeadPose {
 
 #[test]
 pub fn test_process_head_pose() {
-    let (tx, rx) = mpsc::channel();
+    // let (tx, _rx) = mpsc::channel();
 
-    let mut thr_cam = ThreadedCamera::setup_camera();
-    thr_cam.new_camera_thread(tx);
+    // let mut thr_cam = ThreadedCamera::setup_camera();
+    // thr_cam.new_camera_thread(tx);
 
     // let mut head_pose = ProcessHeadPose::new();
     // head_pose.start_tddfa_thread(rx);

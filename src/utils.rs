@@ -12,7 +12,7 @@ use std::f64::consts::{FRAC_PI_2, PI};
 
 pub fn parse_param(
     param: &[f32; 62],
-) -> Result<([[f32; 3]; 3], [[f32; 1]; 3], [[f32; 1]; 40], [[f32; 1]; 10]), &'static str> {
+) -> Result<([[f32; 3]; 3], [[f32; 1]; 3], [[f32; 1]; 40], [[f32; 1]; 10]), &'static str> { // TODO: Can use type alias/defininations to improve code redability.
     let n = param.len();
 
     let (trans_dim, shape_dim, _) = match n {
@@ -49,81 +49,6 @@ pub fn parse_param(
     Ok((r, offset, alpha_shp, alpha_exp))
 }
 
-#[test]
-fn test_parse_param() {
-    let param = [
-        0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
-        17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0,
-        32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0, 41.0, 42.0, 43.0, 44.0, 45.0, 46.0,
-        47.0, 48.0, 49.0, 50.0, 51.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0, 58.0, 59.0, 60.0, 61.0,
-    ];
-
-    let result = parse_param(&param);
-
-    assert!(result.is_ok());
-
-    let expected = Ok((
-        [[0.0, 1.0, 2.0], [4.0, 5.0, 6.0], [8.0, 9.0, 10.0]],
-        [[3.0], [7.0], [11.0]],
-        [
-            [12.0],
-            [13.0],
-            [14.0],
-            [15.0],
-            [16.0],
-            [17.0],
-            [18.0],
-            [19.0],
-            [20.0],
-            [21.0],
-            [22.0],
-            [23.0],
-            [24.0],
-            [25.0],
-            [26.0],
-            [27.0],
-            [28.0],
-            [29.0],
-            [30.0],
-            [31.0],
-            [32.0],
-            [33.0],
-            [34.0],
-            [35.0],
-            [36.0],
-            [37.0],
-            [38.0],
-            [39.0],
-            [40.0],
-            [41.0],
-            [42.0],
-            [43.0],
-            [44.0],
-            [45.0],
-            [46.0],
-            [47.0],
-            [48.0],
-            [49.0],
-            [50.0],
-            [51.0],
-        ],
-        [
-            [52.0],
-            [53.0],
-            [54.0],
-            [55.0],
-            [56.0],
-            [57.0],
-            [58.0],
-            [59.0],
-            [60.0],
-            [61.0],
-        ],
-    ));
-
-    assert_eq!(result, expected);
-}
-
 pub fn similar_transform(mut pts3d: Vec<Vec<f32>>, roi_box: [f32; 4], size: i32) -> Vec<Vec<f32>> {
     pts3d[0].iter_mut().for_each(|p| *p -= 1.0);
     pts3d[2].iter_mut().for_each(|p| *p -= 1.0);
@@ -135,37 +60,15 @@ pub fn similar_transform(mut pts3d: Vec<Vec<f32>>, roi_box: [f32; 4], size: i32)
     let ey = roi_box[3];
     let scale_x = (ex - sx) / size as f32;
     let scale_y = (ey - sy) / size as f32;
-    pts3d[0].iter_mut().for_each(|p| *p = *p * scale_x + sx);
-    pts3d[1].iter_mut().for_each(|p| *p = *p * scale_y + sy);
+    pts3d[0].iter_mut().for_each(|p| *p = (*p).mul_add(scale_x, sx));
+    pts3d[1].iter_mut().for_each(|p| *p = (*p).mul_add(scale_y, sy));
     let s = (scale_x + scale_y) / 2.0;
-    pts3d[2].iter_mut().for_each(|p| *p = *p * s);
+    pts3d[2].iter_mut().for_each(|p| *p *= s);
     pts3d[2].sort_by(|a, b| a.partial_cmp(b).unwrap());
     let min_z = pts3d[2][0];
     pts3d[2].iter_mut().for_each(|p| *p -= min_z);
 
     pts3d
-}
-
-#[test]
-fn test_similar_transform() {
-    let pts3d = vec![
-        vec![0.0, 1.0, 2.0],
-        vec![3.0, 4.0, 5.0],
-        vec![6.0, 7.0, 8.0],
-    ];
-    let roi_box = [1., 2., 3., 4.];
-    let size = 120;
-
-    let result = similar_transform(pts3d, roi_box, size);
-
-    // println!("{:?}", result[0]
-    //     .get(0)
-    //     .map(|first| result[0].iter().all(|x| x - first < 0.01))
-    //     .unwrap_or(true));
-    // println!("{:?}", result[0].iter().zip(&result[0]).filter(|&(a, b)| (a - b) < f32::EPSILON));
-    // assert_eq!(
-    //     result[0].iter().zip(&result[0]).filter(|&(a, b)| (a - b) < f32::EPSILON), 3
-    // );
 }
 
 pub fn parse_roi_box_from_landmark(pts: Vec<Vec<f32>>) -> [f32; 4] {
@@ -196,7 +99,7 @@ pub fn parse_roi_box_from_landmark(pts: Vec<Vec<f32>>) -> [f32; 4] {
         center[1] + radius,
     ];
 
-    let llength = (((bbox[2] - bbox[0]).powf(2.) + (bbox[3] - bbox[1]).powf(2.)) as f32).sqrt();
+    let llength = ((bbox[3] - bbox[1]).mul_add(bbox[3] - bbox[1], (bbox[2] - bbox[0]).powi(2)) as f32).sqrt();
 
     let center_x = ((bbox[2] + bbox[0]) / 2.) as f32;
     let center_y = ((bbox[3] + bbox[1]) / 2.) as f32;
@@ -210,14 +113,6 @@ pub fn parse_roi_box_from_landmark(pts: Vec<Vec<f32>>) -> [f32; 4] {
     roi_box
 }
 
-#[test]
-fn test_parse_roi_box_from_landmark() {
-    let pts = vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]];
-    let result = parse_roi_box_from_landmark(pts);
-
-    assert_eq!(result, [0.58578646, 3.5857863, 3.4142137, 6.414213]);
-}
-
 pub fn parse_roi_box_from_bbox(bbox: [f32; 4]) -> [f32; 4] {
     let left = bbox[0];
     let top = bbox[1];
@@ -225,7 +120,7 @@ pub fn parse_roi_box_from_bbox(bbox: [f32; 4]) -> [f32; 4] {
     let bottom = bbox[3];
     let old_size = (right - left + bottom - top) / 2.;
     let center_x = right - (right - left) / 2.;
-    let center_y = bottom - (bottom - top) / 2. + old_size * 0.14;
+    let center_y = old_size.mul_add(0.14, bottom - (bottom - top) / 2.);
     let size = (old_size * 1.58).round();
 
     let mut roi_box = [0.; 4];
@@ -235,14 +130,6 @@ pub fn parse_roi_box_from_bbox(bbox: [f32; 4]) -> [f32; 4] {
     roi_box[3] = roi_box[1] + size;
 
     roi_box
-}
-
-#[test]
-fn test_parse_roi_box_from_bbox() {
-    let bbox = [1., 2., 3., 4.];
-    let roi_box = parse_roi_box_from_bbox(bbox);
-
-    assert_eq!(roi_box, [0.5, 1.78, 3.5, 4.7799997]);
 }
 
 pub fn crop_img(img: &core::Mat, roi_box: [f32; 4]) -> core::Mat {
@@ -264,22 +151,6 @@ pub fn crop_img(img: &core::Mat, roi_box: [f32; 4]) -> core::Mat {
 
     let roi = core::Rect::new(sx, sy, ex - sx, ey - sy);
     core::Mat::roi(img, roi).unwrap()
-}
-
-#[test]
-fn test_crop_img() {
-    let frame = core::Mat::new_rows_cols_with_default(
-        120,
-        120,
-        core::CV_8UC3,
-        core::Scalar::new(255., 0., 0., 0.),
-    )
-    .unwrap();
-    let roi_box = [50., 60., 100., 120.];
-    let result = crop_img(&frame, roi_box);
-
-    assert_eq!(result.rows() as f32, roi_box[3] - roi_box[1]);
-    assert_eq!(result.cols() as f32, roi_box[2] - roi_box[0]);
 }
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -312,26 +183,6 @@ fn p2s_rt(p: &[[f32; 4]]) -> (f32, [[f32; 3]; 3], [f32; 3]) {
     (s, r, t3d)
 }
 
-#[test]
-fn test_p2s_rt() {
-    let p = [
-        [1.0, 2.0, 3.0, 4.0],
-        [5.0, 6.0, 7.0, 8.0],
-        [9.0, 10.0, 11.0, 12.0],
-    ];
-    let (s, r, t3d) = p2s_rt(&p);
-    assert_eq!(s, 7.114872934237728);
-    assert_eq!(
-        r,
-        [
-            [0.2672612419124244, 0.5345224838248488, 0.8017837257372732],
-            [0.47673129, 0.57207755, 0.66742381],
-            [-0.10192944, 0.20385888, -0.10192944]
-        ]
-    );
-    assert_eq!(t3d, [4.0, 8.0, 12.0]);
-}
-
 fn matrix2angle(r: &[[f32; 3]]) -> (f32, f32, f32) {
     if r[2][0] > 0.998 {
         let z = 0.0;
@@ -349,16 +200,6 @@ fn matrix2angle(r: &[[f32; 3]]) -> (f32, f32, f32) {
         let z = (r[1][0] / x.cos()).atan2(r[0][0] / x.cos());
         (x, y, z)
     }
-}
-
-#[test]
-fn test_matrix2angle() {
-    let r = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]];
-    let (x, y, z) = matrix2angle(&r);
-
-    assert_eq!(x, 1.5707963267948966);
-    assert_eq!(y, -2.5535900500422257);
-    assert_eq!(z, 0.0);
 }
 
 pub fn calc_pose(param: &[f32; 62]) -> ([[f32; 4]; 3], [f32; 3]) {
@@ -386,38 +227,6 @@ pub fn calc_pose(param: &[f32; 62]) -> ([[f32; 4]; 3], [f32; 3]) {
     (p, pose)
 }
 
-#[test]
-fn test_calc_pose() {
-    let param = [
-        0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
-        17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0,
-        32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0, 41.0, 42.0, 43.0, 44.0, 45.0, 46.0,
-        47.0, 48.0, 49.0, 50.0, 51.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0, 58.0, 59.0, 60.0, 61.0,
-    ];
-
-    let (p, updated_pose) = calc_pose(&param);
-
-    assert_eq!(
-        p,
-        [
-            [0.0, 0.4472135954999579, 0.8944271909999159, 3.0],
-            [
-                0.4558423058385518,
-                0.5698028822981898,
-                0.6837634587578276,
-                7.0
-            ],
-            [
-                -0.2038588765750503,
-                0.4077177531501004,
-                -0.2038588765750502,
-                11.0
-            ]
-        ]
-    );
-    assert_eq!(updated_pose, [-11.76270692571231, 116.56505117707799, 90.0]);
-}
-
 fn build_camera_box(rear_size: f32) -> Vec<[f32; 3]> {
     let mut point_3d: Vec<[f32; 3]> = Vec::new();
     let rear_depth = 0.;
@@ -437,26 +246,6 @@ fn build_camera_box(rear_size: f32) -> Vec<[f32; 3]> {
     point_3d.push([-front_size, -front_size, front_depth]);
 
     point_3d
-}
-
-#[test]
-fn test_build_camera_box() {
-    let point_3d = build_camera_box(90.);
-    assert_eq!(
-        point_3d,
-        [
-            [-90., -90., 0.],
-            [-90., 90., 0.],
-            [90., 90., 0.],
-            [90., -90., 0.],
-            [-90., -90., 0.],
-            [-120., -120., 120.],
-            [-120., 120., 120.],
-            [120., 120., 120.],
-            [120., -120., 120.],
-            [-120., -120., 120.]
-        ]
-    )
 }
 
 fn calc_hypotenuse(pts: &[Vec<f32>]) -> f32 {
@@ -487,31 +276,8 @@ fn calc_hypotenuse(pts: &[Vec<f32>]) -> f32 {
         center[0] + radius,
         center[1] + radius,
     ];
-    let llength = ((bbox[2] - bbox[0]).powf(2.0) + (bbox[3] - bbox[1]).powf(2.0)).sqrt();
+    let llength = (bbox[2] - bbox[0]).hypot(bbox[3] - bbox[1]);
     llength / 3.0
-}
-
-#[test]
-fn test_calc_hypotenuse() {
-    let pts = [
-        vec![
-            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
-            17.0, 18.0, 19.0, 20.0,
-        ],
-        vec![
-            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
-            17.0, 18.0, 19.0, 20.0,
-        ],
-        vec![
-            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
-            17.0, 18.0, 19.0, 20.0,
-        ],
-    ];
-    let expected = 8.95;
-
-    let result = calc_hypotenuse(&pts);
-
-    assert!((result - expected).abs() < 0.01);
 }
 
 pub fn gen_point2d(p: &[[f32; 4]; 3], ver: Vec<Vec<f32>>) -> (Vec<Vec<f32>>, f32) {
@@ -546,27 +312,266 @@ pub fn gen_point2d(p: &[[f32; 4]; 3], ver: Vec<Vec<f32>>) -> (Vec<Vec<f32>>, f32
     (point_2d.to_vec(), llength)
 }
 
-#[test]
-fn test_gen_point2d() {
-    let p = [
-        [1.0, 2.0, 3.0, 4.0],
-        [5.0, 6.0, 7.0, 8.0],
-        [9.0, 10.0, 11.0, 12.0],
-    ];
-    let ver = vec![
-        vec![
-            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
-            17.0, 18.0, 19.0, 20.0,
-        ],
-        vec![
-            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
-            17.0, 18.0, 19.0, 20.0,
-        ],
-        vec![
-            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
-            17.0, 18.0, 19.0, 20.0,
-        ],
-    ];
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    println!("{:?}", gen_point2d(&p, ver));
+    #[test]
+    fn test_parse_param() {
+        let param = [
+            0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+            16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0,
+            30.0, 31.0, 32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0, 41.0, 42.0, 43.0,
+            44.0, 45.0, 46.0, 47.0, 48.0, 49.0, 50.0, 51.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0,
+            58.0, 59.0, 60.0, 61.0,
+        ];
+
+        let result = parse_param(&param);
+
+        assert!(result.is_ok());
+
+        let expected = Ok((
+            [[0.0, 1.0, 2.0], [4.0, 5.0, 6.0], [8.0, 9.0, 10.0]],
+            [[3.0], [7.0], [11.0]],
+            [
+                [12.0],
+                [13.0],
+                [14.0],
+                [15.0],
+                [16.0],
+                [17.0],
+                [18.0],
+                [19.0],
+                [20.0],
+                [21.0],
+                [22.0],
+                [23.0],
+                [24.0],
+                [25.0],
+                [26.0],
+                [27.0],
+                [28.0],
+                [29.0],
+                [30.0],
+                [31.0],
+                [32.0],
+                [33.0],
+                [34.0],
+                [35.0],
+                [36.0],
+                [37.0],
+                [38.0],
+                [39.0],
+                [40.0],
+                [41.0],
+                [42.0],
+                [43.0],
+                [44.0],
+                [45.0],
+                [46.0],
+                [47.0],
+                [48.0],
+                [49.0],
+                [50.0],
+                [51.0],
+            ],
+            [
+                [52.0],
+                [53.0],
+                [54.0],
+                [55.0],
+                [56.0],
+                [57.0],
+                [58.0],
+                [59.0],
+                [60.0],
+                [61.0],
+            ],
+        ));
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_similar_transform() {
+        let pts3d = vec![
+            vec![0.0, 1.0, 2.0],
+            vec![3.0, 4.0, 5.0],
+            vec![6.0, 7.0, 8.0],
+        ];
+        let roi_box = [1., 2., 3., 4.];
+        let size = 120;
+
+        let _result = similar_transform(pts3d, roi_box, size);
+
+        // println!("{:?}", result[0]
+        //     .get(0)
+        //     .map(|first| result[0].iter().all(|x| x - first < 0.01))
+        //     .unwrap_or(true));
+        // println!("{:?}", result[0].iter().zip(&result[0]).filter(|&(a, b)| (a - b) < f32::EPSILON));
+        // assert_eq!(
+        //     result[0].iter().zip(&result[0]).filter(|&(a, b)| (a - b) < f32::EPSILON), 3
+        // );
+    }
+
+    #[test]
+    fn test_parse_roi_box_from_landmark() {
+        let pts = vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]];
+        let result = parse_roi_box_from_landmark(pts);
+
+        assert_eq!(result, [0.585_786_46, 3.585_786_3, 3.414_213_7, 6.414_213]);
+    }
+
+    #[test]
+    fn test_parse_roi_box_from_bbox() {
+        let bbox = [1., 2., 3., 4.];
+        let roi_box = parse_roi_box_from_bbox(bbox);
+
+        assert_eq!(roi_box, [0.5, 1.78, 3.5, 4.779_999_7]);
+    }
+
+    #[test]
+    fn test_crop_img() {
+        let frame = core::Mat::new_rows_cols_with_default(
+            120,
+            120,
+            core::CV_8UC3,
+            core::Scalar::new(255., 0., 0., 0.),
+        )
+        .unwrap();
+        let roi_box = [50., 60., 100., 120.];
+        let result = crop_img(&frame, roi_box);
+
+        assert_eq!(result.rows() as f32, roi_box[3] - roi_box[1]);
+        assert_eq!(result.cols() as f32, roi_box[2] - roi_box[0]);
+    }
+    #[test]
+    fn test_p2s_rt() {
+        let p = [
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0, 8.0],
+            [9.0, 10.0, 11.0, 12.0],
+        ];
+        let (s, r, t3d) = p2s_rt(&p);
+        assert_eq!(s, 7.114_873);
+        assert_eq!(
+            r,
+            [
+                [0.267_261_24, 0.534_522_5, 0.801_783_74],
+                [0.476_731_3, 0.572_077_6, 0.667_423_8],
+                [-0.101_929_44, 0.203_858_88, -0.101_929_44]
+            ]
+        );
+        assert_eq!(t3d, [4.0, 8.0, 12.0]);
+    }
+    #[test]
+    fn test_matrix2angle() {
+        let r = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]];
+        let (x, y, z) = matrix2angle(&r);
+
+        assert_eq!(x, 1.570_796_4);
+        assert_eq!(y, -2.553_59);
+        assert_eq!(z, 0.0);
+    }
+
+    #[test]
+    fn test_calc_pose() {
+        let param = [
+            0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+            16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0,
+            30.0, 31.0, 32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0, 41.0, 42.0, 43.0,
+            44.0, 45.0, 46.0, 47.0, 48.0, 49.0, 50.0, 51.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0,
+            58.0, 59.0, 60.0, 61.0,
+        ];
+
+        let (p, updated_pose) = calc_pose(&param);
+
+        assert_eq!(
+            p,
+            [
+                [0.0, 0.447_213_6, 0.894_427_2, 3.0],
+                [
+                    0.455_842_32,
+                    0.569_802_9,
+                    0.683_763_44,
+                    7.0
+                ],
+                [
+                    -0.203_858_88,
+                    0.407_717_76,
+                    -0.203_858_88,
+                    11.0
+                ]
+            ]
+        );
+        assert_eq!(updated_pose, [-11.762_707, 116.565_05, 90.0]);
+    }
+
+    #[test]
+    fn test_build_camera_box() {
+        let point_3d = build_camera_box(90.);
+        assert_eq!(
+            point_3d,
+            [
+                [-90., -90., 0.],
+                [-90., 90., 0.],
+                [90., 90., 0.],
+                [90., -90., 0.],
+                [-90., -90., 0.],
+                [-120., -120., 120.],
+                [-120., 120., 120.],
+                [120., 120., 120.],
+                [120., -120., 120.],
+                [-120., -120., 120.]
+            ]
+        )
+    }
+
+    #[test]
+    fn test_calc_hypotenuse() {
+        let pts = [
+            vec![
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+                16.0, 17.0, 18.0, 19.0, 20.0,
+            ],
+            vec![
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+                16.0, 17.0, 18.0, 19.0, 20.0,
+            ],
+            vec![
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+                16.0, 17.0, 18.0, 19.0, 20.0,
+            ],
+        ];
+        let expected = 8.95;
+
+        let result = calc_hypotenuse(&pts);
+
+        assert!((result - expected).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_gen_point2d() {
+        let p = [
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0, 8.0],
+            [9.0, 10.0, 11.0, 12.0],
+        ];
+        let ver = vec![
+            vec![
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+                16.0, 17.0, 18.0, 19.0, 20.0,
+            ],
+            vec![
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+                16.0, 17.0, 18.0, 19.0, 20.0,
+            ],
+            vec![
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+                16.0, 17.0, 18.0, 19.0, 20.0,
+            ],
+        ];
+
+        println!("{:?}", gen_point2d(&p, ver));
+    }
 }

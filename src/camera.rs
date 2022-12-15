@@ -12,6 +12,7 @@ use std::{
 };
 
 pub struct ThreadedCamera {
+    cam: nokhwa::CameraInfo,
     cam_thread: Option<thread::JoinHandle<()>>,
     alive: sync::Arc<AtomicBool>,
 }
@@ -19,17 +20,17 @@ pub struct ThreadedCamera {
 impl ThreadedCamera {
     pub fn setup_camera() -> Self {
         let dev = nokhwa::query_devices(nokhwa::CaptureAPIBackend::Auto).unwrap();
-        println!("Available devices : ");
 
-        for device_info in dev {
-            println!(
-                "{} @ index {}",
+        for device_info in &dev {
+            tracing::info!(
+                "Detected : {} @ index {}",
                 device_info.human_name(),
                 device_info.index()
             );
         }
 
         Self {
+            cam: dev[0].clone(),
             cam_thread: None,
             alive: sync::Arc::new(AtomicBool::new(false)),
         }
@@ -40,15 +41,17 @@ impl ThreadedCamera {
 
         let alive = self.alive.clone();
 
-        let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY).unwrap(); // videoio::CAP_ANY, CAP_V4L2, // 0 is the default camera
+        tracing::info!(
+            "Using : {} @ index {}",
+            self.cam.human_name(),
+            self.cam.index()
+        );
+
+        let mut cam =
+            videoio::VideoCapture::new(self.cam.index() as i32, videoio::CAP_ANY).unwrap(); // videoio::CAP_ANY, CAP_V4L2, // 0 is the default camera
         let opened = videoio::VideoCapture::is_opened(&cam).unwrap();
 
-        if !opened {
-            panic!("Unable to open default camera!");
-
-            // ! In linux, query devices shows two different indexes for same device
-            // ! If unable of open the 0th index, maybe try the other index also
-        }
+        assert!(opened, "Unable to open default camera!");
 
         self.cam_thread = Some(thread::spawn(move || {
             while alive.load(Ordering::SeqCst) {
@@ -80,6 +83,7 @@ impl ThreadedCamera {
 }
 
 #[test]
+#[ignore = "Can only test this offline since it requires webcam, run cargo test -- --ignored"]
 pub fn test_threaded_camera() {
     use sync::mpsc;
 
