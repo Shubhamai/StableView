@@ -36,7 +36,7 @@ impl ThreadedCamera {
         }
     }
 
-    pub fn new_camera_thread(&mut self, tx: Sender<Mat>) {
+    pub fn start_camera_thread(&mut self, tx: Sender<Mat>) {
         self.alive.store(true, Ordering::SeqCst);
 
         let alive = self.alive.clone();
@@ -60,7 +60,9 @@ impl ThreadedCamera {
                 cam.read(&mut frame).unwrap();
 
                 // Send the frame to the other thread for processing
-                tx.send(frame).unwrap();
+                if tx.send(frame).is_err() {
+                    break;
+                }
             }
         }));
     }
@@ -72,7 +74,9 @@ impl ThreadedCamera {
     //     };
     // }
 
-    pub fn stop(&mut self) {
+    pub fn shutdown(&mut self) {
+        println!("Shutting down camera thread...");
+
         self.alive.store(false, Ordering::SeqCst);
         self.cam_thread
             .take()
@@ -90,11 +94,11 @@ pub fn test_threaded_camera() {
     let (tx, rx) = mpsc::channel();
 
     let mut thr_cam = ThreadedCamera::setup_camera();
-    thr_cam.new_camera_thread(tx);
+    thr_cam.start_camera_thread(tx);
 
     for _ in 0..100 {
         let _frame = rx.recv().unwrap();
     }
 
-    thr_cam.stop();
+    thr_cam.shutdown();
 }

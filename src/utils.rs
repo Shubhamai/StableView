@@ -12,7 +12,8 @@ use std::f64::consts::{FRAC_PI_2, PI};
 
 pub fn parse_param(
     param: &[f32; 62],
-) -> Result<([[f32; 3]; 3], [[f32; 1]; 3], [[f32; 1]; 40], [[f32; 1]; 10]), &'static str> { // TODO: Can use type alias/defininations to improve code redability.
+) -> Result<([[f32; 3]; 3], [[f32; 1]; 3], [[f32; 1]; 40], [[f32; 1]; 10]), &'static str> {
+    // TODO: Can use type alias/defininations to improve code redability.
     let n = param.len();
 
     let (trans_dim, shape_dim, _) = match n {
@@ -60,8 +61,12 @@ pub fn similar_transform(mut pts3d: Vec<Vec<f32>>, roi_box: [f32; 4], size: i32)
     let ey = roi_box[3];
     let scale_x = (ex - sx) / size as f32;
     let scale_y = (ey - sy) / size as f32;
-    pts3d[0].iter_mut().for_each(|p| *p = (*p).mul_add(scale_x, sx));
-    pts3d[1].iter_mut().for_each(|p| *p = (*p).mul_add(scale_y, sy));
+    pts3d[0]
+        .iter_mut()
+        .for_each(|p| *p = (*p).mul_add(scale_x, sx));
+    pts3d[1]
+        .iter_mut()
+        .for_each(|p| *p = (*p).mul_add(scale_y, sy));
     let s = (scale_x + scale_y) / 2.0;
     pts3d[2].iter_mut().for_each(|p| *p *= s);
     pts3d[2].sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -71,8 +76,8 @@ pub fn similar_transform(mut pts3d: Vec<Vec<f32>>, roi_box: [f32; 4], size: i32)
     pts3d
 }
 
-pub fn parse_roi_box_from_landmark(pts: Vec<Vec<f32>>) -> [f32; 4] {
-    let bbox = vec![
+pub fn parse_roi_box_from_landmark(pts: &[Vec<f32>]) -> [f32; 4] {
+    let bbox = [
         pts[0]
             .iter()
             .min_by(|a, b| a.partial_cmp(b).unwrap())
@@ -90,19 +95,21 @@ pub fn parse_roi_box_from_landmark(pts: Vec<Vec<f32>>) -> [f32; 4] {
             .max_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap(),
     ];
-    let center = vec![(bbox[0] + bbox[2]) / 2., (bbox[1] + bbox[3]) / 2.];
+    println!("{:?}", bbox);
+    let center = [(bbox[0] + bbox[2]) / 2., (bbox[1] + bbox[3]) / 2.];
     let radius = f32::max(bbox[2] - bbox[0], bbox[3] - bbox[1]) / 2.;
-    let bbox = vec![
+    let bbox = [
         center[0] - radius,
         center[1] - radius,
         center[0] + radius,
         center[1] + radius,
     ];
 
-    let llength = ((bbox[3] - bbox[1]).mul_add(bbox[3] - bbox[1], (bbox[2] - bbox[0]).powi(2)) as f32).sqrt();
+    let llength =
+        ((bbox[3] - bbox[1]).mul_add(bbox[3] - bbox[1], (bbox[2] - bbox[0]).powi(2)) as f32).sqrt();
 
-    let center_x = ((bbox[2] + bbox[0]) / 2.) as f32;
-    let center_y = ((bbox[3] + bbox[1]) / 2.) as f32;
+    let center_x = (bbox[2] + bbox[0]) / 2.;
+    let center_y = (bbox[3] + bbox[1]) / 2.;
 
     let mut roi_box = [0.0; 4];
     roi_box[0] = center_x - llength / 2.;
@@ -150,6 +157,7 @@ pub fn crop_img(img: &core::Mat, roi_box: [f32; 4]) -> core::Mat {
     let (ey, _) = if ey > h { (h, dh - (ey - h)) } else { (ey, dh) };
 
     let roi = core::Rect::new(sx, sy, ex - sx, ey - sy);
+    // println!("{:?}", roi);
     core::Mat::roi(img, roi).unwrap()
 }
 
@@ -237,8 +245,14 @@ fn build_camera_box(rear_size: f32) -> Vec<[f32; 3]> {
     point_3d.push([-rear_size, -rear_size, rear_depth]);
 
     // ? Subtracting by -1 because in python, the int conversion simplt returns the greatest integer instead of rounding the values to integer
-    let front_size = (4. / 3. * rear_size).round() - 1.;
-    let front_depth = (4. / 3. * rear_size).round() - 1.;
+    let mut front_size = (4. / 3. * rear_size).ceil();
+    let mut front_depth = (4. / 3. * rear_size).ceil();
+
+    if (rear_size.ceil() - rear_size).abs() > f32::EPSILON {
+        front_size -= 1.;
+        front_depth -= 1.;
+    };
+
     point_3d.push([-front_size, -front_size, front_depth]);
     point_3d.push([-front_size, front_size, front_depth]);
     point_3d.push([front_size, front_size, front_depth]);
@@ -249,7 +263,7 @@ fn build_camera_box(rear_size: f32) -> Vec<[f32; 3]> {
 }
 
 fn calc_hypotenuse(pts: &[Vec<f32>]) -> f32 {
-    let bbox = vec![
+    let bbox = [
         pts[0]
             .iter()
             .min_by(|a, b| a.partial_cmp(b).unwrap())
@@ -402,7 +416,7 @@ mod tests {
         let roi_box = [1., 2., 3., 4.];
         let size = 120;
 
-        let _result = similar_transform(pts3d, roi_box, size);
+        let result = similar_transform(pts3d, roi_box, size);
 
         // println!("{:?}", result[0]
         //     .get(0)
@@ -412,12 +426,16 @@ mod tests {
         // assert_eq!(
         //     result[0].iter().zip(&result[0]).filter(|&(a, b)| (a - b) < f32::EPSILON), 3
         // );
+
+        // assert_eq!(
+        //         result,
+        //     );
     }
 
     #[test]
     fn test_parse_roi_box_from_landmark() {
         let pts = vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]];
-        let result = parse_roi_box_from_landmark(pts);
+        let result = parse_roi_box_from_landmark(&pts);
 
         assert_eq!(result, [0.585_786_46, 3.585_786_3, 3.414_213_7, 6.414_213]);
     }
@@ -490,18 +508,8 @@ mod tests {
             p,
             [
                 [0.0, 0.447_213_6, 0.894_427_2, 3.0],
-                [
-                    0.455_842_32,
-                    0.569_802_9,
-                    0.683_763_44,
-                    7.0
-                ],
-                [
-                    -0.203_858_88,
-                    0.407_717_76,
-                    -0.203_858_88,
-                    11.0
-                ]
+                [0.455_842_32, 0.569_802_9, 0.683_763_44, 7.0],
+                [-0.203_858_88, 0.407_717_76, -0.203_858_88, 11.0]
             ]
         );
         assert_eq!(updated_pose, [-11.762_707, 116.565_05, 90.0]);
@@ -509,20 +517,57 @@ mod tests {
 
     #[test]
     fn test_build_camera_box() {
-        let point_3d = build_camera_box(90.);
+        let llength = 90.0;
+        let point_3d = build_camera_box(llength);
         assert_eq!(
             point_3d,
             [
-                [-90., -90., 0.],
-                [-90., 90., 0.],
-                [90., 90., 0.],
-                [90., -90., 0.],
-                [-90., -90., 0.],
+                [-llength, -llength, 0.],
+                [-llength, llength, 0.],
+                [llength, llength, 0.],
+                [llength, -llength, 0.],
+                [-llength, -llength, 0.],
                 [-120., -120., 120.],
                 [-120., 120., 120.],
                 [120., 120., 120.],
                 [120., -120., 120.],
                 [-120., -120., 120.]
+            ]
+        );
+
+        let llength = 90.1;
+        let point_3d = build_camera_box(llength);
+        assert_eq!(
+            point_3d,
+            [
+                [-llength, -llength, 0.],
+                [-llength, llength, 0.],
+                [llength, llength, 0.],
+                [llength, -llength, 0.],
+                [-llength, -llength, 0.],
+                [-120., -120., 120.],
+                [-120., 120., 120.],
+                [120., 120., 120.],
+                [120., -120., 120.],
+                [-120., -120., 120.]
+            ]
+        );
+
+        let llength = 89.9;
+        let point_3d = build_camera_box(llength);
+        assert_eq!(
+            point_3d,
+            [
+                [-llength, -llength, 0.],
+                [-llength, llength, 0.],
+                [llength, llength, 0.],
+                [llength, -llength, 0.],
+                [-llength, -llength, 0.],
+                [-119., -119., 119.],
+                [-119., 119., 119.],
+                [119., 119., 119.],
+                [119., -119., 119.],
+                [-119., -119., 119.]
             ]
         )
     }

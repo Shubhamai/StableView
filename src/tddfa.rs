@@ -137,7 +137,7 @@ impl TDDFA {
         &self,
         input_frame: &Mat,
         face_box: [f32; 4],
-        ver: Vec<Vec<f32>>,
+        ver: &[Vec<f32>],
         crop_policy: &str,
     ) -> Result<([f32; 62], [f32; 4]), Box<dyn Error>> {
         let mut roi_box = [0.; 4];
@@ -197,12 +197,12 @@ pub fn test() {
         .run(
             &frame,
             face_box,
-            vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
+            &vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
             "box",
         )
         .unwrap();
     let pts_3d = bfm.recon_vers(param, roi_box);
 
-    let (param, roi_box) = bfm.run(&frame, face_box, pts_3d, "landmark").unwrap();
+    let (param, roi_box) = bfm.run(&frame, face_box, &pts_3d, "landmark").unwrap();
     let _pts_3d = bfm.recon_vers(param, roi_box);
 }
