@@ -12,7 +12,7 @@ use std::f64::consts::{FRAC_PI_2, PI};
 
 pub fn parse_param(
     param: &[f32; 62],
-) -> Result<([[f32; 3]; 3], [[f32; 1]; 3], [[f32; 1]; 40], [[f32; 1]; 10]), &'static str> {
+) -> Result<([[f32; 3]; 3], [[f32; 1]; 3], [[f32; 1]; 40], [[f32; 1]; 10]), &str> {
     // TODO: Can use type alias/defininations to improve code redability.
     let n = param.len();
 
@@ -95,7 +95,7 @@ pub fn parse_roi_box_from_landmark(pts: &[Vec<f32>]) -> [f32; 4] {
             .max_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap(),
     ];
-    println!("{:?}", bbox);
+
     let center = [(bbox[0] + bbox[2]) / 2., (bbox[1] + bbox[3]) / 2.];
     let radius = f32::max(bbox[2] - bbox[0], bbox[3] - bbox[1]) / 2.;
     let bbox = [

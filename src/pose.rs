@@ -60,123 +60,112 @@ impl ProcessHeadPose {
 
         (centroid, distance)
     }
-    pub fn start(
+
+    pub fn single_iter(&mut self, frame: &Mat) -> [f64; 6] {
+        let start_time = Instant::now();
+
+        // If frame is valid
+        let (mut param, mut roi_box) = self
+            .tddfa
+            .run(frame, self.face_box, &self.pts_3d, "landmark")
+            .unwrap();
+
+        if (roi_box[2] - roi_box[0]).abs() * (roi_box[3] - roi_box[1]).abs() < 2020. {
+            (param, roi_box) = self
+                .tddfa
+                .run(frame, self.face_box, &self.pts_3d, "box")
+                .unwrap();
+        }
+
+        self.pts_3d = self.tddfa.recon_vers(param, roi_box); // ? Commenting this code still seems to output the pose perfectly
+
+        let (p, pose) = calc_pose(&param);
+
+        let (point2d, distance) = gen_point2d(
+            &p,
+            vec![
+                self.pts_3d[0][28..48].to_vec(),
+                self.pts_3d[1][28..48].to_vec(),
+                self.pts_3d[2][28..48].to_vec(),
+            ],
+        );
+
+        let (centroid, distance) = self.get_coordintes_and_depth(pose, distance, point2d);
+
+        let data = [
+            centroid[0] as f64,
+            -centroid[1] as f64,
+            f64::from(distance),
+            f64::from(pose[0]),
+            f64::from(-pose[1]),
+            f64::from(pose[2]),
+        ];
+
+        let elapsed_time = start_time.elapsed();
+        thread::sleep(Duration::from_millis(
+            (((1000 / self.fps) - elapsed_time.as_millis()).max(0))
+                .try_into()
+                .unwrap(),
+        ));
+
+        data
+    }
+
+    pub fn start_loop(
         &mut self,
         rx: Receiver<Mat>,
         mut filter: EuroDataFilter,
         mut socket: SocketNetwork,
     ) {
-        let stdin_channel = self.spawn_stdin_channel();
+        // let stdin_channel = self.spawn_stdin_channel();
 
         let mut frame = rx.recv().unwrap();
-        let (
-            mut param,
-            mut roi_box,
-            // mut pts_3d,
-            mut p,
-            mut pose,
-            mut point2d,
-            mut centroid,
-            mut distance,
-            mut data,
-        );
-
-        (param, roi_box) = self
-            .tddfa
-            .run(&frame, self.face_box, &self.pts_3d, "box")
-            .unwrap();
-        self.pts_3d = self.tddfa.recon_vers(param, roi_box);
+        let mut data;
 
         loop {
-            match stdin_channel.try_recv() {
-                Ok(key) => {
-                    if key.trim().is_empty() {
-                        break;
-                    }
-                }
-                Err(TryRecvError::Empty) => {}
-                Err(TryRecvError::Disconnected) => break,
-            }
-
-            //alive.load(Ordering::SeqCst)
-            let start_time = Instant::now();
+            // match stdin_channel.try_recv() {
+            //     Ok(key) => {
+            //         if key.trim().is_empty() {
+            //             break;
+            //         }
+            //     }
+            //     Err(TryRecvError::Empty) => {}
+            //     Err(TryRecvError::Disconnected) => break,
+            // }
 
             frame = match rx.try_recv() {
                 Ok(result) => result,
                 Err(_) => frame.clone(),
             };
 
-            // If frame is valid
-            (param, roi_box) = self
-                .tddfa
-                .run(&frame, self.face_box, &self.pts_3d, "landmark")
-                .unwrap();
-
-            if (roi_box[2] - roi_box[0]).abs() * (roi_box[3] - roi_box[1]).abs() < 2020. {
-                // println!("Error Detected!!!!!!!!!!!");
-                (param, roi_box) = self
-                    .tddfa
-                    .run(&frame, self.face_box, &self.pts_3d, "box")
-                    .unwrap();
-            }
-
-            self.pts_3d = self.tddfa.recon_vers(param, roi_box); // ? Commenting this code still seems to output the pose perfectly
-
-            (p, pose) = calc_pose(&param);
-
-            (point2d, distance) = gen_point2d(
-                &p,
-                vec![
-                    self.pts_3d[0][28..48].to_vec(),
-                    self.pts_3d[1][28..48].to_vec(),
-                    self.pts_3d[2][28..48].to_vec(),
-                ],
-            );
-
-            (centroid, distance) = self.get_coordintes_and_depth(pose, distance, point2d);
-
-            data = [
-                centroid[0] as f64,
-                -centroid[1] as f64,
-                f64::from(distance),
-                f64::from(pose[0]),
-                f64::from(-pose[1]),
-                f64::from(pose[2]),
-            ];
+            data = self.single_iter(&frame);
 
             data = filter.filter_data(data);
 
             socket.send(data);
-
-            let elapsed_time = start_time.elapsed();
-            thread::sleep(Duration::from_millis(
-                (((1000 / self.fps) - elapsed_time.as_millis()).max(0))
-                    .try_into()
-                    .unwrap(),
-            ));
         }
     }
 
-    fn spawn_stdin_channel(&mut self) -> Receiver<String> {
-        let (tx, rx) = mpsc::channel::<String>();
-        println!("Press Enter to exit.");
-        self.user_input_thread = Some(thread::spawn(move || loop {
-            let mut buffer = String::new();
-            io::stdin().read_line(&mut buffer).unwrap();
-            tx.send(buffer).unwrap();
-        }));
-        rx
-    }
+    // fn spawn_stdin_channel(&mut self) -> Receiver<String> {
+    //     let (tx, rx) = mpsc::channel::<String>();
+    //     println!("Press Enter to exit.");
+    //     self.user_input_thread = Some(thread::spawn(move || loop {
+    //         let mut buffer = String::new();
+    //         io::stdin().read_line(&mut buffer).unwrap();
+    //         tx.send(buffer).unwrap();
+    //     }));
+    //     rx
+    // }
 
-    pub fn shutdown(&mut self) {
-        println!("Shutting down user input thread...");
+    // pub fn shutdown(&mut self) {
+    //     println!("Shutting down user input thread...");
 
-        self.user_input_thread
-            .take()
-            .expect("Called stop on non-running thread")
-            .join()
-            .unwrap();
-    }
+    //     self.user_input_thread
+    //         .take()
+    //         .expect("Called stop on non-running thread")
+    //         .join()
+    //         .unwrap();
+    // }
 }
 
 #[test]
@@ -195,8 +184,8 @@ pub fn test_process_head_pose() {
     let mut head_pose =
         ProcessHeadPose::new("./assets/data.json", "./assets/mb05_120x120.onnx", 120, 60);
 
-    head_pose.start(rx, euro_filter, socket_network);
+    head_pose.start_loop(rx, euro_filter, socket_network);
 
-    head_pose.shutdown();
+    // head_pose.shutdown();
     thr_cam.shutdown();
 }

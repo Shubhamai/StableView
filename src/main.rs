@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 mod camera;
 mod filter;
 mod model;
@@ -31,20 +33,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let euro_filter = EuroDataFilter::new();
     let socket_network = SocketNetwork::new(4242);
-
     // Create a channel to communicate between threads
     let (tx, rx) = mpsc::channel();
-
     let mut thr_cam = ThreadedCamera::setup_camera();
     thr_cam.start_camera_thread(tx);
-
     let mut head_pose =
         ProcessHeadPose::new("./assets/data.json", "./assets/mb05_120x120.onnx", 120, 60);
-
-    head_pose.start(rx, euro_filter, socket_network);
-
+    head_pose.start_loop(rx, euro_filter, socket_network);
     thr_cam.shutdown();
-    head_pose.shutdown();
+    // head_pose.shutdown();
 
     Ok(())
 }
