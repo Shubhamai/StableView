@@ -1,5 +1,5 @@
 use crate::{
-    model::OnnxSessionsManager,
+    model,
     utils::{
         crop_img, parse_param, parse_roi_box_from_bbox, parse_roi_box_from_landmark,
         similar_transform,
@@ -49,15 +49,13 @@ impl TDDFA {
         size: i32,
     ) -> Result<Self, Box<dyn Error>> {
         static ENV: Lazy<Environment> =
-            Lazy::new(|| OnnxSessionsManager::get_environment("Landmark Detection").unwrap());
+            Lazy::new(|| model::get_environment("Landmark Detection").unwrap());
 
-        let landmark_model =
-            OnnxSessionsManager::initialize_model(&ENV, landmark_model_path.to_string(), 1)?;
+        let landmark_model = model::initialize_model(&ENV, landmark_model_path.to_string(), 1)?;
         let landmark_model = Mutex::new(landmark_model);
 
         let data = {
-            let data = std::fs::read_to_string(data_fp).unwrap();
-            serde_json::from_str::<DataStruct>(&data).unwrap()
+            serde_json::from_slice::<DataStruct>(include_bytes!("../assets/data.json")).unwrap()
         };
 
         let mean_array: [f32; 62] = data.mean.as_slice().try_into().unwrap();
