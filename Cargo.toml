@@ -25,7 +25,8 @@ tracing-appender = "0.2.2"
 #egui = "0.20.1"
 #eframe = "0.20.1"
 nokhwa = {version = "0.9.4", features = ["input-msmf", "input-v4l"]}
-
+confy = "0.5.1"
+directories = "4.0.1"
 
 [target.'cfg(windows)'.dependencies]
 native-windows-gui = "1.0.12"
