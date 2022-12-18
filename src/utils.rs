@@ -1,18 +1,53 @@
 // Importing Libraries
-use onnxruntime::ndarray::{arr2, s, Array2, Axis};
+use onnxruntime::ndarray::{arr2, s, Array2, ArrayBase, Axis, Dim, OwnedRepr};
 use opencv::{
     core,
     prelude::{MatTraitConst, MatTraitConstManual},
 };
-use std::f64::consts::{FRAC_PI_2, PI};
+use std::f32::consts::{FRAC_PI_2, PI};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////// TDDFA ////////////////////////////////////////////////////
+////////////////////////////////////// for Tddfa implementation ////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Get the min of max value from an array of floats
+enum Extreme {
+    MIN,
+    MAX,
+}
+
+fn get_extreme_value(vec: &Vec<f32>, extreme: Extreme) -> f32 {
+    let output = match extreme {
+        Extreme::MIN => vec.iter().min_by(|a, b| a.total_cmp(b)),
+        Extreme::MAX => vec.iter().max_by(|a, b| a.total_cmp(b)),
+    };
+
+    match output {
+        Some(value) => *value,
+        None => {
+            tracing::error!("Unable to get extreme value. Default to 0");
+            0.
+        }
+    }
+}
+
+pub fn get_ndarray(
+    vec: Vec<Vec<f32>>,
+    shape: (usize, usize),
+) -> ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>> {
+    let mut array = Array2::<f32>::default(shape);
+    for (i, mut row) in array.axis_iter_mut(Axis(0)).enumerate() {
+        for (j, col) in row.iter_mut().enumerate() {
+            *col = vec[i][j];
+        }
+    }
+
+    array
+}
 
 pub fn parse_param(
     param: &[f32; 62],
-) -> Result<([[f32; 3]; 3], [[f32; 1]; 3], [[f32; 1]; 40], [[f32; 1]; 10]), &str> {
+) -> ([[f32; 3]; 3], [[f32; 1]; 3], [[f32; 1]; 40], [[f32; 1]; 10]) {
     // TODO: Can use type alias/defininations to improve code redability.
     let n = param.len();
 
@@ -20,7 +55,10 @@ pub fn parse_param(
         62 => (12, 40, 10),
         72 => (12, 40, 20),
         141 => (12, 100, 29),
-        _ => return Err("Undefined templated param parsing rule"),
+        invalid_size => {
+            tracing::error!("Undefined templated param parsing rule : {invalid_size}");
+            panic!()
+        }
     };
 
     let r_ = [
@@ -47,30 +85,33 @@ pub fn parse_param(
         alpha_exp[i][0] = param[trans_dim + shape_dim + i];
     }
 
-    Ok((r, offset, alpha_shp, alpha_exp))
+    (r, offset, alpha_shp, alpha_exp)
 }
 
-pub fn similar_transform(mut pts3d: Vec<Vec<f32>>, roi_box: [f32; 4], size: i32) -> Vec<Vec<f32>> {
+pub fn similar_transform(mut pts3d: Vec<Vec<f32>>, roi_box: [f32; 4], size: f32) -> Vec<Vec<f32>> {
     pts3d[0].iter_mut().for_each(|p| *p -= 1.0);
     pts3d[2].iter_mut().for_each(|p| *p -= 1.0);
-    pts3d[1].iter_mut().for_each(|p| *p = size as f32 - *p);
+    pts3d[1].iter_mut().for_each(|p| *p = size - *p);
 
     let sx = roi_box[0];
     let sy = roi_box[1];
     let ex = roi_box[2];
     let ey = roi_box[3];
-    let scale_x = (ex - sx) / size as f32;
-    let scale_y = (ey - sy) / size as f32;
+
+    let scale_x = (ex - sx) / size;
+    let scale_y = (ey - sy) / size;
     pts3d[0]
         .iter_mut()
         .for_each(|p| *p = (*p).mul_add(scale_x, sx));
     pts3d[1]
         .iter_mut()
         .for_each(|p| *p = (*p).mul_add(scale_y, sy));
+
     let s = (scale_x + scale_y) / 2.0;
     pts3d[2].iter_mut().for_each(|p| *p *= s);
-    pts3d[2].sort_by(|a, b| a.partial_cmp(b).unwrap());
-    let min_z = pts3d[2][0];
+
+    let min_z = get_extreme_value(&pts3d[2], Extreme::MIN);
+
     pts3d[2].iter_mut().for_each(|p| *p -= min_z);
 
     pts3d
@@ -78,22 +119,10 @@ pub fn similar_transform(mut pts3d: Vec<Vec<f32>>, roi_box: [f32; 4], size: i32)
 
 pub fn parse_roi_box_from_landmark(pts: &[Vec<f32>]) -> [f32; 4] {
     let bbox = [
-        pts[0]
-            .iter()
-            .min_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap(),
-        pts[1]
-            .iter()
-            .min_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap(),
-        pts[0]
-            .iter()
-            .max_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap(),
-        pts[1]
-            .iter()
-            .max_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap(),
+        get_extreme_value(&pts[0], Extreme::MIN),
+        get_extreme_value(&pts[1], Extreme::MIN),
+        get_extreme_value(&pts[0], Extreme::MAX),
+        get_extreme_value(&pts[1], Extreme::MAX),
     ];
 
     let center = [(bbox[0] + bbox[2]) / 2., (bbox[1] + bbox[3]) / 2.];
@@ -106,7 +135,7 @@ pub fn parse_roi_box_from_landmark(pts: &[Vec<f32>]) -> [f32; 4] {
     ];
 
     let llength =
-        ((bbox[3] - bbox[1]).mul_add(bbox[3] - bbox[1], (bbox[2] - bbox[0]).powi(2)) as f32).sqrt();
+        ((bbox[3] - bbox[1]).mul_add(bbox[3] - bbox[1], (bbox[2] - bbox[0]).powi(2))).sqrt();
 
     let center_x = (bbox[2] + bbox[0]) / 2.;
     let center_y = (bbox[3] + bbox[1]) / 2.;
@@ -157,13 +186,12 @@ pub fn crop_img(img: &core::Mat, roi_box: [f32; 4]) -> core::Mat {
     let (ey, _) = if ey > h { (h, dh - (ey - h)) } else { (ey, dh) };
 
     let roi = core::Rect::new(sx, sy, ex - sx, ey - sy);
-    // println!("{:?}", roi);
-    core::Mat::roi(img, roi).unwrap()
+    core::Mat::roi(img, roi).unwrap() // ! Need to deal with this
 }
 
-// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ///////////////////////////////////////////// Head Pose  ///////////////////////////////////////////////////////
-// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////// Calculating Head Rotation ////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn p2s_rt(p: &[[f32; 4]]) -> (f32, [[f32; 3]; 3], [f32; 3]) {
     let t3d = [p[0][3], p[1][3], p[2][3]];
@@ -172,42 +200,48 @@ fn p2s_rt(p: &[[f32; 4]]) -> (f32, [[f32; 3]; 3], [f32; 3]) {
     let s = (r1.iter().map(|&x| x * x).sum::<f32>().sqrt()
         + r2.iter().map(|&x| x * x).sum::<f32>().sqrt())
         / 2.0;
+
     let r1 = [
         r1[0] / r1.iter().map(|&x| x * x).sum::<f32>().sqrt(),
         r1[1] / r1.iter().map(|&x| x * x).sum::<f32>().sqrt(),
         r1[2] / r1.iter().map(|&x| x * x).sum::<f32>().sqrt(),
     ];
+
     let r2 = [
         r2[0] / r2.iter().map(|&x| x * x).sum::<f32>().sqrt(),
         r2[1] / r2.iter().map(|&x| x * x).sum::<f32>().sqrt(),
         r2[2] / r2.iter().map(|&x| x * x).sum::<f32>().sqrt(),
     ];
+
     let r3 = [
         r1[1] * r2[2] - r1[2] * r2[1],
         r1[2] * r2[0] - r1[0] * r2[2],
         r1[0] * r2[1] - r1[1] * r2[0],
     ];
+
     let r = [r1, r2, r3];
+
     (s, r, t3d)
 }
 
 fn matrix2angle(r: &[[f32; 3]]) -> (f32, f32, f32) {
+    let (mut x, mut y, mut z);
+
     if r[2][0] > 0.998 {
-        let z = 0.0;
-        let x = FRAC_PI_2 as f32;
-        let y = z + -r[0][1].atan2(-r[0][2]);
-        (x, y, z)
+        z = 0.0;
+        x = FRAC_PI_2;
+        y = z + -r[0][1].atan2(-r[0][2]);
     } else if r[2][0] < -0.998 {
-        let z = 0.0;
-        let x = -FRAC_PI_2 as f32;
-        let y = -z + r[0][1].atan2(r[0][2]);
-        (x, y, z)
+        z = 0.0;
+        x = -FRAC_PI_2;
+        y = -z + r[0][1].atan2(r[0][2]);
     } else {
-        let x = r[2][0].asin();
-        let y = (r[2][1] / x.cos()).atan2(r[2][2] / x.cos());
-        let z = (r[1][0] / x.cos()).atan2(r[0][0] / x.cos());
-        (x, y, z)
+        x = r[2][0].asin();
+        y = (r[2][1] / x.cos()).atan2(r[2][2] / x.cos());
+        z = (r[1][0] / x.cos()).atan2(r[0][0] / x.cos());
     }
+
+    (x, y, z)
 }
 
 pub fn calc_pose(param: &[f32; 62]) -> ([[f32; 4]; 3], [f32; 3]) {
@@ -227,9 +261,9 @@ pub fn calc_pose(param: &[f32; 62]) -> ([[f32; 4]; 3], [f32; 3]) {
     let pose = matrix2angle(&r);
 
     let pose = [
-        pose.0 * 180.0 / PI as f32,
-        pose.1 * 180.0 / PI as f32,
-        pose.2 * 180.0 / PI as f32,
+        pose.0 * 180.0 / PI,
+        pose.1 * 180.0 / PI,
+        pose.2 * 180.0 / PI,
     ];
 
     (p, pose)
@@ -244,10 +278,10 @@ fn build_camera_box(rear_size: f32) -> Vec<[f32; 3]> {
     point_3d.push([rear_size, -rear_size, rear_depth]);
     point_3d.push([-rear_size, -rear_size, rear_depth]);
 
-    // ? Subtracting by -1 because in python, the int conversion simplt returns the greatest integer instead of rounding the values to integer
     let mut front_size = (4. / 3. * rear_size).ceil();
     let mut front_depth = (4. / 3. * rear_size).ceil();
 
+    // ? Subtracting by -1 because in python, the int conversion returns the greatest integer instead of rounding the values to integer
     if (rear_size.ceil() - rear_size).abs() > f32::EPSILON {
         front_size -= 1.;
         front_depth -= 1.;
@@ -264,22 +298,10 @@ fn build_camera_box(rear_size: f32) -> Vec<[f32; 3]> {
 
 fn calc_hypotenuse(pts: &[Vec<f32>]) -> f32 {
     let bbox = [
-        pts[0]
-            .iter()
-            .min_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap(),
-        pts[1]
-            .iter()
-            .min_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap(),
-        pts[0]
-            .iter()
-            .max_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap(),
-        pts[1]
-            .iter()
-            .max_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap(),
+        get_extreme_value(&pts[0], Extreme::MIN),
+        get_extreme_value(&pts[1], Extreme::MIN),
+        get_extreme_value(&pts[0], Extreme::MAX),
+        get_extreme_value(&pts[1], Extreme::MAX),
     ];
 
     let center = [(bbox[0] + bbox[2]) / 2.0, (bbox[1] + bbox[3]) / 2.0];
@@ -294,33 +316,33 @@ fn calc_hypotenuse(pts: &[Vec<f32>]) -> f32 {
     llength / 3.0
 }
 
+// TODO : Cleaning this up
 pub fn gen_point2d(p: &[[f32; 4]; 3], ver: Vec<Vec<f32>>) -> (Vec<Vec<f32>>, f32) {
     let llength = calc_hypotenuse(&ver);
     let point_3d = build_camera_box(llength);
+
     let point_3d_homo: Vec<[f32; 4]> = point_3d
         .into_iter()
-        .map(|p| [p[0] as f32, p[1] as f32, p[2] as f32, 1.])
+        .map(|p| [p[0], p[1], p[2], 1.])
         .collect();
 
     let mut binding = arr2(&point_3d_homo).dot(&arr2(p).t());
     let mut point_2d = binding.slice_mut(s![.., ..2]);
 
-    let mut ver_array = Array2::<f32>::default((3, 20));
-    for (i, mut row) in ver_array.axis_iter_mut(Axis(0)).enumerate() {
-        for (j, col) in row.iter_mut().enumerate() {
-            *col = ver[i][j];
-        }
-    }
+    let sliced_ver_mean = get_ndarray(ver, (3, 20))
+        .slice_mut(s![..2, ..])
+        .mean_axis(Axis(1))
+        .unwrap();
 
-    point_2d.slice_mut(s![.., 1]).map_inplace(|x| *x = -*x);
-    let mut point_2d_copy = point_2d.to_owned();
+    // point_2d.slice(s![.., 1]).map_inplace(|x| *x = -*x);
+    let sliced_point2d_mean = point_2d
+        .to_owned()
+        .slice_mut(s![..4, ..2])
+        .mean_axis(Axis(0))
+        .unwrap();
+
     let point_2d = point_2d.slice_mut(s![.., ..2]).map_axis(Axis(1), |x| {
-        (&x - point_2d_copy
-            .slice_mut(s![..4, ..2])
-            .mean_axis(Axis(0))
-            .unwrap()
-            + ver_array.slice_mut(s![..2, ..]).mean_axis(Axis(1)).unwrap())
-        .to_vec()
+        (&x - &sliced_point2d_mean + &sliced_ver_mean).to_vec()
     });
 
     (point_2d.to_vec(), llength)
@@ -329,6 +351,12 @@ pub fn gen_point2d(p: &[[f32; 4]; 3], ver: Vec<Vec<f32>>) -> (Vec<Vec<f32>>, f32
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_get_extreme() {
+        let result = get_extreme_value(&vec![1., 2., 3.], Extreme::MAX);
+        println!("{result}")
+    }
 
     #[test]
     fn test_parse_param() {
@@ -342,9 +370,7 @@ mod tests {
 
         let result = parse_param(&param);
 
-        assert!(result.is_ok());
-
-        let expected = Ok((
+        let expected = (
             [[0.0, 1.0, 2.0], [4.0, 5.0, 6.0], [8.0, 9.0, 10.0]],
             [[3.0], [7.0], [11.0]],
             [
@@ -401,7 +427,7 @@ mod tests {
                 [60.0],
                 [61.0],
             ],
-        ));
+        );
 
         assert_eq!(result, expected);
     }
@@ -414,7 +440,7 @@ mod tests {
             vec![6.0, 7.0, 8.0],
         ];
         let roi_box = [1., 2., 3., 4.];
-        let size = 120;
+        let size = 120.;
 
         let result = similar_transform(pts3d, roi_box, size);
 

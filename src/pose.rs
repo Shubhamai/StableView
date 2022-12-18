@@ -1,19 +1,19 @@
+///
 use crate::filter::EuroDataFilter;
 use crate::network::SocketNetwork;
-use crate::tddfa::TDDFA;
+use crate::tddfa::Tddfa;
+use crate::utils::{calc_pose, gen_point2d};
 
-use crate::utils::calc_pose;
-use crate::utils::gen_point2d;
 use opencv::prelude::Mat;
-use std::io;
-use std::sync::mpsc;
-use std::sync::mpsc::TryRecvError;
-use std::time::Duration;
-use std::time::Instant;
-use std::{sync::mpsc::Receiver, thread};
+use std::{
+    io,
+    sync::mpsc::{self, Receiver, TryRecvError},
+    thread,
+    time::{Duration, Instant},
+};
 
 pub struct ProcessHeadPose {
-    tddfa: TDDFA,
+    tddfa: Tddfa,
     pts_3d: Vec<Vec<f32>>,
     user_input_thread: Option<thread::JoinHandle<()>>,
     face_box: [f32; 4],
@@ -22,14 +22,13 @@ pub struct ProcessHeadPose {
 
 impl ProcessHeadPose {
     pub fn new(data_fp: &str, landmark_model_fp: &str, image_size: i32, fps: u128) -> Self {
-        let face_box = [150., 150., 400., 400.];
-        let tddfa = TDDFA::new(data_fp, landmark_model_fp, image_size).unwrap();
+        let tddfa = Tddfa::new(data_fp, landmark_model_fp, image_size).unwrap();
 
         Self {
             tddfa,
             pts_3d: vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
             user_input_thread: None,
-            face_box,
+            face_box: [150., 150., 400., 400.],
             fps,
         }
     }
@@ -61,10 +60,9 @@ impl ProcessHeadPose {
         (centroid, distance)
     }
 
-    pub fn single_iter(&mut self, frame: &Mat) -> [f64; 6] {
+    pub fn single_iter(&mut self, frame: &Mat) -> [f32; 6] {
         let start_time = Instant::now();
 
-        // If frame is valid
         let (mut param, mut roi_box) = self
             .tddfa
             .run(frame, self.face_box, &self.pts_3d, "landmark")
@@ -93,12 +91,12 @@ impl ProcessHeadPose {
         let (centroid, distance) = self.get_coordintes_and_depth(pose, distance, point2d);
 
         let data = [
-            centroid[0] as f64,
-            -centroid[1] as f64,
-            f64::from(distance),
-            f64::from(pose[0]),
-            f64::from(-pose[1]),
-            f64::from(pose[2]),
+            centroid[0],
+            -centroid[1],
+            distance,
+            pose[0],
+            -pose[1],
+            pose[2],
         ];
 
         let elapsed_time = start_time.elapsed();
@@ -173,13 +171,13 @@ impl ProcessHeadPose {
 pub fn test_process_head_pose() {
     use crate::camera::ThreadedCamera;
 
-    let euro_filter = EuroDataFilter::new();
-    let socket_network = SocketNetwork::new(4242);
+    let euro_filter = EuroDataFilter::new(0.0025, 0.01);
+    let socket_network = SocketNetwork::new((127, 0, 0, 1), 4242);
 
     let (tx, rx) = mpsc::channel();
 
-    let mut thr_cam = ThreadedCamera::setup_camera();
-    thr_cam.start_camera_thread(tx);
+    let mut thr_cam = ThreadedCamera::start_camera_thread(tx, 0);
+    // thr_camstart_camera_thread(tx);
 
     let mut head_pose =
         ProcessHeadPose::new("./assets/data.json", "./assets/mb05_120x120.onnx", 120, 60);

@@ -28,20 +28,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_max_level(Level::INFO)
         .init(); // ! Need to have only 1 log file which resets daily
 
-    tracing::info!("Version {}", env!("CARGO_PKG_VERSION"));
+    tracing::info!(
+        "Version {} on {}",
+        env!("CARGO_PKG_VERSION"),
+        std::env::consts::OS
+    );
     tracing::info!("fps set to {fps}");
 
-    let euro_filter = EuroDataFilter::new();
-    let socket_network = SocketNetwork::new(4242);
+    let euro_filter = EuroDataFilter::new(0.0025, 0.01);
+    let socket_network = SocketNetwork::new((127, 0, 0, 1), 4242);
+
     // Create a channel to communicate between threads
     let (tx, rx) = mpsc::channel();
-    let mut thr_cam = ThreadedCamera::setup_camera();
-    thr_cam.start_camera_thread(tx);
+    let mut thr_cam = ThreadedCamera::start_camera_thread(tx, 0);
+
     let mut head_pose =
         ProcessHeadPose::new("./assets/data.json", "./assets/mb05_120x120.onnx", 120, 60);
     head_pose.start_loop(rx, euro_filter, socket_network);
+
     thr_cam.shutdown();
-    // head_pose.shutdown();
 
     Ok(())
 }

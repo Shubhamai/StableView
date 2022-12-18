@@ -1,16 +1,20 @@
+// Importing Libraries
 use crate::{
     model,
     utils::{
-        crop_img, parse_param, parse_roi_box_from_bbox, parse_roi_box_from_landmark,
+        crop_img, get_ndarray, parse_param, parse_roi_box_from_bbox, parse_roi_box_from_landmark,
         similar_transform,
     },
 };
-use std::error::Error;
-use std::sync::Mutex;
 
-use onnxruntime::tensor::OrtOwnedTensor;
-use onnxruntime::{environment::Environment, session::Session};
+use onnxruntime::{
+    environment::Environment,
+    ndarray::{arr1, arr2, s, Array2, Array4, ArrayBase, Axis, Dim, Order, OwnedRepr},
+    session::Session,
+    tensor::OrtOwnedTensor,
+};
 use serde::{Deserialize, Serialize};
+use std::{error::Error, ops::Deref, sync::Mutex};
 
 use once_cell::sync::Lazy;
 use opencv::{
@@ -19,11 +23,8 @@ use opencv::{
     prelude::{Mat, MatTraitConstManual},
 };
 
-use onnxruntime::ndarray::{arr1, arr2, s, Array2, Array4, ArrayBase, Axis, Dim, Order, OwnedRepr};
-use std::ops::Deref;
-
 #[derive(Serialize, Deserialize)]
-struct DataStruct {
+struct Jsondata {
     mean: Vec<f32>,
     std: Vec<f32>,
     u_base: Vec<Vec<f32>>,
@@ -31,8 +32,7 @@ struct DataStruct {
     w_exp_base: Vec<Vec<f32>>,
 }
 
-#[allow(clippy::upper_case_acronyms)]
-pub struct TDDFA {
+pub struct Tddfa {
     landmark_model: Mutex<Session<'static>>,
     size: i32,
     mean_array: [f32; 62],
@@ -42,7 +42,7 @@ pub struct TDDFA {
     w_exp_base_array: ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>>,
 }
 
-impl TDDFA {
+impl Tddfa {
     pub fn new(
         data_fp: &str,
         landmark_model_path: &str,
@@ -50,37 +50,19 @@ impl TDDFA {
     ) -> Result<Self, Box<dyn Error>> {
         static ENV: Lazy<Environment> =
             Lazy::new(|| model::get_environment("Landmark Detection").unwrap());
-
+        // let env = model::get_environment("Landmark Detection").unwrap();
         let landmark_model = model::initialize_model(&ENV, landmark_model_path.to_string(), 1)?;
         let landmark_model = Mutex::new(landmark_model);
 
-        let data = {
-            serde_json::from_slice::<DataStruct>(include_bytes!("../assets/data.json")).unwrap()
-        };
+        let data =
+            { serde_json::from_slice::<Jsondata>(include_bytes!("../assets/data.json")).unwrap() };
 
         let mean_array: [f32; 62] = data.mean.as_slice().try_into().unwrap();
         let std_array: [f32; 62] = data.std.as_slice().try_into().unwrap();
 
-        let mut u_base_array = Array2::<f32>::default((204, 1));
-        for (i, mut row) in u_base_array.axis_iter_mut(Axis(0)).enumerate() {
-            for (j, col) in row.iter_mut().enumerate() {
-                *col = data.u_base[i][j];
-            }
-        }
-
-        let mut w_shp_base_array = Array2::<f32>::default((204, 40));
-        for (i, mut row) in w_shp_base_array.axis_iter_mut(Axis(0)).enumerate() {
-            for (j, col) in row.iter_mut().enumerate() {
-                *col = data.w_shp_base[i][j];
-            }
-        }
-
-        let mut w_exp_base_array = Array2::<f32>::default((204, 10));
-        for (i, mut row) in w_exp_base_array.axis_iter_mut(Axis(0)).enumerate() {
-            for (j, col) in row.iter_mut().enumerate() {
-                *col = data.w_exp_base[i][j];
-            }
-        }
+        let u_base_array = get_ndarray(data.u_base, (204, 1));
+        let w_shp_base_array = get_ndarray(data.w_shp_base, (204, 40));
+        let w_exp_base_array = get_ndarray(data.w_exp_base, (204, 10));
 
         Ok(Self {
             landmark_model,
@@ -98,7 +80,6 @@ impl TDDFA {
         input_frame: &Mat,
         roi_box: [f32; 4],
     ) -> Vec<ArrayBase<OwnedRepr<f32>, Dim<[usize; 4]>>> {
-
         // let mut rgb_frame = Mat::default();
         // imgproc::cvt_color(&input_frame, &mut rgb_frame, imgproc::COLOR_BGR2RGB, 0).unwrap();
 
@@ -132,7 +113,7 @@ impl TDDFA {
     }
 
     pub fn run(
-        &self,
+        &mut self,
         input_frame: &Mat,
         face_box: [f32; 4],
         ver: &[Vec<f32>],
@@ -150,7 +131,7 @@ impl TDDFA {
         let model_input = self.get_model_input(input_frame, roi_box);
 
         // Inference
-        let mut landmark_model = self.landmark_model.lock().unwrap();
+        let mut landmark_model = self.landmark_model.try_lock().unwrap(); // * unblocking lock
         let param: Vec<OrtOwnedTensor<f32, _>> = landmark_model.run(model_input).unwrap();
         let param: [f32; 62] = param[0].as_slice().unwrap().try_into().unwrap();
 
@@ -161,19 +142,21 @@ impl TDDFA {
     }
 
     pub fn recon_vers(&self, param: [f32; 62], roi_box: [f32; 4]) -> Vec<Vec<f32>> {
-        let (r, offset, alpha_shp, alpha_exp) = parse_param(&param).unwrap();
+        let (r, offset, alpha_shp, alpha_exp) = parse_param(&param);
 
         let pts3d = &self.u_base_array
             + (&self.w_shp_base_array.dot(&arr2(&alpha_shp)))
             + (&self.w_exp_base_array.dot(&arr2(&alpha_exp)));
+
         let pts3d = pts3d.to_shape(((3, 68), Order::ColumnMajor)).unwrap();
         let pts3d = arr2(&r).dot(&pts3d) + arr2(&offset);
+
         let vec_pts_3d = vec![
             pts3d.slice(s![0, ..]).to_vec(),
             pts3d.slice(s![1, ..]).to_vec(),
             pts3d.slice(s![2, ..]).to_vec(),
         ];
-        similar_transform(vec_pts_3d, roi_box, self.size)
+        similar_transform(vec_pts_3d, roi_box, self.size as f32)
     }
 }
 
@@ -185,7 +168,7 @@ pub fn test() {
     let landmark_model_path = "./assets/mb05_120x120.onnx";
     let size = 120;
 
-    let bfm = TDDFA::new(data_fp, landmark_model_path, size).unwrap();
+    let bfm = Tddfa::new(data_fp, landmark_model_path, size).unwrap();
 
     let frame =
         Mat::new_rows_cols_with_default(120, 120, CV_8UC3, Scalar::new(255., 0., 0., 0.)).unwrap();

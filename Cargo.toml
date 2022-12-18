@@ -1,6 +1,6 @@
 [package]
 name = "lobo"
-#description = "A short description of my package"
+description = "A Head tracking application"
 version = "0.1.0"
 edition = "2021"
 authors = ["Shubhamai"]
@@ -24,22 +24,26 @@ tracing-subscriber = "0.3"
 tracing-appender = "0.2.2"
 #egui = "0.20.1"
 #eframe = "0.20.1"
+nokhwa = {version = "0.9.4", features = ["input-msmf", "input-v4l"]}
+
+
+[target.'cfg(windows)'.dependencies]
 native-windows-gui = "1.0.12"
 native-windows-derive = "1.0.3" # Optional. Only if the derive macro is used.
+onnxruntime = {path = "onnxruntime-rs/onnxruntime"}
+onnxruntime-sys = {path = "onnxruntime-rs/onnxruntime-sys"}
 
 # ndarray version changed to "0.15.3" in onnxruntime cargo.toml
 # Using onnxruntime v0.0.12 due to error in windows
-onnxruntime = {path = "onnxruntime_12/onnxruntime"}
-onnxruntime-sys = {path = "onnxruntime_12/onnxruntime-sys"}
+[target.'cfg(unix)'.dependencies]
+onnxruntime = {path = "onnxruntime-rs/onnxruntime"}
+onnxruntime-sys = {path = "onnxruntime-rs/onnxruntime-sys"}
 
-[dependencies.nokhwa]
-version = "0.9.4"
-features = ["input-msmf", "input-v4l"]
 
 [profile.release]
 debug = 0
 strip = "symbols"
 overflow-checks = false
 panic = "abort"
-opt-level = 3
+opt-level = 3 # optimizing for speed
 lto = "thin"
