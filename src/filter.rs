@@ -100,7 +100,7 @@ fn test_euro_filter() {
     for i in 1..100 {
         // Compute the noisy sin value
         let x = (0.1 * i as f32).sin();
-        let x_noisy = x + (f32::from(rand::thread_rng().gen_range(0..10)) / 10.0);
+        let x_noisy = x + (rand::thread_rng().gen_range(0..10) as f32 / 10.0);
 
         // Filter the noisy sin value
         let x_filtered = filter.run(x_noisy);

@@ -9,7 +9,7 @@ use crate::{
 
 use onnxruntime::{
     environment::Environment,
-    ndarray::{arr1, arr2, s, Array2, Array4, ArrayBase, Axis, Dim, Order, OwnedRepr},
+    ndarray::{arr1, arr2, s, Array4, ArrayBase,  Dim, Order, OwnedRepr},
     session::Session,
     tensor::OrtOwnedTensor,
 };
@@ -44,7 +44,7 @@ pub struct Tddfa {
 
 impl Tddfa {
     pub fn new(
-        data_fp: &str,
+        _data_fp: &str,
         landmark_model_path: &str,
         size: i32,
     ) -> Result<Self, Box<dyn Error>> {
@@ -168,7 +168,7 @@ pub fn test() {
     let landmark_model_path = "./assets/mb05_120x120.onnx";
     let size = 120;
 
-    let bfm = Tddfa::new(data_fp, landmark_model_path, size).unwrap();
+    let mut bfm = Tddfa::new(data_fp, landmark_model_path, size).unwrap();
 
     let frame =
         Mat::new_rows_cols_with_default(120, 120, CV_8UC3, Scalar::new(255., 0., 0., 0.)).unwrap();

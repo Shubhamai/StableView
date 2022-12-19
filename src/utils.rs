@@ -225,7 +225,7 @@ fn p2s_rt(p: &[[f32; 4]]) -> (f32, [[f32; 3]; 3], [f32; 3]) {
 }
 
 fn matrix2angle(r: &[[f32; 3]]) -> (f32, f32, f32) {
-    let (mut x, mut y, mut z);
+    let (x, y, z);
 
     if r[2][0] > 0.998 {
         z = 0.0;
@@ -442,7 +442,7 @@ mod tests {
         let roi_box = [1., 2., 3., 4.];
         let size = 120.;
 
-        let result = similar_transform(pts3d, roi_box, size);
+        let _result = similar_transform(pts3d, roi_box, size);
 
         // println!("{:?}", result[0]
         //     .get(0)

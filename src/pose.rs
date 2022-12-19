@@ -6,8 +6,7 @@ use crate::utils::{calc_pose, gen_point2d};
 
 use opencv::prelude::Mat;
 use std::{
-    io,
-    sync::mpsc::{self, Receiver, TryRecvError},
+    sync::mpsc::Receiver,
     thread,
     time::{Duration, Instant},
 };
@@ -15,7 +14,7 @@ use std::{
 pub struct ProcessHeadPose {
     tddfa: Tddfa,
     pts_3d: Vec<Vec<f32>>,
-    user_input_thread: Option<thread::JoinHandle<()>>,
+    // user_input_thread: Option<thread::JoinHandle<()>>,
     face_box: [f32; 4],
     fps: u128,
 }
@@ -27,7 +26,7 @@ impl ProcessHeadPose {
         Self {
             tddfa,
             pts_3d: vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
-            user_input_thread: None,
+            // user_input_thread: None,
             face_box: [150., 150., 400., 400.],
             fps,
         }
@@ -170,6 +169,7 @@ impl ProcessHeadPose {
 #[ignore = "Can only test this offline since it requires webcam, run cargo test -- --ignored"]
 pub fn test_process_head_pose() {
     use crate::camera::ThreadedCamera;
+    use std::sync::mpsc;
 
     let euro_filter = EuroDataFilter::new(0.0025, 0.01);
     let socket_network = SocketNetwork::new((127, 0, 0, 1), 4242);

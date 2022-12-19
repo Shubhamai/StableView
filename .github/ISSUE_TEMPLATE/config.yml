@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Installer
+    url: https://github.com/Shubhamai/lobo/issues/new/choose
+    about: File a bug report or suggest a new feature
+  - name: Support on GitHub
+    url: https://github.com/Shubhamai/lobo/discussions
+    about: Please ask and answer questions here.

@@ -14,13 +14,12 @@ use crate::pose::ProcessHeadPose;
 use camera::ThreadedCamera;
 use network::SocketNetwork;
 use serde::{Deserialize, Serialize};
-use std::{io::Read, sync::mpsc};
+use std::sync::mpsc;
 use tracing::Level;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(default)]
 struct AppConfig {
-    log_directory: String,
     log_filename: String,
     ip_addr: (u8, u8, u8, u8),
     port: u16,
@@ -33,12 +32,7 @@ struct AppConfig {
 impl Default for AppConfig {
     fn default() -> Self {
         AppConfig {
-            log_directory: directories::ProjectDirs::from("rs", "", env!("CARGO_PKG_NAME"))
-                .unwrap()
-                .data_dir()
-                .to_str()
-                .unwrap()
-                .to_owned(),
+            // ? Adding log directory path might lead to un-anonymous logs
             log_filename: "logs.txt".to_string(),
             ip_addr: (127, 0, 0, 1),
             port: 4242,
@@ -55,8 +49,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cfg_filepath = confy::get_configuration_file_path(env!("CARGO_PKG_NAME"), "config")?;
     confy::store(env!("CARGO_PKG_NAME"), "config", &AppConfig::default())?;
 
-    let file_appender =
-        tracing_appender::rolling::never(cfg.log_directory.clone(), cfg.log_filename.clone());
+    let file_appender = tracing_appender::rolling::never(
+        directories::ProjectDirs::from("rs", "", env!("CARGO_PKG_NAME"))
+            .unwrap()
+            .data_dir()
+            .to_str()
+            .unwrap()
+            .to_owned(), // * Similar path is also used by confy https://github.com/rust-cli/confy/blob/master/src/lib.rs#L316
+        cfg.log_filename.clone(),
+    );
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 
     tracing_subscriber::fmt()
@@ -72,11 +73,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     tracing::info!("The configuration file path is: {:#?}", cfg_filepath);
-    tracing::info!(
-        "The logs file path is: {} as {}",
-        cfg.log_directory,
-        cfg.log_filename
-    );
+    tracing::info!("The logs file name is: {}", cfg.log_filename);
     tracing::info!("Config : {:#?}", cfg);
 
     let euro_filter = EuroDataFilter::new(cfg.min_cutoff, cfg.beta);

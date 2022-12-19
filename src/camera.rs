@@ -5,7 +5,6 @@ use opencv::{
     videoio,
 };
 use std::{
-    io,
     sync::{
         self,
         atomic::{AtomicBool, Ordering},
@@ -20,31 +19,31 @@ pub struct ThreadedCamera {
 }
 
 impl ThreadedCamera {
-    pub fn get_available_cameras() -> Result<i32, NokhwaError> {
-        let devices = nokhwa::query_devices(nokhwa::CaptureAPIBackend::Auto);
+    // pub fn get_available_cameras() -> Result<i32, NokhwaError> {
+    //     let devices = nokhwa::query_devices(nokhwa::CaptureAPIBackend::Auto);
 
-        let device_index = match devices {
-            Ok(devices) => {
-                for device_info in devices {
-                    tracing::info!(
-                        "Detected : {} @ index {}",
-                        device_info.human_name(),
-                        device_info.index()
-                    )
-                }
-                0
-            }
-            Err(error) => {
-                tracing::error!(
-                    "Unable to read camera devices : {:?}. Setting default (default, 0)",
-                    error
-                );
-                0
-            }
-        };
+    //     let device_index = match devices {
+    //         Ok(devices) => {
+    //             for device_info in devices {
+    //                 tracing::info!(
+    //                     "Detected : {} @ index {}",
+    //                     device_info.human_name(),
+    //                     device_info.index()
+    //                 )
+    //             }
+    //             0
+    //         }
+    //         Err(error) => {
+    //             tracing::error!(
+    //                 "Unable to read camera devices : {:?}. Setting default (default, 0)",
+    //                 error
+    //             );
+    //             0
+    //         }
+    //     };
 
-        Ok(device_index)
-    }
+    //     Ok(device_index)
+    // }
 
     pub fn start_camera_thread(tx: Sender<Mat>, camera_index: i32) -> Self {
         // Serving as a signal to stop the thread when needed
