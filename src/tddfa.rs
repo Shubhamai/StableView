@@ -98,7 +98,7 @@ impl Tddfa {
             0.0,
             imgproc::INTER_LINEAR, //*INTER_AREA, // https://stackoverflow.com/a/51042104 | Speed -> https://stackoverflow.com/a/44278268
         )
-        .unwrap();
+        .unwrap(); // ! Error handling here
 
         let vec = Mat::data_typed::<Vec3b>(&resized_frame).unwrap();
 

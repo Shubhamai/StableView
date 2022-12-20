@@ -1,4 +1,4 @@
-use nokhwa::NokhwaError;
+// use nokhwa::NokhwaError;
 /// Running camera on a seperate thread and returning the frames
 use opencv::{
     prelude::{Mat, VideoCaptureTrait, VideoCaptureTraitConst},

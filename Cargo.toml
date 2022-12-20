@@ -3,7 +3,7 @@ name = "lobo"
 description = "A Head tracking application"
 version = "0.1.0"
 edition = "2021"
-authors = ["Shubhamai"]
+authors = ["Shubhamai <shubham.aiengineer@gmail.com>"]
 publish = false # To prevent accidental publish on crates.io
 license = "MIT"
 #repository = "https://github.com/<my-repo>"
@@ -13,8 +13,7 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-opencv =  "0.74.1"
-gnuplot = "0.0.37"
+opencv =  {version = "0.74.2"}
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 once_cell = "1.16.0"
@@ -22,24 +21,34 @@ rand = "0.8.5"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 tracing-appender = "0.2.2"
-#egui = "0.20.1"
-#eframe = "0.20.1"
-nokhwa = {version = "0.9.4", features = ["input-msmf", "input-v4l"]}
+# egui = "0.20.1"
+# eframe = "0.20.1"
+# nokhwa = {version = "0.9.4", features = ["input-msmf", "input-v4l"]}
 confy = "0.5.1"
 directories = "4.0.1"
 
-[target.'cfg(windows)'.dependencies]
-native-windows-gui = "1.0.12"
-native-windows-derive = "1.0.3" # Optional. Only if the derive macro is used.
-onnxruntime = {path = "onnxruntime-rs/onnxruntime"}
-onnxruntime-sys = {path = "onnxruntime-rs/onnxruntime-sys"}
+iced = "0.6"
+
+
+#egui = "0.20.1"
+#eframe = "0.20.1"
+
+#druid = "0.7.0"
+
+
+#[target.'cfg(windows)'.dependencies]
+#native-windows-gui = "1.0.12"
+#native-windows-derive = "1.0.3" # Optional. Only if the derive macro is used.
+
+#onnxruntime = {path = "onnxruntime-rs/onnxruntime"}
+#onnxruntime-sys = {path = "onnxruntime-rs/onnxruntime-sys"}
 
 # ndarray version changed to "0.15.3" in onnxruntime cargo.toml
 # Using onnxruntime v0.0.12 due to error in windows
-[target.'cfg(unix)'.dependencies]
+# [target.'cfg(unix)'.dependencies]
 onnxruntime = {path = "onnxruntime-rs/onnxruntime"}
 onnxruntime-sys = {path = "onnxruntime-rs/onnxruntime-sys"}
-
+# ndarray = "0.15.3" cargo update -p ndarray --precise 0.15.3
 
 [profile.release]
 debug = 0
