@@ -2,19 +2,28 @@
 use crate::{
     model,
     utils::{
-        crop_img, get_ndarray, parse_param, parse_roi_box_from_bbox, parse_roi_box_from_landmark,
-        similar_transform,
+        common::get_ndarray,
+        // headpose::{calc_pose, gen_point2d},
+        image::crop_img,
+        tddfa::{
+            parse_param, parse_roi_box_from_bbox, parse_roi_box_from_landmark, similar_transform,
+        },
     },
 };
 
 use onnxruntime::{
     environment::Environment,
-    ndarray::{arr1, arr2, s, Array4, ArrayBase,  Dim, Order, OwnedRepr},
+    ndarray::{arr1, arr2, s, Array4, ArrayBase, Dim, Order, OwnedRepr},
     session::Session,
     tensor::OrtOwnedTensor,
+    GraphOptimizationLevel,
 };
 use serde::{Deserialize, Serialize};
-use std::{error::Error, ops::Deref, sync::Mutex};
+use std::{
+    error::Error,
+    ops::Deref,
+    sync::{Arc, Mutex},
+};
 
 use once_cell::sync::Lazy;
 use opencv::{
@@ -32,8 +41,9 @@ struct Jsondata {
     w_exp_base: Vec<Vec<f32>>,
 }
 
+#[derive(Clone)]
 pub struct Tddfa {
-    landmark_model: Mutex<Session<'static>>,
+    pub landmark_model: Arc<Mutex<Session<'static>>>,
     size: i32,
     mean_array: [f32; 62],
     std_array: [f32; 62],
@@ -42,17 +52,31 @@ pub struct Tddfa {
     w_exp_base_array: ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>>,
 }
 
+static ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
+    Environment::builder()
+        .with_name("mangai")
+        .with_log_level(onnxruntime::LoggingLevel::Warning)
+        .build()
+        .unwrap()
+});
+
 impl Tddfa {
     pub fn new(
         _data_fp: &str,
         landmark_model_path: &str,
         size: i32,
     ) -> Result<Self, Box<dyn Error>> {
-        static ENV: Lazy<Environment> =
-            Lazy::new(|| model::get_environment("Landmark Detection").unwrap());
+        // static ENV: Lazy<Environment> =
+        //     Lazy::new(|| model::get_environment("Landmark Detection").unwrap());
         // let env = model::get_environment("Landmark Detection").unwrap();
-        let landmark_model = model::initialize_model(&ENV, landmark_model_path.to_string(), 1)?;
-        let landmark_model = Mutex::new(landmark_model);
+        // let landmark_model = model::initialize_model(ENVIRONMENT, landmark_model_path.to_string(), 1)?;
+        let model_bytes = include_bytes!("../assets/mb05_120x120.onnx");
+        let landmark_model = ENVIRONMENT
+            .new_session_builder()?
+            .with_optimization_level(GraphOptimizationLevel::All)?
+            .with_number_threads(1)?
+            .with_model_from_memory(model_bytes)?;
+        let landmark_model = Arc::new(Mutex::new(landmark_model));
 
         let data =
             { serde_json::from_slice::<Jsondata>(include_bytes!("../assets/data.json")).unwrap() };
@@ -178,7 +202,7 @@ pub fn test() {
         .run(
             &frame,
             face_box,
-            &vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
+            &[vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
             "box",
         )
         .unwrap();

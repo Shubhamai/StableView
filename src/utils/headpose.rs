@@ -1,3 +1,9 @@
+// Imporing Libraries
+use crate::enums::extreme::Extreme;
+use crate::utils::common::{get_extreme_value, get_ndarray};
+use onnxruntime::ndarray::{arr2, s, Axis};
+use std::f32::consts::{FRAC_PI_2, PI};
+
 fn p2s_rt(p: &[[f32; 4]]) -> (f32, [[f32; 3]; 3], [f32; 3]) {
     let t3d = [p[0][3], p[1][3], p[2][3]];
     let r1 = [p[0][0], p[0][1], p[0][2]];
@@ -103,10 +109,10 @@ fn build_camera_box(rear_size: f32) -> Vec<[f32; 3]> {
 
 fn calc_hypotenuse(pts: &[Vec<f32>]) -> f32 {
     let bbox = [
-        get_extreme_value(&pts[0], Extreme::MIN),
-        get_extreme_value(&pts[1], Extreme::MIN),
-        get_extreme_value(&pts[0], Extreme::MAX),
-        get_extreme_value(&pts[1], Extreme::MAX),
+        get_extreme_value(&pts[0], Extreme::Min),
+        get_extreme_value(&pts[1], Extreme::Min),
+        get_extreme_value(&pts[0], Extreme::Max),
+        get_extreme_value(&pts[1], Extreme::Max),
     ];
 
     let center = [(bbox[0] + bbox[2]) / 2.0, (bbox[1] + bbox[3]) / 2.0];
@@ -151,4 +157,166 @@ pub fn gen_point2d(p: &[[f32; 4]; 3], ver: Vec<Vec<f32>>) -> (Vec<Vec<f32>>, f32
     });
 
     (point_2d.to_vec(), llength)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_p2s_rt() {
+        let p = [
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0, 8.0],
+            [9.0, 10.0, 11.0, 12.0],
+        ];
+        let (s, r, t3d) = p2s_rt(&p);
+        assert_eq!(s, 7.114_873);
+        assert_eq!(
+            r,
+            [
+                [0.267_261_24, 0.534_522_5, 0.801_783_74],
+                [0.476_731_3, 0.572_077_6, 0.667_423_8],
+                [-0.101_929_44, 0.203_858_88, -0.101_929_44]
+            ]
+        );
+        assert_eq!(t3d, [4.0, 8.0, 12.0]);
+    }
+    #[test]
+    fn test_matrix2angle() {
+        let r = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]];
+        let (x, y, z) = matrix2angle(&r);
+
+        assert_eq!(x, 1.570_796_4);
+        assert_eq!(y, -2.553_59);
+        assert_eq!(z, 0.0);
+    }
+
+    #[test]
+    fn test_calc_pose() {
+        let param = [
+            0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+            16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0,
+            30.0, 31.0, 32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0, 41.0, 42.0, 43.0,
+            44.0, 45.0, 46.0, 47.0, 48.0, 49.0, 50.0, 51.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0,
+            58.0, 59.0, 60.0, 61.0,
+        ];
+
+        let (p, updated_pose) = calc_pose(&param);
+
+        assert_eq!(
+            p,
+            [
+                [0.0, 0.447_213_6, 0.894_427_2, 3.0],
+                [0.455_842_32, 0.569_802_9, 0.683_763_44, 7.0],
+                [-0.203_858_88, 0.407_717_76, -0.203_858_88, 11.0]
+            ]
+        );
+        assert_eq!(updated_pose, [-11.762_707, 116.565_05, 90.0]);
+    }
+
+    #[test]
+    fn test_build_camera_box() {
+        let llength = 90.0;
+        let point_3d = build_camera_box(llength);
+        assert_eq!(
+            point_3d,
+            [
+                [-llength, -llength, 0.],
+                [-llength, llength, 0.],
+                [llength, llength, 0.],
+                [llength, -llength, 0.],
+                [-llength, -llength, 0.],
+                [-120., -120., 120.],
+                [-120., 120., 120.],
+                [120., 120., 120.],
+                [120., -120., 120.],
+                [-120., -120., 120.]
+            ]
+        );
+
+        let llength = 90.1;
+        let point_3d = build_camera_box(llength);
+        assert_eq!(
+            point_3d,
+            [
+                [-llength, -llength, 0.],
+                [-llength, llength, 0.],
+                [llength, llength, 0.],
+                [llength, -llength, 0.],
+                [-llength, -llength, 0.],
+                [-120., -120., 120.],
+                [-120., 120., 120.],
+                [120., 120., 120.],
+                [120., -120., 120.],
+                [-120., -120., 120.]
+            ]
+        );
+
+        let llength = 89.9;
+        let point_3d = build_camera_box(llength);
+        assert_eq!(
+            point_3d,
+            [
+                [-llength, -llength, 0.],
+                [-llength, llength, 0.],
+                [llength, llength, 0.],
+                [llength, -llength, 0.],
+                [-llength, -llength, 0.],
+                [-119., -119., 119.],
+                [-119., 119., 119.],
+                [119., 119., 119.],
+                [119., -119., 119.],
+                [-119., -119., 119.]
+            ]
+        )
+    }
+
+    #[test]
+    fn test_calc_hypotenuse() {
+        let pts = [
+            vec![
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+                16.0, 17.0, 18.0, 19.0, 20.0,
+            ],
+            vec![
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+                16.0, 17.0, 18.0, 19.0, 20.0,
+            ],
+            vec![
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+                16.0, 17.0, 18.0, 19.0, 20.0,
+            ],
+        ];
+        let expected = 8.95;
+
+        let result = calc_hypotenuse(&pts);
+
+        assert!((result - expected).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_gen_point2d() {
+        let p = [
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0, 8.0],
+            [9.0, 10.0, 11.0, 12.0],
+        ];
+        let ver = vec![
+            vec![
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+                16.0, 17.0, 18.0, 19.0, 20.0,
+            ],
+            vec![
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+                16.0, 17.0, 18.0, 19.0, 20.0,
+            ],
+            vec![
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+                16.0, 17.0, 18.0, 19.0, 20.0,
+            ],
+        ];
+
+        println!("{:?}", gen_point2d(&p, ver));
+    }
 }

@@ -1,3 +1,6 @@
+use crate::enums::extreme::Extreme;
+use crate::utils::common::get_extreme_value;
+
 pub fn parse_param(
     param: &[f32; 62],
 ) -> ([[f32; 3]; 3], [[f32; 1]; 3], [[f32; 1]; 40], [[f32; 1]; 10]) {
@@ -63,7 +66,7 @@ pub fn similar_transform(mut pts3d: Vec<Vec<f32>>, roi_box: [f32; 4], size: f32)
     let s = (scale_x + scale_y) / 2.0;
     pts3d[2].iter_mut().for_each(|p| *p *= s);
 
-    let min_z = get_extreme_value(&pts3d[2], Extreme::MIN);
+    let min_z = get_extreme_value(&pts3d[2], Extreme::Min);
 
     pts3d[2].iter_mut().for_each(|p| *p -= min_z);
 
@@ -72,10 +75,10 @@ pub fn similar_transform(mut pts3d: Vec<Vec<f32>>, roi_box: [f32; 4], size: f32)
 
 pub fn parse_roi_box_from_landmark(pts: &[Vec<f32>]) -> [f32; 4] {
     let bbox = [
-        get_extreme_value(&pts[0], Extreme::MIN),
-        get_extreme_value(&pts[1], Extreme::MIN),
-        get_extreme_value(&pts[0], Extreme::MAX),
-        get_extreme_value(&pts[1], Extreme::MAX),
+        get_extreme_value(&pts[0], Extreme::Min),
+        get_extreme_value(&pts[1], Extreme::Min),
+        get_extreme_value(&pts[0], Extreme::Max),
+        get_extreme_value(&pts[1], Extreme::Max),
     ];
 
     let center = [(bbox[0] + bbox[2]) / 2., (bbox[1] + bbox[3]) / 2.];
@@ -127,7 +130,7 @@ mod tests {
 
     #[test]
     fn test_get_extreme() {
-        let result = get_extreme_value(&vec![1., 2., 3.], Extreme::MAX);
+        let result = get_extreme_value(&[1., 2., 3.], Extreme::Max);
         println!("{result}")
     }
 

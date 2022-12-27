@@ -57,7 +57,8 @@
 
         <Icon Id='SetupIcon' SourceFile='wix\Product.ico'/>
 
-        <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1'/>
+        <!-- <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1'/> -->
+        <Media Id="1" Cabinet="Sample.cab" EmbedCab="yes" DiskPrompt="Installation Media #1" />
         <Property Id='DiskPrompt' Value='Head Tracker Installation'/>
 
         <Directory Id='TARGETDIR' Name='SourceDir'>
@@ -248,7 +249,9 @@
         <Property Id='ARPHELPLINK' Value='https://github.com/shubhamai/lobo'/>
         
         <UI>
-            <UIRef Id='WixUI_FeatureTree'/>
+            <!-- <UIRef Id='WixUI_FeatureTree'/> -->
+            <UIRef Id="WixUI_Minimal" />
+
             <!--
               Disabling the EULA dialog in the installer is a two step process:
                  1. Uncomment the following two `Publish` tags

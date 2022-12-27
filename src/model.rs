@@ -13,7 +13,7 @@ pub fn get_environment(name: &str) -> Result<Environment, OrtError> {
 // Setting up the session, logging levels, optimization levels and threads.
 pub fn initialize_model(
     environment: &Environment,
-    model_path: String,
+    _model_path: String,
     num_threads: i16,
 ) -> Result<Session, OrtError> {
     let model_bytes = include_bytes!("../assets/mb05_120x120.onnx");
