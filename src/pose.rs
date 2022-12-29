@@ -139,7 +139,7 @@ impl ProcessHeadPose {
                 // let data = self.single_iter(&frame);
 
                 let data = [1., 2., 3., 4., 5., 6.];
-                let data = filter.filter_data(data);
+                let data = filter.filter_data(data, None, None);
 
                 socket.send(data);
             }

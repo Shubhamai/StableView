@@ -54,7 +54,7 @@ pub struct Tddfa {
 
 static ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
     Environment::builder()
-        .with_name("mangai")
+        .with_name("Landmark Detection")
         .with_log_level(onnxruntime::LoggingLevel::Warning)
         .build()
         .unwrap()
@@ -66,10 +66,6 @@ impl Tddfa {
         landmark_model_path: &str,
         size: i32,
     ) -> Result<Self, Box<dyn Error>> {
-        // static ENV: Lazy<Environment> =
-        //     Lazy::new(|| model::get_environment("Landmark Detection").unwrap());
-        // let env = model::get_environment("Landmark Detection").unwrap();
-        // let landmark_model = model::initialize_model(ENVIRONMENT, landmark_model_path.to_string(), 1)?;
         let model_bytes = include_bytes!("../assets/mb05_120x120.onnx");
         let landmark_model = ENVIRONMENT
             .new_session_builder()?
@@ -108,7 +104,11 @@ impl Tddfa {
         // imgproc::cvt_color(&input_frame, &mut rgb_frame, imgproc::COLOR_BGR2RGB, 0).unwrap();
 
         let cropped_image = crop_img(input_frame, roi_box);
-
+        // println!(
+        //     "{:?} {:?}",
+        //     cropped_image.size().unwrap().width,
+        //     cropped_image.size().unwrap().height
+        // );
         // Resizing the frame
         let mut resized_frame = Mat::default();
         imgproc::resize(

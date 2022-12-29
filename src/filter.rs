@@ -37,7 +37,11 @@ impl OneEuroFilter {
         a.mul_add(x, (1.0 - a) * x_prev)
     }
 
-    fn run(&mut self, x: f32) -> f32 {
+    fn run(&mut self, x: f32, min_cutoff: Option<f32> , beta: Option<f32>) -> f32 {
+
+        let min_cutoff = min_cutoff.unwrap_or(self.min_cutoff);
+        let beta = beta.unwrap_or(self.beta);
+
         let t_e = 1.; // constant change in time
 
         let a_d = self.smoothing_factor(t_e, self.d_cutoff);
@@ -45,7 +49,7 @@ impl OneEuroFilter {
 
         self.dx_prev = self.exponential_smoothing(a_d, dx, self.dx_prev);
 
-        let cutoff = self.beta.mul_add(self.dx_prev.abs(), self.min_cutoff);
+        let cutoff = beta.mul_add(self.dx_prev.abs(), min_cutoff);
         let a = self.smoothing_factor(t_e, cutoff);
         self.x_prev = self.exponential_smoothing(a, x, self.x_prev);
 
@@ -75,15 +79,15 @@ impl EuroDataFilter {
         }
     }
 
-    pub fn filter_data(&mut self, data: [f32; 6]) -> [f32; 6] {
+    pub fn filter_data(&mut self, data: [f32; 6], min_cutoff: Option<f32> , beta: Option<f32>) -> [f32; 6] {
         let mut filtered_data = [0.; 6];
 
-        filtered_data[0] = self.x.run(data[0]);
-        filtered_data[1] = self.y.run(data[1]);
-        filtered_data[2] = self.z.run(data[2]);
-        filtered_data[3] = self.yaw.run(data[3]);
-        filtered_data[4] = self.pitch.run(data[4]);
-        filtered_data[5] = self.roll.run(data[5]);
+        filtered_data[0] = self.x.run(data[0], min_cutoff, beta);
+        filtered_data[1] = self.y.run(data[1], min_cutoff, beta);
+        filtered_data[2] = self.z.run(data[2], min_cutoff, beta);
+        filtered_data[3] = self.yaw.run(data[3], min_cutoff, beta);
+        filtered_data[4] = self.pitch.run(data[4], min_cutoff, beta);
+        filtered_data[5] = self.roll.run(data[5], min_cutoff, beta);
 
         filtered_data
     }
@@ -103,7 +107,7 @@ fn test_euro_filter() {
         let x_noisy = x + (rand::thread_rng().gen_range(0..10) as f32 / 10.0);
 
         // Filter the noisy sin value
-        let x_filtered = filter.run(x_noisy);
+        let x_filtered = filter.run(x_noisy, None, None);
 
         // Print the original and filtered sin values
         println!(

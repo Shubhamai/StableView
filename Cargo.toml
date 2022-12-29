@@ -6,7 +6,7 @@ edition = "2021"
 authors = ["Shubhamai <shubham.aiengineer@gmail.com>"]
 publish = false # To prevent accidental publish on crates.io
 license = "MIT"
-#repository = "https://github.com/<my-repo>"
+repository = "https://github.com/Shubhamai/lobo"
 #readme = "README.md"
 
 
@@ -27,7 +27,7 @@ tracing-appender = "0.2.2"
 confy = "0.5.1"
 directories = "4.0.1"
 
-iced = "0.6"
+iced = {version = "0.6" , features = ["svg"]}
 
 
 #egui = "0.20.1"

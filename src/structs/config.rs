@@ -3,7 +3,6 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(default)]
 pub struct AppConfig {
     pub log_filename: String,
     pub ip_addr: (u8, u8, u8, u8),
