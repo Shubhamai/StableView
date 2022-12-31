@@ -157,12 +157,10 @@ impl Application for HeadTracker {
             Message::EventOccurred(event) => {
                 if Event::Window(window::Event::CloseRequested) == event {
                     self.keep_running.store(false, Ordering::SeqCst);
-                    println!("here");
                     // thread::sleep(Duration::from_millis(100));
                     confy::store(APP_NAME, "config", self.cfg.clone()).unwrap();
-                    println!("here2");
                     self.should_exit = true;
-                    println!("here3");
+          
                 }
             }
         }

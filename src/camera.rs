@@ -25,7 +25,7 @@ impl ThreadedCamera {
         // let mut devices_list: Vec<CameraInfo> = vec![];
         let mut devices_list = HashMap::new();
 
-        let available_devices = nokhwa::query_devices(nokhwa::CaptureAPIBackend::Auto);
+        let available_devices = nokhwa::query(nokhwa::native_api_backend().unwrap());
 
         match available_devices {
             Ok(available_devices) => {
@@ -35,7 +35,7 @@ impl ThreadedCamera {
                         device_info.human_name(),
                         device_info.index()
                     );
-                    devices_list.insert(device_info.human_name(), device_info.index() as i32);
+                    devices_list.insert(device_info.human_name(), device_info.index().as_index().unwrap() as i32);
                 }
             }
             Err(error) => {
