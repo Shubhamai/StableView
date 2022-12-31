@@ -1,4 +1,4 @@
-use std::sync::atomic::Ordering;
+use std::{borrow::Cow, io::Read, sync::atomic::Ordering};
 
 use iced::{
     alignment::{self, Horizontal, Vertical},
@@ -13,7 +13,7 @@ use iced::{
 
 use crate::{enums::message::Message, structs::app::HeadTracker};
 
-use super::style::{APP_AUTHORS, APP_NAME, APP_VERSION, HEIGHT_BODY, HEIGHT_FOOTER, HEIGHT_HEADER};
+use super::style::{APP_AUTHORS, APP_NAME, APP_VERSION, HEIGHT_BODY, HEIGHT_FOOTER, };
 
 pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let input_min_cutoff = (headtracker.min_cutoff.load(Ordering::SeqCst) * 10000.) as u32;
@@ -94,17 +94,19 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
 
     let camera_row = Container::new(
         Row::new()
-            // .push({
-            //     let handle = svg::Handle::from_path("wix/logo.svg");
-            //     svg(handle)
-            //         .width(Length::Units(120))
-            //         .height(Length::Units(120))
-            //         .style(theme::Svg::Default)
-            // })
-            // .push(
-            //     Container::new(toggle_button("Change Camera").on_press(Message::Toggle))
-            //         .width(Length::FillPortion(5)),
-            // )
+            .push(
+                pick_list(
+                    Cow::from(
+                        headtracker
+                            .camera_list
+                            .keys()
+                            .cloned()
+                            .collect::<Vec<String>>(),
+                    ),
+                    headtracker.selected_camera.clone(),
+                    Message::Camera,
+                ),
+            )
             .push(
                 Container::new(button(text("Hide Camera")).on_press(Message::Toggle))
                     .width(Length::FillPortion(5)),

@@ -143,14 +143,14 @@ pub fn gen_point2d(p: &[[f32; 4]; 3], ver: Vec<Vec<f32>>) -> (Vec<Vec<f32>>, f32
     let sliced_ver_mean = get_ndarray(ver, (3, 20))
         .slice_mut(s![..2, ..])
         .mean_axis(Axis(1))
-        .unwrap();
+        .expect("Unable to calculate sliced_ver_mean in gen_point2d");
 
     // point_2d.slice(s![.., 1]).map_inplace(|x| *x = -*x);
     let sliced_point2d_mean = point_2d
         .to_owned()
         .slice_mut(s![..4, ..2])
         .mean_axis(Axis(0))
-        .unwrap();
+        .expect("Unable to calculate sliced_point2d_mean in gen_point2d");
 
     let point_2d = point_2d.slice_mut(s![.., ..2]).map_axis(Axis(1), |x| {
         (&x - &sliced_point2d_mean + &sliced_ver_mean).to_vec()

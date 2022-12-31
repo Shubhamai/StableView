@@ -1,13 +1,9 @@
 ///
-use crate::filter::EuroDataFilter;
-use crate::network::SocketNetwork;
 use crate::tddfa::Tddfa;
 use crate::utils::headpose::{calc_pose, gen_point2d};
 
 use opencv::prelude::Mat;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::{
-    sync::{self, mpsc::Receiver},
     thread,
     time::{Duration, Instant},
 };
@@ -15,23 +11,19 @@ use std::{
 pub struct ProcessHeadPose {
     tddfa: Tddfa,
     pts_3d: Vec<Vec<f32>>,
-    // user_input_thread: Option<thread::JoinHandle<()>>,
     face_box: [f32; 4],
     fps: u128,
-    alive: sync::Arc<AtomicBool>,
 }
 
 impl ProcessHeadPose {
-    pub fn new(data_fp: &str, landmark_model_fp: &str, image_size: i32, fps: u128) -> Self {
-        let tddfa = Tddfa::new(data_fp, landmark_model_fp, image_size).unwrap();
+    pub fn new(image_size: i32, fps: u128) -> Self {
+        let tddfa = Tddfa::new(image_size).unwrap();
 
         Self {
             tddfa,
             pts_3d: vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
-            // user_input_thread: None,
             face_box: [150., 150., 400., 400.],
             fps,
-            alive: sync::Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -39,7 +31,7 @@ impl ProcessHeadPose {
         &self,
         pose: [f32; 3],
         mut distance: f32,
-        point2d: Vec<Vec<f32>>,
+        _point2d: Vec<Vec<f32>>,
         roi_box: &[f32; 4],
     ) -> ([f32; 2], f32) {
         distance -= 56.;
@@ -107,89 +99,9 @@ impl ProcessHeadPose {
 
         let elapsed_time = start_time.elapsed();
         let delay_time = ((1000 / self.fps) as f32 - elapsed_time.as_millis() as f32).max(0.);
-        // println!("{} {} {}",delay_time, elapsed_time.as_millis(), (1000 / self.fps));
         thread::sleep(Duration::from_millis(delay_time.round() as u64));
-        // TODO : Fix overflow errors ( attempt to subtract with overflow )
 
         data
-    }
-
-    pub fn start_thread(
-        &mut self,
-        rx: Receiver<Mat>,
-        mut filter: EuroDataFilter,
-        mut socket: SocketNetwork,
-    ) {
-        // let stdin_channel = self.spawn_stdin_channel();
-
-        self.alive.store(true, Ordering::SeqCst);
-
-        let alive = self.alive.clone();
-
-        let mut frame = rx.recv().unwrap();
-        // let mut data;
-
-        thread::spawn(move || {
-            while alive.load(Ordering::SeqCst) {
-                frame = match rx.try_recv() {
-                    Ok(result) => result,
-                    Err(_) => frame.clone(),
-                };
-
-                // let data = self.single_iter(&frame);
-
-                let data = [1., 2., 3., 4., 5., 6.];
-                let data = filter.filter_data(data, None, None);
-
-                socket.send(data);
-            }
-        });
-
-        // loop {
-        // match stdin_channel.try_recv() {
-        //     Ok(key) => {
-        //         if key.trim().is_empty() {
-        //             break;
-        //         }
-        //     }
-        //     Err(TryRecvError::Empty) => {}
-        //     Err(TryRecvError::Disconnected) => break,
-        // }
-
-        // frame = match rx.try_recv() {
-        //     Ok(result) => result,
-        //     Err(_) => frame.clone(),
-        // };
-
-        // data = self.single_iter(&frame);
-
-        // data = filter.filter_data(data);
-
-        // socket.send(data);
-        // }
-    }
-
-    // fn spawn_stdin_channel(&mut self) -> Receiver<String> {
-    //     let (tx, rx) = mpsc::channel::<String>();
-    //     println!("Press Enter to exit.");
-    //     self.user_input_thread = Some(thread::spawn(move || loop {
-    //         let mut buffer = String::new();
-    //         io::stdin().read_line(&mut buffer).unwrap();
-    //         tx.send(buffer).unwrap();
-    //     }));
-    //     rx
-    // }
-
-    pub fn shutdown(&mut self) {
-        println!("Shutting down user input thread...");
-
-        self.alive.store(false, Ordering::SeqCst);
-
-        // self.user_input_thread
-        //     .take()
-        //     .expect("Called stop on non-running thread")
-        //     .join()
-        //     .unwrap();
     }
 }
 
@@ -197,6 +109,8 @@ impl ProcessHeadPose {
 #[ignore = "Can only test this offline since it requires webcam, run cargo test -- --ignored"]
 pub fn test_process_head_pose() {
     use crate::camera::ThreadedCamera;
+    use crate::filter::EuroDataFilter;
+    use crate::network::SocketNetwork;
     use std::sync::mpsc;
 
     let euro_filter = EuroDataFilter::new(0.0025, 0.01);
@@ -205,13 +119,8 @@ pub fn test_process_head_pose() {
     let (tx, rx) = mpsc::channel();
 
     let mut thr_cam = ThreadedCamera::start_camera_thread(tx, 0);
-    // thr_camstart_camera_thread(tx);
 
-    let mut head_pose =
-        ProcessHeadPose::new("./assets/data.json", "./assets/mb05_120x120.onnx", 120, 60);
+    let mut head_pose = ProcessHeadPose::new(120, 60);
 
-    head_pose.start_thread(rx, euro_filter, socket_network);
-
-    // head_pose.shutdown();
     thr_cam.shutdown();
 }

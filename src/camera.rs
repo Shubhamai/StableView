@@ -1,4 +1,3 @@
-// use nokhwa::NokhwaError;
 /// Running camera on a seperate thread and returning the frames
 use opencv::{
     prelude::{Mat, VideoCaptureTrait, VideoCaptureTraitConst},
@@ -13,37 +12,43 @@ use std::{
     thread,
 };
 
+use std::collections::HashMap;
+
 pub struct ThreadedCamera {
     cam_thread: Option<thread::JoinHandle<()>>, // Storing the thread
     keep_running: sync::Arc<AtomicBool>,        // Signal to stop the thread
 }
 
 impl ThreadedCamera {
-    // pub fn get_available_cameras() -> Result<i32, NokhwaError> {
-    //     let devices = nokhwa::query_devices(nokhwa::CaptureAPIBackend::Auto);
+    pub fn get_available_cameras() -> Result<HashMap<String, i32>, nokhwa::NokhwaError> {
+        //Result<Vec<CameraInfo>, nokhwa::NokhwaError> {
+        // let mut devices_list: Vec<CameraInfo> = vec![];
+        let mut devices_list = HashMap::new();
 
-    //     let device_index = match devices {
-    //         Ok(devices) => {
-    //             for device_info in devices {
-    //                 tracing::info!(
-    //                     "Detected : {} @ index {}",
-    //                     device_info.human_name(),
-    //                     device_info.index()
-    //                 )
-    //             }
-    //             0
-    //         }
-    //         Err(error) => {
-    //             tracing::error!(
-    //                 "Unable to read camera devices : {:?}. Setting default (default, 0)",
-    //                 error
-    //             );
-    //             0
-    //         }
-    //     };
+        let available_devices = nokhwa::query_devices(nokhwa::CaptureAPIBackend::Auto);
 
-    //     Ok(device_index)
-    // }
+        match available_devices {
+            Ok(available_devices) => {
+                for device_info in available_devices {
+                    tracing::info!(
+                        "Detected : {} @ index {}",
+                        device_info.human_name(),
+                        device_info.index()
+                    );
+                    devices_list.insert(device_info.human_name(), device_info.index() as i32);
+                }
+            }
+            Err(error) => {
+                tracing::error!(
+                    "Unable to read camera devices : {:?}. Setting default (Deault Device, 0)",
+                    error
+                );
+                devices_list.insert("Deault Device".to_string(), 0);
+            }
+        };
+
+        Ok(devices_list)
+    }
 
     pub fn start_camera_thread(tx: Sender<Mat>, camera_index: i32) -> Self {
         // Serving as a signal to stop the thread when needed
@@ -97,6 +102,8 @@ pub fn test_threaded_camera() {
     use sync::mpsc;
 
     let (tx, rx) = mpsc::channel();
+
+    println!("{:?}", ThreadedCamera::get_available_cameras());
 
     let mut thr_cam = ThreadedCamera::start_camera_thread(tx, 0);
 

@@ -1,14 +1,8 @@
 // Importing Libraries
-use crate::{
-    model,
-    utils::{
-        common::get_ndarray,
-        // headpose::{calc_pose, gen_point2d},
-        image::crop_img,
-        tddfa::{
-            parse_param, parse_roi_box_from_bbox, parse_roi_box_from_landmark, similar_transform,
-        },
-    },
+use crate::utils::{
+    common::get_ndarray,
+    image::crop_img,
+    tddfa::{parse_param, parse_roi_box_from_bbox, parse_roi_box_from_landmark, similar_transform},
 };
 
 use onnxruntime::{
@@ -61,11 +55,7 @@ static ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
 });
 
 impl Tddfa {
-    pub fn new(
-        _data_fp: &str,
-        landmark_model_path: &str,
-        size: i32,
-    ) -> Result<Self, Box<dyn Error>> {
+    pub fn new(size: i32) -> Result<Self, Box<dyn Error>> {
         let model_bytes = include_bytes!("../assets/mb05_120x120.onnx");
         let landmark_model = ENVIRONMENT
             .new_session_builder()?
@@ -75,7 +65,7 @@ impl Tddfa {
         let landmark_model = Arc::new(Mutex::new(landmark_model));
 
         let data =
-            { serde_json::from_slice::<Jsondata>(include_bytes!("../assets/data.json")).unwrap() };
+            serde_json::from_slice::<Jsondata>(include_bytes!("../assets/data.json")).unwrap();
 
         let mean_array: [f32; 62] = data.mean.as_slice().try_into().unwrap();
         let std_array: [f32; 62] = data.std.as_slice().try_into().unwrap();
@@ -103,12 +93,9 @@ impl Tddfa {
         // let mut rgb_frame = Mat::default();
         // imgproc::cvt_color(&input_frame, &mut rgb_frame, imgproc::COLOR_BGR2RGB, 0).unwrap();
 
+        // Cropping the image
         let cropped_image = crop_img(input_frame, roi_box);
-        // println!(
-        //     "{:?} {:?}",
-        //     cropped_image.size().unwrap().width,
-        //     cropped_image.size().unwrap().height
-        // );
+
         // Resizing the frame
         let mut resized_frame = Mat::default();
         imgproc::resize(
@@ -124,7 +111,8 @@ impl Tddfa {
         )
         .unwrap(); // ! Error handling here
 
-        let vec = Mat::data_typed::<Vec3b>(&resized_frame).unwrap();
+        let vec = Mat::data_typed::<Vec3b>(&resized_frame)
+            .expect("Unable to convert the image to vector");
 
         let array = Array4::from_shape_fn(
             (1, 3, self.size as usize, self.size as usize),
@@ -188,11 +176,9 @@ impl Tddfa {
 pub fn test() {
     use opencv::core::{Scalar, CV_8UC3};
 
-    let data_fp = "./assets/data.json";
-    let landmark_model_path = "./assets/mb05_120x120.onnx";
     let size = 120;
 
-    let mut bfm = Tddfa::new(data_fp, landmark_model_path, size).unwrap();
+    let mut bfm = Tddfa::new(size).unwrap();
 
     let frame =
         Mat::new_rows_cols_with_default(120, 120, CV_8UC3, Scalar::new(255., 0., 0., 0.)).unwrap();

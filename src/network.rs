@@ -45,14 +45,13 @@ impl SocketNetwork {
         ];
 
         // Convert an array to f64 to array of u8
-        unsafe {
-            let ptr = self.buf.as_mut_ptr().cast::<[f64; 6]>();
-            *ptr = data;
-        }
+        let out = unsafe {
+            std::slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * 4)
+        };
 
         // Send data
         self.socket_network
-            .send_to(&self.buf, self.address)
+            .send_to(&out, self.address)
             .expect("failed to send data");
     }
 }

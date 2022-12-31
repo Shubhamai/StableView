@@ -1,9 +1,12 @@
-use std::sync::{
-    self,
-    atomic::{AtomicBool, Ordering, AtomicU32},
+use std::{
+    collections::HashMap,
+    sync::{
+        self,
+        atomic::{AtomicBool, AtomicU32, Ordering},
+    },
 };
 
-use super::config::AppConfig;
+use super::{ config::AppConfig};
 
 pub struct AtomicF32 {
     storage: AtomicU32,
@@ -25,10 +28,13 @@ impl AtomicF32 {
     }
 }
 
+#[derive(Clone)]
 pub struct HeadTracker {
     pub keep_running: sync::Arc<AtomicBool>,
     pub beta: sync::Arc<AtomicF32>,
     pub min_cutoff: sync::Arc<AtomicF32>,
-    pub camera_index: i32,
-    pub cfg : AppConfig
+    pub cfg: AppConfig,
+    pub should_exit: bool,
+    pub camera_list: HashMap<String, i32>,
+    pub selected_camera: Option<String>,
 }

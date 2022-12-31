@@ -4,18 +4,19 @@ mod camera;
 mod enums;
 mod filter;
 mod gui;
-mod model;
 mod network;
 mod pose;
 mod structs;
 mod tddfa;
 mod utils;
 
+use crate::camera::ThreadedCamera;
 use crate::gui::style::{APP_NAME, APP_VERSION};
 use crate::structs::{
     app::{AtomicF32, HeadTracker},
     config::AppConfig,
 };
+use iced::window::Icon;
 use iced::{window, Application, Settings};
 use std::sync::{atomic::AtomicBool, Arc};
 use tracing::Level;
@@ -26,6 +27,7 @@ fn main() -> iced::Result {
     confy::store(APP_NAME, "config", &AppConfig::default()).unwrap();
 
     let file_appender = tracing_appender::rolling::never(
+        // ? Adding organization name
         directories::ProjectDirs::from("rs", "", APP_NAME)
             .unwrap()
             .data_dir()
@@ -42,7 +44,6 @@ fn main() -> iced::Result {
         .init(); // ! Need to have only 1 log file which resets daily
 
     tracing::info!("Version {} on {}", APP_VERSION, std::env::consts::OS);
-
     tracing::info!("The configuration file path is: {:#?}", cfg_filepath);
     tracing::info!("The logs file name is: {}", cfg.log_filename);
     tracing::info!("Config : {:#?}", cfg);
@@ -58,21 +59,23 @@ fn main() -> iced::Result {
             decorations: true,
             transparent: false,
             always_on_top: false,
-            icon: None,
+            icon: Some(Icon::from_file_data(include_bytes!("../wix/Product.ico"), None).unwrap()),
             visible: true,
         },
         flags: HeadTracker {
             keep_running: Arc::new(AtomicBool::new(false)),
             beta: Arc::new(AtomicF32::new(cfg.min_cutoff)),
             min_cutoff: Arc::new(AtomicF32::new(cfg.beta)),
-            camera_index: 0,
-            cfg
+            cfg,
+            should_exit: false,
+            camera_list: ThreadedCamera::get_available_cameras().unwrap(),
+            selected_camera : ThreadedCamera::get_available_cameras().unwrap().keys().next().cloned()
         },
         default_font: None,
         default_text_size: 16,
         text_multithreading: false,
         antialiasing: false,
-        exit_on_close_request: true,
+        exit_on_close_request: false,
         try_opengles_first: false,
     })
 }

@@ -1,9 +1,12 @@
 use std::{
     sync::{atomic::Ordering, mpsc},
-    thread,
+    thread, time::Duration,
 };
 
-use iced::{executor, widget::Container, Application, Command, Element, Length, Theme};
+use iced::{
+    executor, widget::Container, Application, Command, Element, Length, Subscription, Theme,
+};
+use iced_native::{window, Event};
 
 use crate::{
     camera::ThreadedCamera, enums::message::Message, filter::EuroDataFilter,
@@ -28,6 +31,14 @@ impl Application for HeadTracker {
         String::from(APP_NAME)
     }
 
+    fn subscription(&self) -> Subscription<Message> {
+        iced_native::subscription::events().map(Message::EventOccurred)
+    }
+
+    fn should_exit(&self) -> bool {
+        self.should_exit
+    }
+
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
             Message::Toggle => {
@@ -36,7 +47,7 @@ impl Application for HeadTracker {
                     let cloned_keep_running = self.keep_running.clone();
                     let cloned_min_cutoff = self.min_cutoff.clone();
                     let cloned_beta = self.beta.clone();
-
+                    let camera_index = *self.camera_list.get(self.selected_camera.as_ref().unwrap()).unwrap();
                     let cloned_cfg = self.cfg.clone();
 
                     thread::spawn(move || {
@@ -49,15 +60,10 @@ impl Application for HeadTracker {
                         let (tx, rx) = mpsc::channel();
                         let mut thr_cam = ThreadedCamera::start_camera_thread(
                             tx,
-                            cloned_cfg.default_camera_index,
+                            camera_index,
                         );
 
-                        let mut head_pose = ProcessHeadPose::new(
-                            "./assets/data.json",
-                            "./assets/mb05_120x120.onnx",
-                            120,
-                            60,
-                        );
+                        let mut head_pose = ProcessHeadPose::new(120, 60);
 
                         let mut frame = rx.recv().unwrap();
                         let mut data;
@@ -147,6 +153,18 @@ impl Application for HeadTracker {
                     .unwrap();
             }
             Message::InputIP(value) => println!("{value}"),
+            Message::Camera(camera_name) => {self.selected_camera = Some(camera_name) },
+            Message::EventOccurred(event) => {
+                if Event::Window(window::Event::CloseRequested) == event {
+                    self.keep_running.store(false, Ordering::SeqCst);
+                    println!("here");
+                    // thread::sleep(Duration::from_millis(100));
+                    confy::store(APP_NAME, "config", self.cfg.clone()).unwrap();
+                    println!("here2");
+                    self.should_exit = true;
+                    println!("here3");
+                }
+            }
         }
         Command::none()
     }
