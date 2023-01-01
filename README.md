@@ -1,29 +1,29 @@
-<p align="center"><a href="https://github.com/Shubhamai/lobo"><img alt="Lobo" src="assets/banner.png" width="100%"/></a></p>
+<p align="center"><a href="https://github.com/Shubhamai/StableView"><img alt="StableView" src="assets/banner.png" width="100%"/></a></p>
 
 <hr>
 
-<p align="center"> Easy, fast and efficient head Tracking application using only webcam </p>
+<p align="center"> Easy, fast and efficient Head Tracking application using only webcam </p>
 
-[![Build status](https://github.com/shubhamai/lobo/actions/workflows/build.yml/badge.svg)](https://github.com/shubhamai/lobo/actions)
-[![GitHub Release](https://img.shields.io/github/v/release/shubhamai/lobo)](https://github.com/shubhamai/lobo/releases/latest)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/shubhamai/lobo/blob/main/LICENSE)
-[![GitHub All Releases download count](https://img.shields.io/github/downloads/shubhamai/lobo/total.svg?style=flat)](https://github.com/shubhamai/lobo/releases/latest)
+[![Build status](https://github.com/shubhamai/StableView/actions/workflows/build.yml/badge.svg)](https://github.com/shubhamai/StableView/actions)
+[![GitHub Release](https://img.shields.io/github/v/release/shubhamai/StableView)](https://github.com/shubhamai/StableView/releases/latest)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/shubhamai/StableView/blob/main/LICENSE)
+[![GitHub All Releases download count](https://img.shields.io/github/downloads/shubhamai/StableView/total.svg?style=flat)](https://github.com/shubhamai/StableView/releases/latest)
 
 <div align="center">
   <h3>
-    <a href="">
+    <a href="https://github.com/shubhamai/StableView/releases/">
       Download
     </a>
     <span> | </span>
-    <a href="https://github.com/shubhamai/lobo/wiki">
+    <a href="https://github.com/shubhamai/StableView/wiki">
       Wiki
     </a>
     <span> | </span>
-    <a href="https://github.com/Shubhamai/lobo/discussions">
+    <a href="https://github.com/Shubhamai/StableView/discussions">
       Chat
     </a>
     <span> | </span>
-    <a href="https://github.com/Shubhamai/lobo/blob/main/CONTRIBUTING.md">
+    <a href="https://github.com/Shubhamai/StableView/blob/main/CONTRIBUTING.md">
       Contributing
     </a>
   </h3>
@@ -50,11 +50,11 @@
 
 ## Bug Report
 
-If you see an error message or run into an issue, please [open a new issue](https://github.com/Shubhamai/lobo/issues/new/choose). This effort is valued and helps all the users.
+If you see an error message or run into an issue, please [open a new issue](https://github.com/Shubhamai/StableView/issues/new/choose). This effort is valued and helps all the users.
 
 ## Feature Request
 
-If you have any idea or a missing feature you would like to see, please [submit a feature request](https://github.com/Shubhamai/lobo/issues/new/choose) or [discuss](https://github.com/Shubhamai/lobo/discussions) it with other users.
+If you have any idea or a missing feature you would like to see, please [submit a feature request](https://github.com/Shubhamai/StableView/issues/new/choose) or [discuss](https://github.com/Shubhamai/StableView/discussions) it with other users.
 
 ## Contributing
 
@@ -64,13 +64,13 @@ Contributions are greatly appreciated! If you want to contribute to the project,
 
 Thanks to all the people who contributed to the project.
 
-<a href="https://github.com/shubhamai/lobo/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=shubhamai/lobo&max=30&columns=10" />
+<a href="https://github.com/shubhamai/StableView/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=shubhamai/StableView&max=30&columns=10" />
 </a>
 
 ## License
 
-Lobo is open-source and free software released under the [MIT License](LICENSE).
+StableView is open-source and free software released under the [MIT License](LICENSE).
 
 ## Citations
 

@@ -1,13 +1,13 @@
 [package]
-name = "lobo"
+name = "StableView"
 description = "A Head tracking application using only webcam"
 version = "0.0.1"
 edition = "2021"
 authors = ["Shubhamai <shubham.aiengineer@gmail.com>"]
 publish = false # To prevent accidental publish on crates.io
 license = "MIT"
-repository = "https://github.com/Shubhamai/lobo"
-homepage = "https://github.com/Shubhamai/lobo"
+repository = "https://github.com/Shubhamai/StableView"
+homepage = "https://github.com/Shubhamai/StableView"
 readme = "README.md"
 
 

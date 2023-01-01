@@ -10,9 +10,9 @@ body:
     attributes:
       label: Logs
       placeholder: |
-        *  INFO lobo::network: Version 0.1.0 on windows
-        *  INFO lobo::network: Sending data to 127.0.0.1 on port 4242
-      description: Please paste the contents from the logs.txt (located in C:/Users/USERNAME/AppData/Roaming/lobo/data) into the field.
+        *  INFO StableView::network: Version 0.1.0 on windows
+        *  INFO StableView::network: Sending data to 127.0.0.1 on port 4242
+      description: Please paste the contents from the logs.txt (located in C:/Users/USERNAME/AppData/Roaming/StableView/data) into the field.
       render: StringTemplate
     validations:
       required: true

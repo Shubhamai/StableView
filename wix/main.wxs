@@ -94,7 +94,7 @@
                                 Id='exe0'
                                 Name='headtracker.exe'
                                 DiskId='1'
-                                Source='target\$(var.Profile)\lobo.exe'
+                                Source='target\$(var.Profile)\StableView.exe'
                                 KeyPath='yes'/>
                         </Component>
                         
@@ -246,7 +246,7 @@
         <Icon Id='ProductICO' SourceFile='wix\Product.ico'/>
         <Property Id='ARPPRODUCTICON' Value='ProductICO' />
 
-        <Property Id='ARPHELPLINK' Value='https://github.com/shubhamai/lobo'/>
+        <Property Id='ARPHELPLINK' Value='https://github.com/shubhamai/StableView'/>
         
         <UI>
             <!-- <UIRef Id='WixUI_FeatureTree'/> -->
