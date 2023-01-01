@@ -1,5 +1,4 @@
 /// Common utility functions used by multiple modules
-
 // Importing Libraries
 use crate::enums::extreme::Extreme;
 use onnxruntime::ndarray::{Array2, ArrayBase, Axis, Dim, OwnedRepr};

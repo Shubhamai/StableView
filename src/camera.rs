@@ -1,6 +1,4 @@
 /// Running camera on a seperate thread and returning the frames
-
-
 use opencv::{
     prelude::{Mat, VideoCaptureTrait, VideoCaptureTraitConst},
     videoio,
@@ -18,8 +16,6 @@ use std::collections::HashMap;
 
 use crate::structs::camera::ThreadedCamera;
 
-
-
 impl ThreadedCamera {
     pub fn get_available_cameras() -> Result<HashMap<String, i32>, nokhwa::NokhwaError> {
         let mut devices_list = HashMap::new();
@@ -34,7 +30,10 @@ impl ThreadedCamera {
                         device_info.human_name(),
                         device_info.index()
                     );
-                    devices_list.insert(device_info.human_name(), device_info.index().as_index().unwrap() as i32);
+                    devices_list.insert(
+                        device_info.human_name(),
+                        device_info.index().as_index().unwrap() as i32,
+                    );
                 }
             }
             Err(error) => {

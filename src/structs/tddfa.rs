@@ -1,5 +1,8 @@
-use std::sync::{Mutex, Arc};
-use onnxruntime::{ndarray::{ArrayBase, Dim, OwnedRepr}, session::Session};
+use onnxruntime::{
+    ndarray::{ArrayBase, Dim, OwnedRepr},
+    session::Session,
+};
+use std::sync::{Arc, Mutex};
 
 pub struct Tddfa {
     pub landmark_model: Arc<Mutex<Session<'static>>>,

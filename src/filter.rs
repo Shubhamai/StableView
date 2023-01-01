@@ -37,8 +37,7 @@ impl OneEuroFilter {
         a.mul_add(x, (1.0 - a) * x_prev)
     }
 
-    fn run(&mut self, x: f32, min_cutoff: Option<f32> , beta: Option<f32>) -> f32 {
-
+    fn run(&mut self, x: f32, min_cutoff: Option<f32>, beta: Option<f32>) -> f32 {
         let min_cutoff = min_cutoff.unwrap_or(self.min_cutoff);
         let beta = beta.unwrap_or(self.beta);
 
@@ -79,7 +78,12 @@ impl EuroDataFilter {
         }
     }
 
-    pub fn filter_data(&mut self, data: [f32; 6], min_cutoff: Option<f32> , beta: Option<f32>) -> [f32; 6] {
+    pub fn filter_data(
+        &mut self,
+        data: [f32; 6],
+        min_cutoff: Option<f32>,
+        beta: Option<f32>,
+    ) -> [f32; 6] {
         let mut filtered_data = [0.; 6];
 
         filtered_data[0] = self.x.run(data[0], min_cutoff, beta);

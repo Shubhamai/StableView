@@ -4,7 +4,7 @@
 
 <p align="center"> Easy, fast and efficient Head Tracking application using only webcam </p>
 
-[![Build status](https://github.com/shubhamai/StableView/actions/workflows/build.yml/badge.svg)](https://github.com/shubhamai/StableView/actions)
+[![Build status](https://github.com/Shubhamai/StableView/actions/workflows/ci.yml/badge.svg)](https://github.com/Shubhamai/StableView/actions/workflows/ci.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/shubhamai/StableView)](https://github.com/shubhamai/StableView/releases/latest)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/shubhamai/StableView/blob/main/LICENSE)
 [![GitHub All Releases download count](https://img.shields.io/github/downloads/shubhamai/StableView/total.svg?style=flat)](https://github.com/shubhamai/StableView/releases/latest)

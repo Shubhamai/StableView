@@ -1,8 +1,7 @@
 /// Utility function used by tddfa module
-/// The code is mostly converted from python to rust with assistance from ChatGPT. 
+/// The code is mostly converted from python to rust with assistance from ChatGPT.
 /// Python source - https://github.com/cleardusk/3DDFA_V2/blob/master/utils/tddfa_util.py
 /// https://github.com/cleardusk/3DDFA_V2/blob/master/utils/functions.py#L65
-
 use crate::enums::extreme::Extreme;
 use crate::utils::common::get_extreme_value;
 

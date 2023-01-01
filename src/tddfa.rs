@@ -1,13 +1,17 @@
 /// Model inference and generating the head pose
 /// Python source - https://github.com/cleardusk/3DDFA_V2/blob/master/TDDFA.py
-
-
 // Importing Libraries
-use crate::{utils::{
-    common::get_ndarray,
-    image::crop_img,
-    tddfa::{parse_param, parse_roi_box_from_bbox, parse_roi_box_from_landmark, similar_transform},
-}, structs::{tddfa::Tddfa, data::Jsondata}, enums::crop_policy::CropPolicy};
+use crate::{
+    enums::crop_policy::CropPolicy,
+    structs::{data::Jsondata, tddfa::Tddfa},
+    utils::{
+        common::get_ndarray,
+        image::crop_img,
+        tddfa::{
+            parse_param, parse_roi_box_from_bbox, parse_roi_box_from_landmark, similar_transform,
+        },
+    },
+};
 
 use onnxruntime::{
     environment::Environment,
@@ -28,7 +32,6 @@ use opencv::{
     prelude::{Mat, MatTraitConstManual},
 };
 
- 
 static ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
     Environment::builder()
         .with_name("Landmark Detection")
@@ -39,7 +42,6 @@ static ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
 
 impl Tddfa {
     pub fn new(size: i32) -> Result<Self, Box<dyn Error>> {
-
         let landmark_model = ENVIRONMENT
             .new_session_builder()?
             .with_optimization_level(GraphOptimizationLevel::All)?
@@ -114,10 +116,9 @@ impl Tddfa {
         ver: &[Vec<f32>],
         crop_policy: CropPolicy,
     ) -> Result<([f32; 62], [f32; 4]), Box<dyn Error>> {
-
         let roi_box = match crop_policy {
             CropPolicy::Box => parse_roi_box_from_bbox(face_box),
-            CropPolicy::Landmark => parse_roi_box_from_landmark(ver)
+            CropPolicy::Landmark => parse_roi_box_from_landmark(ver),
         };
 
         let model_input = self.get_model_input(input_frame, &roi_box);
@@ -174,6 +175,8 @@ pub fn test() {
         .unwrap();
     let pts_3d = bfm.recon_vers(param, roi_box);
 
-    let (param, roi_box) = bfm.run(&frame, face_box, &pts_3d, CropPolicy::Landmark).unwrap();
+    let (param, roi_box) = bfm
+        .run(&frame, face_box, &pts_3d, CropPolicy::Landmark)
+        .unwrap();
     let _pts_3d = bfm.recon_vers(param, roi_box);
 }

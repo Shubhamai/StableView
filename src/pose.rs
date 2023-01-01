@@ -9,7 +9,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-
 impl ProcessHeadPose {
     pub fn new(image_size: i32, fps: u128) -> Self {
         let tddfa = Tddfa::new(image_size).unwrap();
@@ -104,7 +103,7 @@ impl ProcessHeadPose {
 #[ignore = "Can only test this offline since it requires webcam, run cargo test -- --ignored"]
 pub fn test_process_head_pose() {
     use crate::filter::EuroDataFilter;
-    use crate::structs::{network::SocketNetwork, camera::ThreadedCamera};
+    use crate::structs::{camera::ThreadedCamera, network::SocketNetwork};
     use std::sync::mpsc;
 
     let euro_filter = EuroDataFilter::new(0.0025, 0.01);

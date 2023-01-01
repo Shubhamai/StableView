@@ -1,7 +1,6 @@
+use crate::structs::network::SocketNetwork;
 /// Deals with sending the data (x,y,depth,yaw,pitch,roll) to opentrack (https://github.com/opentrack/opentrack) using UDP socket
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
-use crate::structs::network::SocketNetwork;
-
 
 impl SocketNetwork {
     pub fn new(ip_arr: (u8, u8, u8, u8), port: u16) -> Self {
@@ -18,7 +17,8 @@ impl SocketNetwork {
             port,
         );
 
-        let socket_network = UdpSocket::bind("{ip_arr.0}.{ip_arr.1}.{ip_arr.2}.{ip_arr.3}:{port}").expect("failed to bind UDP socket");
+        let socket_network = UdpSocket::bind("{ip_arr.0}.{ip_arr.1}.{ip_arr.2}.{ip_arr.3}:{port}")
+            .expect("failed to bind UDP socket");
 
         Self {
             address,
@@ -38,9 +38,7 @@ impl SocketNetwork {
         ];
 
         // Convert an array to f64 to array of u8
-        let out = unsafe {
-            std::slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * 4)
-        };
+        let out = unsafe { std::slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * 4) };
 
         // Send data
         self.socket_network

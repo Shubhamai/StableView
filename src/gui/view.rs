@@ -1,19 +1,18 @@
-use std::{borrow::Cow, io::Read, sync::atomic::Ordering};
+use std::{borrow::Cow, sync::atomic::Ordering};
 
 use iced::{
     alignment::{self, Horizontal, Vertical},
-    theme::{self, Slider},
     widget::{
-        button, column, container, horizontal_space, image, pick_list, row, slider, svg, text,
-        text_input, vertical_space, Button, Column, Container, PickList, Row, Text,
+        button, horizontal_space, pick_list, slider, text,
+        text_input, vertical_space,  Column, Container, Row, Text,
     },
-    window::{self, Position},
-    Alignment, Application, Command, Element, Length, Renderer, Settings, Subscription, Theme,
+
+    Alignment,  Length, Renderer, 
 };
 
 use crate::{enums::message::Message, structs::app::HeadTracker};
 
-use super::style::{APP_AUTHORS, APP_NAME, APP_VERSION, HEIGHT_BODY, HEIGHT_FOOTER, };
+use super::style::{APP_AUTHORS, APP_NAME, APP_VERSION, HEIGHT_BODY, HEIGHT_FOOTER};
 
 pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let input_min_cutoff = (headtracker.min_cutoff.load(Ordering::SeqCst) * 10000.) as u32;
@@ -93,21 +92,17 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     .padding(40);
 
     let camera_row = Container::new(
-        Row::new()
-            .push(
-                pick_list(
-                    Cow::from(
-                        headtracker
-                            .camera_list
-                            .keys()
-                            .cloned()
-                            .collect::<Vec<String>>(),
-                    ),
-                    headtracker.selected_camera.clone(),
-                    Message::Camera,
-                ),
-            )
-            // .push(
+        Row::new().push(pick_list(
+            Cow::from(
+                headtracker
+                    .camera_list
+                    .keys()
+                    .cloned()
+                    .collect::<Vec<String>>(),
+            ),
+            headtracker.selected_camera.clone(),
+            Message::Camera,
+        )), // .push(
             //     Container::new(button(text("Hide Camera")).on_press(Message::Toggle))
             //         .width(Length::FillPortion(5)),
             // ),

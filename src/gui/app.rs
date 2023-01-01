@@ -9,8 +9,10 @@ use iced::{
 use iced_native::{window, Event};
 
 use crate::{
-     enums::message::Message, filter::EuroDataFilter,
-    structs::{camera::ThreadedCamera, network::SocketNetwork, pose::ProcessHeadPose},  structs::app::HeadTracker,
+    enums::message::Message,
+    filter::EuroDataFilter,
+    structs::app::HeadTracker,
+    structs::{camera::ThreadedCamera, network::SocketNetwork, pose::ProcessHeadPose},
 };
 
 use crate::gui::view::run_page;
@@ -47,7 +49,10 @@ impl Application for HeadTracker {
                     let cloned_keep_running = self.keep_running.clone();
                     let cloned_min_cutoff = self.min_cutoff.clone();
                     let cloned_beta = self.beta.clone();
-                    let camera_index = *self.camera_list.get(self.selected_camera.as_ref().unwrap()).unwrap();
+                    let camera_index = *self
+                        .camera_list
+                        .get(self.selected_camera.as_ref().unwrap())
+                        .unwrap();
                     let cloned_cfg = self.cfg.clone();
 
                     thread::spawn(move || {
@@ -58,10 +63,7 @@ impl Application for HeadTracker {
 
                         // Create a channel to communicate between threads
                         let (tx, rx) = mpsc::channel();
-                        let mut thr_cam = ThreadedCamera::start_camera_thread(
-                            tx,
-                            camera_index,
-                        );
+                        let mut thr_cam = ThreadedCamera::start_camera_thread(tx, camera_index);
 
                         let mut head_pose = ProcessHeadPose::new(120, 60);
 
@@ -153,14 +155,13 @@ impl Application for HeadTracker {
                     .unwrap();
             }
             Message::InputIP(value) => println!("{value}"),
-            Message::Camera(camera_name) => {self.selected_camera = Some(camera_name) },
+            Message::Camera(camera_name) => self.selected_camera = Some(camera_name),
             Message::EventOccurred(event) => {
                 if Event::Window(window::Event::CloseRequested) == event {
                     self.keep_running.store(false, Ordering::SeqCst);
                     // thread::sleep(Duration::from_millis(100));
                     confy::store(APP_NAME, "config", self.cfg.clone()).unwrap();
                     self.should_exit = true;
-          
                 }
             }
         }

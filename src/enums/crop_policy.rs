@@ -1,4 +1,4 @@
 pub enum CropPolicy {
     Box,
-    Landmark
+    Landmark,
 }

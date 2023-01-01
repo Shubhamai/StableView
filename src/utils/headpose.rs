@@ -1,7 +1,6 @@
 /// Utility function used by headpose module
-/// The code is mostly converted from python to rust with assistance from ChatGPT. 
+/// The code is mostly converted from python to rust with assistance from ChatGPT.
 /// Python source - https://github.com/cleardusk/3DDFA_V2/blob/fa8dfc479b46c218e7d375706c673d5823ddb464/utils/pose.py
-
 // Imporing Libraries
 use crate::enums::extreme::Extreme;
 use crate::utils::common::{get_extreme_value, get_ndarray};

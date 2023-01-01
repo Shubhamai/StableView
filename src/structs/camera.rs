@@ -1,4 +1,7 @@
-use std::{thread, sync::{atomic::AtomicBool, self}};
+use std::{
+    sync::{self, atomic::AtomicBool},
+    thread,
+};
 
 pub struct ThreadedCamera {
     pub cam_thread: Option<thread::JoinHandle<()>>, // Storing the thread

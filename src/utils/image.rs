@@ -1,6 +1,5 @@
 /// Utility function for processing image
 /// Python source - https://github.com/cleardusk/3DDFA/blob/d5c1f6a647a89070b1f9ea4e88c910b743a1a87a/utils/inference.py#L20
-
 use opencv::{
     core::{Mat, Rect},
     prelude::MatTraitConstManual,

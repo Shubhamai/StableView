@@ -13,8 +13,8 @@ mod utils;
 use crate::gui::style::{APP_NAME, APP_VERSION};
 use crate::structs::{
     app::{AtomicF32, HeadTracker},
+    camera::ThreadedCamera,
     config::AppConfig,
-    camera::ThreadedCamera
 };
 use iced::window::Icon;
 use iced::{window, Application, Settings};
@@ -60,7 +60,7 @@ fn main() -> iced::Result {
             transparent: false,
             always_on_top: false,
             // icon: Some(Icon::from_file_data(include_bytes!("../wix/Product.ico"), None).unwrap()),
-            icon : None,
+            icon: None,
             visible: true,
         },
         flags: HeadTracker {
@@ -70,7 +70,11 @@ fn main() -> iced::Result {
             cfg,
             should_exit: false,
             camera_list: ThreadedCamera::get_available_cameras().unwrap(),
-            selected_camera : ThreadedCamera::get_available_cameras().unwrap().keys().next().cloned()
+            selected_camera: ThreadedCamera::get_available_cameras()
+                .unwrap()
+                .keys()
+                .next()
+                .cloned(),
         },
         default_font: None,
         default_text_size: 16,

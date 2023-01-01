@@ -3,12 +3,11 @@
 # cargo install -f cargo-binutils
 # rustup component add llvm-tools-preview
 
-#[target.x86_64-pc-windows-msvc]
-#rustflags = ["-C", "target-feature=+crt-static", "--emit", "asm"]
-# "link-arg=-fuse-ld=lld",
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static", "--emit", "asm"]
 
-#[target.x86_64-pc-windows-gnu]
-#rustflags = ["-C", "target-feature=+crt-static", "--emit", "asm"]
+[target.x86_64-pc-windows-gnu]
+rustflags = ["-C", "target-feature=+crt-static", "--emit", "asm"]
 
 # On Linux:
 # - Ubuntu, sudo apt-get install lld clang
