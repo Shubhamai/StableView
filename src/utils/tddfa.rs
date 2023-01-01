@@ -1,3 +1,8 @@
+/// Utility function used by tddfa module
+/// The code is mostly converted from python to rust with assistance from ChatGPT. 
+/// Python source - https://github.com/cleardusk/3DDFA_V2/blob/master/utils/tddfa_util.py
+/// https://github.com/cleardusk/3DDFA_V2/blob/master/utils/functions.py#L65
+
 use crate::enums::extreme::Extreme;
 use crate::utils::common::get_extreme_value;
 
@@ -220,18 +225,7 @@ mod tests {
 
         let _result = similar_transform(pts3d, roi_box, size);
 
-        // println!("{:?}", result[0]
-        //     .get(0)
-        //     .map(|first| result[0].iter().all(|x| x - first < 0.01))
-        //     .unwrap_or(true));
-        // println!("{:?}", result[0].iter().zip(&result[0]).filter(|&(a, b)| (a - b) < f32::EPSILON));
-        // assert_eq!(
-        //     result[0].iter().zip(&result[0]).filter(|&(a, b)| (a - b) < f32::EPSILON), 3
-        // );
-
-        // assert_eq!(
-        //         result,
-        //     );
+        // ! assert function here
     }
 
     #[test]

@@ -1,6 +1,8 @@
 # Contributing
 
-When contributing to this repository, please first discuss the change you wish to make via [discuss]((https://github.com/shubhamai/lobo/discussions)), [issue](https://github.com/shubhamai/lobo/issues/new/choose), email, or any other method with the owners of this repository before making a change.
+Thank you for considering to contribute to Lobo!
+
+When contributing to this repository, please first discuss the change you wish to make via [discuss](<(https://github.com/shubhamai/lobo/discussions)>), [issue](https://github.com/shubhamai/lobo/issues/new/choose), email, or any other method with the owners of this repository before making a change.
 
 Please note we have a [code of conduct](CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
 
@@ -10,13 +12,17 @@ To set up a development environment, please follow these steps:
 
 1. Install [Rust](https://www.rust-lang.org/).
 
-1. Clone the repo
+2. Clone the repo
 
    ```sh
    git clone https://github.com/shubhamai/lobo
    ```
 
-1. Run `cargo run` to run the application without any optimizations. To run the application fully optimized, add `--release` to the command, ie. `cargo run --release`
+3. Run `cargo run` to run the application without any optimizations. To run the application fully optimized, add `--release` to the command, ie. `cargo run --release`
+
+4. To build the `.msi` installer for windows -
+   1. First install [cargo-wix](https://github.com/volks73/cargo-wix).
+   2. Run `cargo wix`. A new folder will be created in target folder containing the `.msi` file.
 
 ## Issues and feature requests
 

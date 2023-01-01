@@ -7,6 +7,7 @@ authors = ["Shubhamai <shubham.aiengineer@gmail.com>"]
 publish = false # To prevent accidental publish on crates.io
 license = "MIT"
 repository = "https://github.com/Shubhamai/lobo"
+homepage = "https://github.com/Shubhamai/lobo"
 readme = "README.md"
 
 

@@ -1,8 +1,10 @@
+/// Common utility functions used by multiple modules
+
 // Importing Libraries
 use crate::enums::extreme::Extreme;
 use onnxruntime::ndarray::{Array2, ArrayBase, Axis, Dim, OwnedRepr};
 
-// Get minimum or maximum value from a vertor containing floats
+// Get minimum or maximum value from a vector containing floats
 pub fn get_extreme_value(vec: &[f32], extreme: Extreme) -> f32 {
     let output = match extreme {
         Extreme::Min => vec.iter().min_by(|a, b| a.total_cmp(b)),

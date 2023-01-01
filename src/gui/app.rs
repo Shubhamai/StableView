@@ -1,6 +1,6 @@
 use std::{
     sync::{atomic::Ordering, mpsc},
-    thread, time::Duration,
+    thread,
 };
 
 use iced::{
@@ -9,8 +9,8 @@ use iced::{
 use iced_native::{window, Event};
 
 use crate::{
-    camera::ThreadedCamera, enums::message::Message, filter::EuroDataFilter,
-    network::SocketNetwork, pose::ProcessHeadPose, structs::app::HeadTracker,
+     enums::message::Message, filter::EuroDataFilter,
+    structs::{camera::ThreadedCamera, network::SocketNetwork, pose::ProcessHeadPose},  structs::app::HeadTracker,
 };
 
 use crate::gui::view::run_page;

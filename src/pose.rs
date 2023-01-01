@@ -1,5 +1,6 @@
-///
-use crate::tddfa::Tddfa;
+/// Processing the head pose (filters, etc.) and generating the x,y,z of the head.
+use crate::enums::crop_policy::CropPolicy;
+use crate::structs::{pose::ProcessHeadPose, tddfa::Tddfa};
 use crate::utils::headpose::{calc_pose, gen_point2d};
 
 use opencv::prelude::Mat;
@@ -8,12 +9,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-pub struct ProcessHeadPose {
-    tddfa: Tddfa,
-    pts_3d: Vec<Vec<f32>>,
-    face_box: [f32; 4],
-    fps: u128,
-}
 
 impl ProcessHeadPose {
     pub fn new(image_size: i32, fps: u128) -> Self {
@@ -63,13 +58,13 @@ impl ProcessHeadPose {
 
         let (mut param, mut roi_box) = self
             .tddfa
-            .run(frame, self.face_box, &self.pts_3d, "landmark")
+            .run(frame, self.face_box, &self.pts_3d, CropPolicy::Landmark)
             .unwrap();
 
         if (roi_box[2] - roi_box[0]).abs() * (roi_box[3] - roi_box[1]).abs() < 2020. {
             (param, roi_box) = self
                 .tddfa
-                .run(frame, self.face_box, &self.pts_3d, "box")
+                .run(frame, self.face_box, &self.pts_3d, CropPolicy::Box)
                 .unwrap();
         }
 
@@ -108,9 +103,8 @@ impl ProcessHeadPose {
 #[test]
 #[ignore = "Can only test this offline since it requires webcam, run cargo test -- --ignored"]
 pub fn test_process_head_pose() {
-    use crate::camera::ThreadedCamera;
     use crate::filter::EuroDataFilter;
-    use crate::network::SocketNetwork;
+    use crate::structs::{network::SocketNetwork, camera::ThreadedCamera};
     use std::sync::mpsc;
 
     let euro_filter = EuroDataFilter::new(0.0025, 0.01);

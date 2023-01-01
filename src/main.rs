@@ -10,11 +10,11 @@ mod structs;
 mod tddfa;
 mod utils;
 
-use crate::camera::ThreadedCamera;
 use crate::gui::style::{APP_NAME, APP_VERSION};
 use crate::structs::{
     app::{AtomicF32, HeadTracker},
     config::AppConfig,
+    camera::ThreadedCamera
 };
 use iced::window::Icon;
 use iced::{window, Application, Settings};
@@ -59,7 +59,8 @@ fn main() -> iced::Result {
             decorations: true,
             transparent: false,
             always_on_top: false,
-            icon: Some(Icon::from_file_data(include_bytes!("../wix/Product.ico"), None).unwrap()),
+            // icon: Some(Icon::from_file_data(include_bytes!("../wix/Product.ico"), None).unwrap()),
+            icon : None,
             visible: true,
         },
         flags: HeadTracker {

@@ -1,4 +1,6 @@
 /// Running camera on a seperate thread and returning the frames
+
+
 use opencv::{
     prelude::{Mat, VideoCaptureTrait, VideoCaptureTraitConst},
     videoio,
@@ -14,15 +16,12 @@ use std::{
 
 use std::collections::HashMap;
 
-pub struct ThreadedCamera {
-    cam_thread: Option<thread::JoinHandle<()>>, // Storing the thread
-    keep_running: sync::Arc<AtomicBool>,        // Signal to stop the thread
-}
+use crate::structs::camera::ThreadedCamera;
+
+
 
 impl ThreadedCamera {
     pub fn get_available_cameras() -> Result<HashMap<String, i32>, nokhwa::NokhwaError> {
-        //Result<Vec<CameraInfo>, nokhwa::NokhwaError> {
-        // let mut devices_list: Vec<CameraInfo> = vec![];
         let mut devices_list = HashMap::new();
 
         let available_devices = nokhwa::query(nokhwa::native_api_backend().unwrap());

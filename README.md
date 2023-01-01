@@ -12,7 +12,7 @@
 <div align="center">
   <h3>
     <a href="">
-      Website
+      Download
     </a>
     <span> | </span>
     <a href="https://github.com/shubhamai/lobo/wiki">
@@ -23,7 +23,7 @@
       Chat
     </a>
     <span> | </span>
-    <a href="https://github.com/Shubhamai/lobo/blob/main/.github/CONTRIBUTING.md">
+    <a href="https://github.com/Shubhamai/lobo/blob/main/CONTRIBUTING.md">
       Contributing
     </a>
   </h3>
@@ -48,17 +48,17 @@
 - [Sniffer](https://github.com/GyulyVGC/sniffnet/) for GUI inspirations, code structure, readme, etc.
 - [ChatGPT](https://openai.com/blog/chatgpt/) for assisting me to convert the python code to rust.
 
-# Bug Report
+## Bug Report
 
 If you see an error message or run into an issue, please [open a new issue](https://github.com/Shubhamai/lobo/issues/new/choose). This effort is valued and helps all the users.
 
-# Feature Request
+## Feature Request
 
 If you have any idea or a missing feature you would like to see, please [submit a feature request](https://github.com/Shubhamai/lobo/issues/new/choose) or [discuss](https://github.com/Shubhamai/lobo/discussions) it with other users.
 
-# Contributing
+## Contributing
 
-Contributions are greatly appreciated! If you want to contribute to the project, please read [Contributing.md](Contributing.md) for more details.
+Contributions are greatly appreciated! If you want to contribute to the project, please read [Contributing.md](CONTRIBUTING.md) for more details.
 
 ## Contributors
 
@@ -67,6 +67,10 @@ Thanks to all the people who contributed to the project.
 <a href="https://github.com/shubhamai/lobo/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=shubhamai/lobo&max=30&columns=10" />
 </a>
+
+## License
+
+Lobo is open-source and free software released under the [MIT License](LICENSE).
 
 ## Citations
 

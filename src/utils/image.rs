@@ -1,9 +1,12 @@
+/// Utility function for processing image
+/// Python source - https://github.com/cleardusk/3DDFA/blob/d5c1f6a647a89070b1f9ea4e88c910b743a1a87a/utils/inference.py#L20
+
 use opencv::{
     core::{Mat, Rect},
     prelude::MatTraitConstManual,
 };
 
-pub fn crop_img(img: &Mat, roi_box: [f32; 4]) -> Mat {
+pub fn crop_img(img: &Mat, roi_box: &[f32; 4]) -> Mat {
     let h = img.size().unwrap().height;
     let w = img.size().unwrap().width;
 
@@ -49,13 +52,13 @@ fn test_crop_img() {
     let frame =
         Mat::new_rows_cols_with_default(120, 120, CV_8UC3, Scalar::new(255., 0., 0., 0.)).unwrap();
     let roi_box = [50., 60., 100., 120.];
-    let result = crop_img(&frame, roi_box);
+    let result = crop_img(&frame, &roi_box);
 
     assert_eq!(result.rows() as f32, roi_box[3] - roi_box[1]);
     assert_eq!(result.cols() as f32, roi_box[2] - roi_box[0]);
 
     let roi_box = [50., 60., 400., 400.];
-    let result = crop_img(&frame, roi_box);
+    let result = crop_img(&frame, &roi_box);
 
     assert_eq!(result.rows() as f32, 60.);
     assert_eq!(result.cols() as f32, 70.);

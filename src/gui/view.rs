@@ -107,10 +107,10 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                     Message::Camera,
                 ),
             )
-            .push(
-                Container::new(button(text("Hide Camera")).on_press(Message::Toggle))
-                    .width(Length::FillPortion(5)),
-            ),
+            // .push(
+            //     Container::new(button(text("Hide Camera")).on_press(Message::Toggle))
+            //         .width(Length::FillPortion(5)),
+            // ),
     )
     .padding(40);
 
@@ -140,7 +140,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
 fn footer() -> Container<'static, Message, Renderer> {
     let github_button = button(
         text("Github")
-            .size(24)
+            .size(5)
             .horizontal_alignment(alignment::Horizontal::Center)
             .vertical_alignment(alignment::Vertical::Center),
     )
@@ -150,7 +150,7 @@ fn footer() -> Container<'static, Message, Renderer> {
 
     let logs_button = button(
         text("Open Logs")
-            .size(12)
+            .size(5)
             .horizontal_alignment(alignment::Horizontal::Center)
             .vertical_alignment(alignment::Vertical::Center),
     )

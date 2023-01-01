@@ -6,7 +6,7 @@ use std::{
     },
 };
 
-use super::{ config::AppConfig};
+use super::config::AppConfig;
 
 pub struct AtomicF32 {
     storage: AtomicU32,

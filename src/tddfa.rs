@@ -1,18 +1,20 @@
+/// Model inference and generating the head pose
+/// Python source - https://github.com/cleardusk/3DDFA_V2/blob/master/TDDFA.py
+
+
 // Importing Libraries
-use crate::utils::{
+use crate::{utils::{
     common::get_ndarray,
     image::crop_img,
     tddfa::{parse_param, parse_roi_box_from_bbox, parse_roi_box_from_landmark, similar_transform},
-};
+}, structs::{tddfa::Tddfa, data::Jsondata}, enums::crop_policy::CropPolicy};
 
 use onnxruntime::{
     environment::Environment,
     ndarray::{arr1, arr2, s, Array4, ArrayBase, Dim, Order, OwnedRepr},
-    session::Session,
     tensor::OrtOwnedTensor,
     GraphOptimizationLevel,
 };
-use serde::{Deserialize, Serialize};
 use std::{
     error::Error,
     ops::Deref,
@@ -26,26 +28,7 @@ use opencv::{
     prelude::{Mat, MatTraitConstManual},
 };
 
-#[derive(Serialize, Deserialize)]
-struct Jsondata {
-    mean: Vec<f32>,
-    std: Vec<f32>,
-    u_base: Vec<Vec<f32>>,
-    w_shp_base: Vec<Vec<f32>>,
-    w_exp_base: Vec<Vec<f32>>,
-}
-
-#[derive(Clone)]
-pub struct Tddfa {
-    pub landmark_model: Arc<Mutex<Session<'static>>>,
-    size: i32,
-    mean_array: [f32; 62],
-    std_array: [f32; 62],
-    u_base_array: ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>>,
-    w_shp_base_array: ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>>,
-    w_exp_base_array: ArrayBase<OwnedRepr<f32>, Dim<[usize; 2]>>,
-}
-
+ 
 static ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
     Environment::builder()
         .with_name("Landmark Detection")
@@ -56,12 +39,12 @@ static ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
 
 impl Tddfa {
     pub fn new(size: i32) -> Result<Self, Box<dyn Error>> {
-        let model_bytes = include_bytes!("../assets/mb05_120x120.onnx");
+
         let landmark_model = ENVIRONMENT
             .new_session_builder()?
             .with_optimization_level(GraphOptimizationLevel::All)?
             .with_number_threads(1)?
-            .with_model_from_memory(model_bytes)?;
+            .with_model_from_memory(include_bytes!("../assets/mb05_120x120.onnx"))?;
         let landmark_model = Arc::new(Mutex::new(landmark_model));
 
         let data =
@@ -88,7 +71,7 @@ impl Tddfa {
     fn get_model_input(
         &self,
         input_frame: &Mat,
-        roi_box: [f32; 4],
+        roi_box: &[f32; 4],
     ) -> Vec<ArrayBase<OwnedRepr<f32>, Dim<[usize; 4]>>> {
         // let mut rgb_frame = Mat::default();
         // imgproc::cvt_color(&input_frame, &mut rgb_frame, imgproc::COLOR_BGR2RGB, 0).unwrap();
@@ -129,18 +112,15 @@ impl Tddfa {
         input_frame: &Mat,
         face_box: [f32; 4],
         ver: &[Vec<f32>],
-        crop_policy: &str,
+        crop_policy: CropPolicy,
     ) -> Result<([f32; 62], [f32; 4]), Box<dyn Error>> {
-        let mut roi_box = [0.; 4];
-        if crop_policy == "box" {
-            roi_box = parse_roi_box_from_bbox(face_box);
-        } else if crop_policy == "landmark" {
-            roi_box = parse_roi_box_from_landmark(ver);
-        } else {
-            tracing::error!("Invalid crop policy : {crop_policy}");
-        }
 
-        let model_input = self.get_model_input(input_frame, roi_box);
+        let roi_box = match crop_policy {
+            CropPolicy::Box => parse_roi_box_from_bbox(face_box),
+            CropPolicy::Landmark => parse_roi_box_from_landmark(ver)
+        };
+
+        let model_input = self.get_model_input(input_frame, &roi_box);
 
         // Inference
         let mut landmark_model = self.landmark_model.try_lock().unwrap(); // * unblocking lock
@@ -189,11 +169,11 @@ pub fn test() {
             &frame,
             face_box,
             &[vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
-            "box",
+            CropPolicy::Box,
         )
         .unwrap();
     let pts_3d = bfm.recon_vers(param, roi_box);
 
-    let (param, roi_box) = bfm.run(&frame, face_box, &pts_3d, "landmark").unwrap();
+    let (param, roi_box) = bfm.run(&frame, face_box, &pts_3d, CropPolicy::Landmark).unwrap();
     let _pts_3d = bfm.recon_vers(param, roi_box);
 }
