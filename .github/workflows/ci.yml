@@ -33,6 +33,8 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
+      - name: Install Ubuntu Dependencies
+        run: sudo apt-get install libopencv-dev clang libclang-dev clang
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
@@ -50,8 +52,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Install libpcap
-      run: sudo apt-get install libpcap-dev
+    - name: Install Ubuntu Dependencies
+      run: sudo apt-get install libopencv-dev clang libclang-dev clang
     - name: Build 
       run: cargo build --verbose
     - name: Run tests 
