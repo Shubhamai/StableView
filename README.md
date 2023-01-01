@@ -2,12 +2,17 @@
 
 <hr>
 
-<p align="center"> Easy, fast and efficient Head Tracking application using only webcam </p>
 
-[![Build status](https://github.com/Shubhamai/StableView/actions/workflows/ci.yml/badge.svg)](https://github.com/Shubhamai/StableView/actions/workflows/ci.yml)
-[![GitHub Release](https://img.shields.io/github/v/release/shubhamai/StableView)](https://github.com/shubhamai/StableView/releases/latest)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/shubhamai/StableView/blob/main/LICENSE)
-[![GitHub All Releases download count](https://img.shields.io/github/downloads/shubhamai/StableView/total.svg?style=flat)](https://github.com/shubhamai/StableView/releases/latest)
+<p align="center"> Easy, fast and efficient Head Tracking application using only webcam  </p>
+
+<p align="center">
+<a href="https://github.com/shubhamai/StableView/releases/latest"><img alt="" src="https://badgen.net/badge/Download/Windows/?color=blue&icon=windows&label"/></a> 
+<a href="https://github.com/shubhamai/StableView/releases/latest"><img alt="" src="https://badgen.net/badge/Download/Linux64/?color=orange&icon=terminal&label"/></a>
+<a href="https://github.com/Shubhamai/StableView/actions/workflows/ci.yml"><img alt="" src="https://github.com/Shubhamai/StableView/actions/workflows/ci.yml/badge.svg"/></a>
+<a href="https://github.com/shubhamai/StableView/blob/main/LICENSE"><img alt="" src="https://img.shields.io/badge/License-MIT-blue.svg"/></a>
+<a href="https://github.com/shubhamai/StableView/releases/latest"><img alt="" src="https://img.shields.io/github/downloads/shubhamai/StableView/total.svg?style=flat"/></a>
+</p>
+
 
 <div align="center">
   <h3>
@@ -28,6 +33,9 @@
     </a>
   </h3>
 </div>
+
+<hr>
+
 
 # Status
 
