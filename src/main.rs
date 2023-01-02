@@ -92,7 +92,7 @@ fn main() -> iced::Result {
             run_headtracker: Arc::new(AtomicBool::new(false)),
             should_exit: false,
         },
-        default_font: Some(include_bytes!("../assets/fonts/Silkscreen-Regular.ttf")),
+        default_font: Some(include_bytes!("../assets/fonts/Inter-Regular.ttf")),
         default_text_size: 16,
         text_multithreading: false,
         antialiasing: false,

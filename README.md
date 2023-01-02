@@ -1,4 +1,4 @@
-<p align="center"><a href="https://github.com/Shubhamai/StableView"><img alt="StableView" src="assets/banner.png" width="100%"/></a></p>
+<p align="center"><a href="https://github.com/Shubhamai/StableView"><img alt="StableView" src="assets/brand/banner.png" width="100%"/></a></p>
 
 <hr>
 

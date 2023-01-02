@@ -170,25 +170,25 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
 }
 
 fn footer() -> Container<'static, Message, Renderer> {
-    let github_button = button(
-        text("Github")
-            .size(5)
-            .horizontal_alignment(alignment::Horizontal::Center)
-            .vertical_alignment(alignment::Vertical::Center),
-    )
-    .height(Length::Units(35))
-    .width(Length::Units(35))
-    .on_press(Message::OpenGithub);
+    // let github_button = button(
+    //     text("Github")
+    //         .size(5)
+    //         .horizontal_alignment(alignment::Horizontal::Center)
+    //         .vertical_alignment(alignment::Vertical::Center),
+    // )
+    // .height(Length::Units(35))
+    // .width(Length::Units(35))
+    // .on_press(Message::OpenGithub);
 
-    let logs_button = button(
-        text("Open Logs")
-            .size(5)
-            .horizontal_alignment(alignment::Horizontal::Center)
-            .vertical_alignment(alignment::Vertical::Center),
-    )
-    .height(Length::Units(35))
-    .width(Length::Units(35))
-    .on_press(Message::OpenLogs);
+    // let logs_button = button(
+    //     text("Open Logs")
+    //         .size(5)
+    //         .horizontal_alignment(alignment::Horizontal::Center)
+    //         .vertical_alignment(alignment::Vertical::Center),
+    // )
+    // .height(Length::Units(35))
+    // .width(Length::Units(35))
+    // .on_press(Message::OpenLogs);
 
     let footer_row = Row::new()
         .align_items(Alignment::Center)
@@ -196,8 +196,9 @@ fn footer() -> Container<'static, Message, Renderer> {
             "{} {} by {} ",
             APP_NAME, APP_VERSION, APP_AUTHORS
         )))
-        .push(github_button)
-        .push(logs_button);
+        // .push(github_button)
+        // .push(logs_button)
+        ;
 
     Container::new(footer_row)
         .width(Length::Fill)
