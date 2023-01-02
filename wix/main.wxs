@@ -55,7 +55,7 @@
             Schedule='afterInstallInitialize'
             DowngradeErrorMessage='A newer version of [ProductName] is already installed. Setup will now exit.'/>
 
-        <Icon Id='SetupIcon' SourceFile='wix\Product.ico'/>
+        <Icon Id='SetupIcon' SourceFile='assets\brand\Product.ico'/>
 
         <!-- <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1'/> -->
         <Media Id="1" Cabinet="Sample.cab" EmbedCab="yes" DiskPrompt="Installation Media #1" />
@@ -103,7 +103,7 @@
                             Id='opencv'
                             Name='opencv_world460.dll'
                             DiskId='1'
-                            Source='wix\opencv_world460.dll'
+                            Source='assets\dlls\opencv_world460.dll'
                             KeyPath='yes'/>
                           </Component>
   
@@ -112,7 +112,7 @@
                           Id='msvcp'
                           Name='msvcp140.dll'
                           DiskId='1'
-                          Source='wix\msvcp140.dll'
+                          Source='assets\dlls\msvcp140.dll'
                           KeyPath='yes'/>
                         </Component>
 
@@ -121,7 +121,7 @@
                           Id='onnx'
                           Name='onnxruntime.dll'
                           DiskId='1'
-                          Source='wix\onnxruntime.dll'
+                          Source='assets\dlls\onnxruntime.dll'
                           KeyPath='yes'/>
                         </Component>
 
@@ -130,7 +130,7 @@
                           Id='vcruntime'
                           Name='vcruntime140.dll'
                           DiskId='1'
-                          Source='wix\vcruntime140.dll'
+                          Source='assets\dlls\vcruntime140.dll'
                           KeyPath='yes'/>
                         </Component>
 
@@ -139,7 +139,7 @@
                           Id='vcruntime1'
                           Name='vcruntime140_1.dll'
                           DiskId='1'
-                          Source='wix\vcruntime140_1.dll'
+                          Source='assets\dlls\vcruntime140_1.dll'
                           KeyPath='yes'/>
                         </Component>
 
@@ -243,7 +243,7 @@
           The product icon is the graphic that appears in the Add/Remove
           Programs control panel for the application.
         -->
-        <Icon Id='ProductICO' SourceFile='wix\Product.ico'/>
+        <Icon Id='ProductICO' SourceFile='assets\brand\Product.ico'/>
         <Property Id='ARPPRODUCTICON' Value='ProductICO' />
 
         <Property Id='ARPHELPLINK' Value='https://github.com/shubhamai/StableView'/>
@@ -276,7 +276,7 @@
           about customization.
           The banner BMP dimensions are 493 x 58 pixels.
         -->
-        <WixVariable Id='WixUIBannerBmp' Value='wix\Banner.bmp'/>
+        <WixVariable Id='WixUIBannerBmp' Value='assets\brand\Banner.bmp'/>
 
         
         <!--
@@ -286,7 +286,7 @@
           customization.
           The dialog BMP dimensions are 493 x 312 pixels.
         -->
-        <WixVariable Id='WixUIDialogBmp' Value='wix\Dialog.bmp'/>
+        <WixVariable Id='WixUIDialogBmp' Value='assets\brand\Dialog.bmp'/>
 
     </Product>
 

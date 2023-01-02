@@ -1,4 +1,4 @@
-// #![windows_subsystem = "windows"]
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod camera;
 mod enums;
@@ -16,12 +16,11 @@ use crate::structs::{
     camera::ThreadedCamera,
     config::AppConfig,
 };
-use iced::{
-    window::{self, Icon},
-    Application, Settings,
+use iced::{window, Application, Settings};
+use std::sync::{
+    atomic::{AtomicBool, AtomicU32},
+    Arc,
 };
-use std::sync::atomic::AtomicU32;
-use std::sync::{atomic::AtomicBool, Arc};
 use tracing::Level;
 
 fn main() -> iced::Result {
@@ -64,8 +63,10 @@ fn main() -> iced::Result {
             decorations: true,
             transparent: false,
             always_on_top: false,
-            // icon: Some(Icon::from_file_data(include_bytes!("../wix/Product.ico"), None).unwrap()),
-            icon: None,
+            icon: Some(
+                window::Icon::from_file_data(include_bytes!("../assets/brand/Product.ico"), None)
+                    .unwrap(),
+            ),
             visible: true,
         },
         flags: HeadTracker {
@@ -91,7 +92,7 @@ fn main() -> iced::Result {
             run_headtracker: Arc::new(AtomicBool::new(false)),
             should_exit: false,
         },
-        default_font: None,
+        default_font: Some(include_bytes!("../assets/fonts/Silkscreen-Regular.ttf")),
         default_text_size: 16,
         text_multithreading: false,
         antialiasing: false,

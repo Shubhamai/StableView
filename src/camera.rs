@@ -31,7 +31,7 @@ impl ThreadedCamera {
                         device_info.index()
                     );
                     devices_list.insert(
-                        device_info.human_name(),
+                        format!("{:<4}", device_info.human_name()),
                         device_info.index().as_index().unwrap() as i32,
                     );
                 }
@@ -41,7 +41,7 @@ impl ThreadedCamera {
                     "Unable to read camera devices : {:?}. Setting default (Deault Device, 0)",
                     error
                 );
-                devices_list.insert("Deault Device".to_string(), 0);
+                devices_list.insert("Default Cam".to_string(), 0);
             }
         };
 

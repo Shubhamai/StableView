@@ -102,11 +102,11 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let camera_row = Container::new(
         Column::new()
             .push({
-                let handle = iced::widget::svg::Handle::from_path("wix/background.svg");
-                iced::widget::svg(handle)
-                    .width(Length::Fill)
-                    .height(Length::Units(200))
-                    .style(iced::theme::Svg::Default)
+                iced::widget::image::viewer(iced::widget::image::Handle::from_path(
+                    "assets/brand/no_video.png",
+                ))
+                .width(Length::Fill)
+                .height(Length::Units(200))
             })
             .push(vertical_space(Length::Units(32)))
             .push(Container::new(
@@ -123,14 +123,14 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                             headtracker.selected_camera.clone(),
                             Message::Camera,
                         )
-                        .width(Length::FillPortion(65)),
+                        .width(Length::FillPortion(50)),
                     )
                     .push(horizontal_space(Length::FillPortion(10)))
                     .push(
-                        toggler("Hide".to_string(), hide_camera, Message::HideCamera)
+                        toggler("Hide Cam".to_string(), hide_camera, Message::HideCamera)
                             .size(24)
-                            .spacing(1)
-                            .width(Length::FillPortion(25)),
+                            .spacing(2)
+                            .width(Length::FillPortion(40)),
                     )
                     .padding(1),
             )),
@@ -197,8 +197,7 @@ fn footer() -> Container<'static, Message, Renderer> {
             APP_NAME, APP_VERSION, APP_AUTHORS
         )))
         .push(github_button)
-        .push(logs_button)
-        .push(Text::new("  "));
+        .push(logs_button);
 
     Container::new(footer_row)
         .width(Length::Fill)

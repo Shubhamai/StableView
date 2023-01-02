@@ -5,7 +5,8 @@ use std::{
 };
 
 use iced::{
-    executor, widget::Container, Application, Command, Element, Length, Subscription, Theme,
+    application, executor, theme, widget::Container, Application, Color, Command, Element, Length,
+    Subscription, Theme,
 };
 use iced_native::{window, Event};
 
@@ -40,6 +41,21 @@ impl Application for HeadTracker {
 
     fn should_exit(&self) -> bool {
         self.should_exit
+    }
+
+    fn theme(&self) -> Theme {
+        Theme::Light
+    }
+
+    fn style(&self) -> theme::Application {
+        fn dark_background(_theme: &Theme) -> application::Appearance {
+            application::Appearance {
+                background_color: Color::from_rgb8(245, 245, 245),
+                text_color: Color::BLACK,
+            }
+        }
+
+        theme::Application::from(dark_background as fn(&Theme) -> _)
     }
 
     fn update(&mut self, message: Message) -> Command<Message> {

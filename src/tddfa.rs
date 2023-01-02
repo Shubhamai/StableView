@@ -42,10 +42,10 @@ impl Tddfa {
             .new_session_builder()?
             .with_optimization_level(GraphOptimizationLevel::All)?
             .with_number_threads(1)?
-            .with_model_from_memory(include_bytes!("../assets/mb05_120x120.onnx"))?;
+            .with_model_from_memory(include_bytes!("../assets/model/mb05_120x120.onnx"))?;
 
         let data =
-            serde_json::from_slice::<Jsondata>(include_bytes!("../assets/data.json")).unwrap();
+            serde_json::from_slice::<Jsondata>(include_bytes!("../assets/model/data.json")).unwrap();
 
         let mean_array: [f32; 62] = data.mean.as_slice().try_into().unwrap();
         let std_array: [f32; 62] = data.std.as_slice().try_into().unwrap();
