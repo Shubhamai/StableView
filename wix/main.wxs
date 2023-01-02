@@ -33,7 +33,7 @@
 
     <Product
         Id='*'
-        Name='Head Tracker'
+        Name='StableView'
         UpgradeCode='4770A1A9-9FF8-4001-8434-3CA9C89461AD'
         Manufacturer='Shubhamai'
         Language='1033'
@@ -42,7 +42,7 @@
 
         <Package Id='*'
             Keywords='Installer'
-            Description='Head Tracking utility'
+            Description='Head Tracking application using only webcam'
             Manufacturer='Shubhamai'
             InstallerVersion='450'
             Languages='1033'
@@ -59,11 +59,11 @@
 
         <!-- <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1'/> -->
         <Media Id="1" Cabinet="Sample.cab" EmbedCab="yes" DiskPrompt="Installation Media #1" />
-        <Property Id='DiskPrompt' Value='Head Tracker Installation'/>
+        <Property Id='DiskPrompt' Value='StableView Installation'/>
 
         <Directory Id='TARGETDIR' Name='SourceDir'>
             <Directory Id='$(var.PlatformProgramFilesFolder)' Name='PFiles'>
-                <Directory Id='APPLICATIONFOLDER' Name='Head Tracker'>
+                <Directory Id='APPLICATIONFOLDER' Name='StableView'>
                     <!--
                       Disabling the license sidecar file in the installer is a two step process:
                       1. Comment out or remove the `Component` tag along with its contents.
@@ -92,7 +92,7 @@
                         <Component Id='binary0' Guid='*' Win64='$(var.Win64)'>
                             <File
                                 Id='exe0'
-                                Name='headtracker.exe'
+                                Name='stableview.exe'
                                 DiskId='1'
                                 Source='target\$(var.Profile)\StableView.exe'
                                 KeyPath='yes'/>
@@ -148,7 +148,7 @@
                 </Directory>
             </Directory>
 			<Directory Id="ProgramMenuFolder">
-				<Directory Id="ApplicationProgramsFolder" Name="Head tracker"/>
+				<Directory Id="ApplicationProgramsFolder" Name="StableView"/>
 			</Directory>
 			<Directory Id="DesktopFolder" Name="Desktop">
 			</Directory>
@@ -157,26 +157,26 @@
 		<DirectoryRef Id="ApplicationProgramsFolder">
 			<Component Id="AppStart" Guid="d5886d8d-009d-4468-9db3-1ebc72f7c201">
 				<Shortcut Id="AppStartShortcut" 
-					Name="Head Tracker" 
-					Description="Head Tracking utility"
-					Target="[APPLICATIONFOLDER]bin\headtracker.exe"
+					Name="StableView" 
+					Description="Head Tracking application using only webcam"
+					Target="[APPLICATIONFOLDER]bin\stableview.exe"
 					WorkingDirectory="APPLICATIONROOTDIRECTORY"
 					Icon="SetupIcon"/>
 				<RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
-				<RegistryValue Root="HKCU" Key="Software\shubhamai\headtracker" Name="StartShortcut" Type="integer" Value="1" KeyPath="yes"/>
+				<RegistryValue Root="HKCU" Key="Software\shubhamai\stableview" Name="StartShortcut" Type="integer" Value="1" KeyPath="yes"/>
 		   </Component>
 		</DirectoryRef>
 		
 		<DirectoryRef Id="DesktopFolder">
 		    <Component Id="AppDesk" Guid="e7261bca-c8c3-4f7f-be81-eb3a7470bc7d">
 				<Shortcut Id="AppDeskShortcut"
-					Name="Head Tracker"
-					Description="Head Tracking utility"
-					Target="[APPLICATIONFOLDER]bin\headtracker.exe"
+					Name="StableView"
+					Description="Head Tracking application using only webcam"
+					Target="[APPLICATIONFOLDER]bin\stableview.exe"
 					WorkingDirectory="APPLICATIONROOTDIRECTORY"
 					Icon="SetupIcon"/>
 				<RemoveFolder Id="DesktopFolder" On="uninstall"/>
-				<RegistryValue Root="HKCU" Key="Software\shubhamai\headtracker" Name="DeskShortcut" Type="integer" Value="1" KeyPath="yes"/>
+				<RegistryValue Root="HKCU" Key="Software\shubhamai\stableview" Name="DeskShortcut" Type="integer" Value="1" KeyPath="yes"/>
 			</Component>
 		</DirectoryRef>
 		
@@ -276,7 +276,7 @@
           about customization.
           The banner BMP dimensions are 493 x 58 pixels.
         -->
-        <WixVariable Id='WixUIBannerBmp' Value='assets\brand\Banner.bmp'/>
+        <WixVariable Id='WixUIBannerBmp' Value='assets\brand\banner.png'/>
 
         
         <!--

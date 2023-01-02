@@ -37,27 +37,35 @@
 
 # Status
 
-- The project is currently in heavy development and will have it's first alpha release soon :)
-  - Todo's :
-    - [ ] Release workflow.
-    - [ ] Error handling & removing all `.expect` and `.unwrap`.
-    - [ ] Saving app state & configuration management.
-    - [ ] Adding custom design & styles to the UI.
+**3 Jan, 2023**
+
+The project is currently in heavy development and will have it's first alpha release soon :)
+
+![progress gif](assets\updates\jan-03-2023-update.gif)
+
+- Todo's :
+  - [ ] Release workflow & auto-update.
+  - [ ] Error handling & removing all `.expect` and `.unwrap`.
+  - [ ] Saving app state, default states & configuration management.
+  - [ ] Adding custom design & styles to the UI.
 
 # Installation
 
+> Visit the [releases page](https://github.com/shubhamai/StableView/releases/latest) and download the latest version on your platform.
+
+For windows, a `.msi` installer will be provided, simply double-click on the installer and follow the installation steps. After Installing, you can simply run `StableView` from the start menu.
+
 # Features
 
-- Uses your regular old webcam with AI for head tracking.
-- Uses extremely low CPU and returns high performance.
+- Uses your regular old webcam with AI for head tracking. Uses an extremely low CPU (<3%-60fps in Ryzen 5 3600H) and returns high performance.
 - Works with [opentrack](https://github.com/opentrack/opentrack) to run on any modern simulator including Microsoft Flight Simulator, Digital Combat Simulator, Xplane & more.
 - Easy to install and _updates to newer versions with a click (in progress)_.
 
 # Shoutouts
 
-- Thanks to the authors of the paper [3DDFA_V2 : Towards Fast, Accurate and Stable 3D Dense Face Alignment](https://paperswithcode.com/paper/towards-fast-accurate-and-stable-3d-dense-1), without them, this application wouldn't have been possible, majority of the inference code is based on their work. Thanks [Jianzhu Guo](https://guojianzhu.com), [Xiangyu Zhu](http://www.cbsr.ia.ac.cn/users/xiangyuzhu/), [Yang Yang](http://www.cbsr.ia.ac.cn/users/yyang/main.htm), Fan Yang, [Zhen Lei](http://www.cbsr.ia.ac.cn/users/zlei/) and [Stan Z. Li](https://scholar.google.com/citations?user=Y-nyLGIAAAAJ).
+- Thanks to the authors of the paper [3DDFA_V2 : Towards Fast, Accurate and Stable 3D Dense Face Alignment](https://paperswithcode.com/paper/towards-fast-accurate-and-stable-3d-dense-1), without them, this application wouldn't have been possible, majority of the model inference code is based on their work. Thanks [Jianzhu Guo](https://guojianzhu.com), [Xiangyu Zhu](http://www.cbsr.ia.ac.cn/users/xiangyuzhu/), [Yang Yang](http://www.cbsr.ia.ac.cn/users/yyang/main.htm), Fan Yang, [Zhen Lei](http://www.cbsr.ia.ac.cn/users/zlei/) and [Stan Z. Li](https://scholar.google.com/citations?user=Y-nyLGIAAAAJ).
 - [Sniffer](https://github.com/GyulyVGC/sniffnet/) for GUI inspirations, code structure, readme, etc.
-- [ChatGPT](https://openai.com/blog/chatgpt/) for assisting me to convert the python code to rust.
+- [ChatGPT](https://openai.com/blog/chatgpt/) for assisting me to convert some of the python code to rust.
 
 ## Bug Report
 
