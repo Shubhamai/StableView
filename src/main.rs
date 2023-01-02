@@ -64,7 +64,8 @@ fn main() -> iced::Result {
             decorations: true,
             transparent: false,
             always_on_top: false,
-            icon: Some(Icon::from_file_data(include_bytes!("../wix/Product.ico"), None).unwrap()),
+            // icon: Some(Icon::from_file_data(include_bytes!("../wix/Product.ico"), None).unwrap()),
+            icon: None,
             visible: true,
         },
         flags: HeadTracker {
@@ -84,8 +85,10 @@ fn main() -> iced::Result {
                 .keys()
                 .next()
                 .cloned(),
+            hide_camera: true,
+
             headtracker_thread: None,
-            keep_running: Arc::new(AtomicBool::new(false)),
+            run_headtracker: Arc::new(AtomicBool::new(false)),
             should_exit: false,
         },
         default_font: None,

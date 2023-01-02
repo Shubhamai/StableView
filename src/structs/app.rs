@@ -43,9 +43,10 @@ pub struct HeadTracker {
 
     pub camera_list: HashMap<String, i32>,
     pub selected_camera: Option<String>,
+    pub hide_camera: bool,
 
     pub headtracker_thread: Option<thread::JoinHandle<()>>,
-    pub keep_running: sync::Arc<AtomicBool>,
+    pub run_headtracker: sync::Arc<AtomicBool>,
 
     pub should_exit: bool,
 }

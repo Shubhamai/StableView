@@ -3,8 +3,8 @@ use std::{borrow::Cow, sync::atomic::Ordering};
 use iced::{
     alignment::{self, Horizontal, Vertical},
     widget::{
-        button, horizontal_space, pick_list, rule, slider, text, text_input, vertical_space,
-        Column, Container, Row, Text,
+        button, horizontal_space, pick_list, rule, slider, text, text_input, toggler,
+        vertical_space, Column, Container, Row, Text,
     },
     Alignment, Length, Renderer,
 };
@@ -36,32 +36,35 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let input_ip_2 = headtracker.ip_arr_2.as_str();
     let input_ip_3 = headtracker.ip_arr_3.as_str();
     let port = headtracker.port.as_str();
+    let hide_camera = headtracker.hide_camera;
 
-    let min_cutoff_slider = slider(0..=50, min_cutoff, Message::MinCutoffSliderChanged);
-    let beta_slider = slider(0..=50, beta, Message::BetaSliderChanged);
-    let fps_slider = slider(15..=120, fps, Message::FPSSliderChanged);
+    let min_cutoff_slider = slider(0..=50, min_cutoff, Message::MinCutoffSliderChanged).step(1);
+    let beta_slider = slider(0..=50, beta, Message::BetaSliderChanged).step(1);
+    let fps_slider = slider(15..=120, fps, Message::FPSSliderChanged).step(1);
 
     let toggle_start = {
-        let label = match headtracker.keep_running.load(Ordering::SeqCst) {
+        let label = match headtracker.run_headtracker.load(Ordering::SeqCst) {
             true => "Stop",
             false => "Start",
         };
-
-        button(text(label)).on_press(Message::Toggle)
+        button(
+            text(label)
+                .vertical_alignment(Vertical::Center)
+                .horizontal_alignment(Horizontal::Center),
+        )
+        .height(Length::Units(40))
+        .width(Length::Units(180))
+        .on_press(Message::Toggle)
     };
 
     let sliders_row = Container::new(
         Column::new()
-            .push(Container::new(
-                Row::new()
-                    .push(horizontal_space(Length::FillPortion(50)))
-                    .push(button(text("Reset to Default").size(15)).on_press(Message::Toggle))
-                    .width(Length::FillPortion(50)),
-            ))
-            .push(vertical_space(Length::Units(30)))
             .push(text("Filter Settings").size(15))
+            .push(vertical_space(Length::Units(20)))
+            .push(text("Speed").size(14))
             .push(Container::new(min_cutoff_slider).width(Length::FillPortion(2)))
             .push(vertical_space(Length::Units(10)))
+            .push(text("Smooth").size(14))
             .push(Container::new(beta_slider).width(Length::FillPortion(2)))
             .push(vertical_space(Length::Units(30)))
             .push(text("FPS").size(15))
@@ -92,48 +95,49 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                         text_input("4242", port, Message::InputPort).width(Length::FillPortion(15)),
                     ),
             ))
-            .push(vertical_space(Length::Units(30)))
-            .push(Container::new(
-                Row::new()
-                    .push(horizontal_space(Length::FillPortion(10)))
-                    .push(
-                        button(text("Save").horizontal_alignment(Horizontal::Center))
-                            .width(Length::Fill)
-                            .on_press(Message::Toggle)
-                            .width(Length::FillPortion(80)),
-                    )
-                    .push(horizontal_space(Length::FillPortion(10))),
-            ))
-            .push(Container::new(
-                Row::new()
-                    .push(horizontal_space(Length::FillPortion(26)))
-                    .push(
-                        text("Unsaved changes")
-                            .size(15)
-                            .width(Length::FillPortion(48)),
-                    )
-                    .push(horizontal_space(Length::FillPortion(26))),
-            )),
+            .push(vertical_space(Length::Units(30))),
     )
     .padding(40);
 
     let camera_row = Container::new(
-        Row::new().push(pick_list(
-            Cow::from(
-                headtracker
-                    .camera_list
-                    .keys()
-                    .cloned()
-                    .collect::<Vec<String>>(),
-            ),
-            headtracker.selected_camera.clone(),
-            Message::Camera,
-        )), // .push(
-            //     Container::new(button(text("Hide Camera")).on_press(Message::Toggle))
-            //         .width(Length::FillPortion(5)),
-            // ),
+        Column::new()
+            .push({
+                let handle = iced::widget::svg::Handle::from_path("wix/background.svg");
+                iced::widget::svg(handle)
+                    .width(Length::Fill)
+                    .height(Length::Units(200))
+                    .style(iced::theme::Svg::Default)
+            })
+            .push(vertical_space(Length::Units(32)))
+            .push(Container::new(
+                Row::new()
+                    .push(
+                        pick_list(
+                            Cow::from(
+                                headtracker
+                                    .camera_list
+                                    .keys()
+                                    .cloned()
+                                    .collect::<Vec<String>>(),
+                            ),
+                            headtracker.selected_camera.clone(),
+                            Message::Camera,
+                        )
+                        .width(Length::FillPortion(65)),
+                    )
+                    .push(horizontal_space(Length::FillPortion(10)))
+                    .push(
+                        toggler("Hide".to_string(), hide_camera, Message::HideCamera)
+                            .size(24)
+                            .spacing(1)
+                            .width(Length::FillPortion(25)),
+                    )
+                    .padding(1),
+            )),
     )
-    .padding(40);
+    .padding(40)
+    .center_x()
+    .center_y();
 
     let start_button_row = Container::new(toggle_start)
         .width(Length::Fill)
@@ -148,8 +152,15 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let body = Container::new(
         Column::new()
             .width(Length::Fill)
-            .push(controls_row)
-            .push(start_button_row),
+            .push(vertical_space(Length::Units(40)))
+            .push(Container::new(
+                Row::new()
+                    .push(horizontal_space(Length::FillPortion(2)))
+                    .push(button(text("Reset to Default").size(15)).on_press(Message::Toggle))
+                    .push(horizontal_space(Length::Units(40))),
+            ))
+            .push(controls_row.width(Length::FillPortion(50)))
+            .push(start_button_row.width(Length::FillPortion(50))),
     )
     .height(Length::FillPortion(HEIGHT_BODY));
 

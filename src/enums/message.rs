@@ -12,6 +12,7 @@ pub enum Message {
     InputIP3(String),
     InputPort(String),
     Camera(String),
+    HideCamera(bool),
     OpenGithub,
     OpenLogs,
     EventOccurred(Event),
