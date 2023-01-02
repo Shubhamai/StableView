@@ -41,7 +41,7 @@
 
 The project is currently in heavy development and will have it's first alpha release soon :)
 
-![progress gif](assets\updates\jan-03-2023-update.gif)
+![progress gif](assets/updates/jan-03-2023-update.gif)
 
 - Todo's :
   - [ ] Release workflow & auto-update.
