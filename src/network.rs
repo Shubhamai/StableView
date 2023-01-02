@@ -3,22 +3,27 @@ use crate::structs::network::SocketNetwork;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 
 impl SocketNetwork {
-    pub fn new(ip_arr: (u8, u8, u8, u8), port: u16) -> Self {
+    pub fn new(
+        ip_arr_0: String,
+        ip_arr_1: String,
+        ip_arr_2: String,
+        ip_arr_3: String,
+        port: String,
+    ) -> Self {
         tracing::info!(
             "Sending data to {}.{}.{}.{} on port {port}",
-            ip_arr.0,
-            ip_arr.1,
-            ip_arr.2,
-            ip_arr.3
+            ip_arr_0,
+            ip_arr_1,
+            ip_arr_2,
+            ip_arr_3
         );
 
-        let address = SocketAddr::new(
-            IpAddr::V4(Ipv4Addr::new(ip_arr.0, ip_arr.1, ip_arr.2, ip_arr.3)),
-            port,
+        let address = format!(
+            "{}.{}.{}.{}:{}",
+            ip_arr_0, ip_arr_1, ip_arr_2, ip_arr_3, port
         );
 
-        let socket_network = UdpSocket::bind("0.0.0.0:0")
-            .expect("failed to bind UDP socket");
+        let socket_network = UdpSocket::bind("0.0.0.0:0").expect("failed to bind UDP socket");
 
         Self {
             address,
@@ -38,17 +43,24 @@ impl SocketNetwork {
         ];
 
         // Convert an array to f64 to array of u8
-        let out = unsafe { std::slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * 4) };
+        let out =
+            unsafe { std::slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * 10) };
 
         // Send data
         self.socket_network
-            .send_to(&out, self.address)
+            .send_to(&out, &self.address)
             .expect("failed to send data");
     }
 }
 
 #[test]
 pub fn test_socket_network() {
-    let mut socket_network = SocketNetwork::new((127, 0, 0, 1), 4242);
+    let mut socket_network = SocketNetwork::new(
+        "127".to_owned(),
+        "0".to_owned(),
+        "0".to_owned(),
+        "1".to_owned(),
+        "4242".to_owned(),
+    );
     socket_network.send([1., 2., 3., 4., 5., 6.])
 }

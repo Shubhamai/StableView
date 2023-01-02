@@ -16,15 +16,17 @@ use crate::structs::{
     camera::ThreadedCamera,
     config::AppConfig,
 };
-use iced::window::Icon;
-use iced::{window, Application, Settings};
+use iced::{
+    window::{self, Icon},
+    Application, Settings,
+};
+use std::sync::atomic::AtomicU32;
 use std::sync::{atomic::AtomicBool, Arc};
 use tracing::Level;
 
 fn main() -> iced::Result {
-    let cfg: AppConfig = confy::load(APP_NAME, "config").unwrap();
-    let cfg_filepath = confy::get_configuration_file_path(APP_NAME, "config").unwrap();
-    confy::store(APP_NAME, "config", &AppConfig::default()).unwrap();
+    // let cfg: AppConfig = confy::load(APP_NAME, "config").unwrap();
+    // confy::store(APP_NAME, "config", &AppConfig::default()).unwrap();
 
     let file_appender = tracing_appender::rolling::never(
         // ? Adding organization name
@@ -33,7 +35,7 @@ fn main() -> iced::Result {
             .data_dir()
             .to_str()
             .unwrap(), // * Similar path is also used by confy https://github.com/rust-cli/confy/blob/master/src/lib.rs#L316
-        cfg.log_filename.clone(),
+        "logs.txt",
     );
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 
@@ -44,9 +46,12 @@ fn main() -> iced::Result {
         .init(); // ! Need to have only 1 log file which resets daily
 
     tracing::info!("Version {} on {}", APP_VERSION, std::env::consts::OS);
-    tracing::info!("The configuration file path is: {:#?}", cfg_filepath);
-    tracing::info!("The logs file name is: {}", cfg.log_filename);
-    tracing::info!("Config : {:#?}", cfg);
+    tracing::info!(
+        "The configuration file path is: {:#?}",
+        confy::get_configuration_file_path(APP_NAME, "config").unwrap()
+    );
+    tracing::info!("The logs file name is: {}", "logs.txt");
+    // tracing::info!("Config : {:#?}", cfg);
 
     HeadTracker::run(Settings {
         id: None,
@@ -59,22 +64,29 @@ fn main() -> iced::Result {
             decorations: true,
             transparent: false,
             always_on_top: false,
-            // icon: Some(Icon::from_file_data(include_bytes!("../wix/Product.ico"), None).unwrap()),
-            icon: None,
+            icon: Some(Icon::from_file_data(include_bytes!("../wix/Product.ico"), None).unwrap()),
             visible: true,
         },
         flags: HeadTracker {
-            keep_running: Arc::new(AtomicBool::new(false)),
-            beta: Arc::new(AtomicF32::new(cfg.min_cutoff)),
-            min_cutoff: Arc::new(AtomicF32::new(cfg.beta)),
-            cfg,
-            should_exit: false,
+            min_cutoff: Arc::new(AtomicF32::new(0.0025)),
+            beta: Arc::new(AtomicF32::new(0.01)),
+
+            ip_arr_0: "127".to_string(),
+            ip_arr_1: "0".to_string(),
+            ip_arr_2: "0".to_string(),
+            ip_arr_3: "1".to_string(),
+            port: "4242".to_string(),
+
+            fps: Arc::new(AtomicU32::new(60)),
             camera_list: ThreadedCamera::get_available_cameras().unwrap(),
             selected_camera: ThreadedCamera::get_available_cameras()
                 .unwrap()
                 .keys()
                 .next()
                 .cloned(),
+            headtracker_thread: None,
+            keep_running: Arc::new(AtomicBool::new(false)),
+            should_exit: false,
         },
         default_font: None,
         default_text_size: 16,

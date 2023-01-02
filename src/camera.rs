@@ -83,7 +83,7 @@ impl ThreadedCamera {
     }
 
     pub fn shutdown(&mut self) {
-        println!("Shutting down camera thread...");
+        tracing::info!("Shutting down camera thread...");
 
         self.keep_running.store(false, Ordering::SeqCst);
         self.cam_thread

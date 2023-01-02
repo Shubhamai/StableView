@@ -45,6 +45,7 @@ mod tests {
 
     #[test]
     fn test_get_extreme() {
-        let _result = get_extreme_value(&[1., 2., 3.], Extreme::Max);
+        assert_eq!(get_extreme_value(&[1., 2., 3.], Extreme::Max), 3.);
+        assert_eq!(get_extreme_value(&[1., 2., 3.], Extreme::Min), 1.)
     }
 }

@@ -1,6 +1,7 @@
 use std::{
     sync::{atomic::Ordering, mpsc},
     thread,
+    time::{Duration, Instant},
 };
 
 use iced::{
@@ -46,31 +47,44 @@ impl Application for HeadTracker {
             Message::Toggle => {
                 if !self.keep_running.load(Ordering::SeqCst) {
                     self.keep_running.store(true, Ordering::SeqCst);
-                    let cloned_keep_running = self.keep_running.clone();
-                    let cloned_min_cutoff = self.min_cutoff.clone();
-                    let cloned_beta = self.beta.clone();
+
+                    let min_cutoff = self.min_cutoff.clone();
+                    let beta = self.beta.clone();
+                    let (ip_arr_0, ip_arr_1, ip_arr_2, ip_arr_3, port) = (
+                        self.ip_arr_0.clone(),
+                        self.ip_arr_1.clone(),
+                        self.ip_arr_2.clone(),
+                        self.ip_arr_3.clone(),
+                        self.port.clone(),
+                    );
                     let camera_index = *self
                         .camera_list
                         .get(self.selected_camera.as_ref().unwrap())
                         .unwrap();
-                    let cloned_cfg = self.cfg.clone();
+                    let fps = self.fps.clone();
 
-                    thread::spawn(move || {
-                        let mut euro_filter =
-                            EuroDataFilter::new(cloned_cfg.min_cutoff, cloned_cfg.beta);
+                    let keep_running = self.keep_running.clone();
+
+                    self.headtracker_thread = Some(thread::spawn(move || {
+                        let mut euro_filter = EuroDataFilter::new(
+                            min_cutoff.load(Ordering::SeqCst),
+                            beta.load(Ordering::SeqCst),
+                        );
                         let mut socket_network =
-                            SocketNetwork::new(cloned_cfg.ip_addr, cloned_cfg.port);
+                            SocketNetwork::new(ip_arr_0, ip_arr_1, ip_arr_2, ip_arr_3, port);
 
                         // Create a channel to communicate between threads
                         let (tx, rx) = mpsc::channel();
                         let mut thr_cam = ThreadedCamera::start_camera_thread(tx, camera_index);
 
-                        let mut head_pose = ProcessHeadPose::new(120, 60);
+                        let mut head_pose = ProcessHeadPose::new(120);
 
                         let mut frame = rx.recv().unwrap();
                         let mut data;
 
-                        while cloned_keep_running.load(Ordering::SeqCst) {
+                        while keep_running.load(Ordering::SeqCst) {
+                            let start_time = Instant::now();
+
                             frame = match rx.try_recv() {
                                 Ok(result) => result,
                                 Err(_) => frame.clone(),
@@ -80,27 +94,53 @@ impl Application for HeadTracker {
 
                             data = euro_filter.filter_data(
                                 data,
-                                Some(cloned_min_cutoff.load(Ordering::SeqCst)),
-                                Some(cloned_beta.load(Ordering::SeqCst)),
+                                Some(min_cutoff.load(Ordering::SeqCst)),
+                                Some(beta.load(Ordering::SeqCst)),
                             );
 
                             socket_network.send(data);
+
+                            let elapsed_time = start_time.elapsed();
+                            let delay_time = ((1000 / fps.load(Ordering::SeqCst)) as f32
+                                - elapsed_time.as_millis() as f32)
+                                .max(0.);
+                            thread::sleep(Duration::from_millis(delay_time.round() as u64));
                         }
 
                         thr_cam.shutdown();
-                    });
+                    }));
                 } else {
-                    self.keep_running.store(false, Ordering::SeqCst)
-                    // println!("Thread already running")
+                    self.keep_running.store(false, Ordering::SeqCst);
+                    self.headtracker_thread
+                        .take()
+                        .expect("Called stop on non-running thread")
+                        .join()
+                        .expect("Could not join spawned thread");
                 }
             }
-            Message::MinCutoffSliderChanged(value) => self
-                .min_cutoff
-                .store(value as f32 / 10000., Ordering::SeqCst),
-            Message::BetaSliderChanged(value) => {
-                self.beta.store(value as f32 / 1000., Ordering::SeqCst)
+            Message::MinCutoffSliderChanged(value) => {
+                if value == 0 {
+                    self.min_cutoff.store(0., Ordering::SeqCst)
+                } else {
+                    self.min_cutoff
+                        .store(1. / ((value * value) as f32), Ordering::SeqCst)
+                }
             }
-
+            Message::BetaSliderChanged(value) => {
+                if value == 0 {
+                    self.beta.store(0., Ordering::SeqCst)
+                } else {
+                    self.beta
+                        .store(1. / ((value * value) as f32), Ordering::SeqCst)
+                }
+            }
+            Message::FPSSliderChanged(fps) => self.fps.store(fps, Ordering::SeqCst),
+            Message::InputIP0(ip_arr_0) => self.ip_arr_0 = ip_arr_0,
+            Message::InputIP1(ip_arr_1) => self.ip_arr_1 = ip_arr_1,
+            Message::InputIP2(ip_arr_2) => self.ip_arr_2 = ip_arr_2,
+            Message::InputIP3(ip_arr_3) => self.ip_arr_3 = ip_arr_3,
+            Message::InputPort(port) => self.port = port,
+            Message::Camera(camera_name) => self.selected_camera = Some(camera_name),
             Message::OpenGithub => {
                 #[cfg(target_os = "windows")]
                 std::process::Command::new("explorer")
@@ -154,13 +194,17 @@ impl Application for HeadTracker {
                     .spawn()
                     .unwrap();
             }
-            Message::InputIP(value) => println!("{value}"),
-            Message::Camera(camera_name) => self.selected_camera = Some(camera_name),
             Message::EventOccurred(event) => {
                 if Event::Window(window::Event::CloseRequested) == event {
-                    self.keep_running.store(false, Ordering::SeqCst);
-                    // thread::sleep(Duration::from_millis(100));
-                    confy::store(APP_NAME, "config", self.cfg.clone()).unwrap();
+                    if self.keep_running.load(Ordering::SeqCst) {
+                        self.keep_running.store(false, Ordering::SeqCst);
+                        self.headtracker_thread
+                            .take()
+                            .expect("Called stop on non-running thread")
+                            .join()
+                            .expect("Could not join spawned thread");
+                    }
+                    // confy::store(APP_NAME, "config", self.cfg.clone()).unwrap();
                     self.should_exit = true;
                 }
             }

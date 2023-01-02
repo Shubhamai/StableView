@@ -4,6 +4,7 @@ use std::{
         self,
         atomic::{AtomicBool, AtomicU32, Ordering},
     },
+    thread,
 };
 
 use super::config::AppConfig;
@@ -28,13 +29,23 @@ impl AtomicF32 {
     }
 }
 
-#[derive(Clone)]
 pub struct HeadTracker {
-    pub keep_running: sync::Arc<AtomicBool>,
-    pub beta: sync::Arc<AtomicF32>,
     pub min_cutoff: sync::Arc<AtomicF32>,
-    pub cfg: AppConfig,
-    pub should_exit: bool,
+    pub beta: sync::Arc<AtomicF32>,
+
+    pub ip_arr_0: String,
+    pub ip_arr_1: String,
+    pub ip_arr_2: String,
+    pub ip_arr_3: String,
+    pub port: String,
+
+    pub fps: sync::Arc<AtomicU32>,
+
     pub camera_list: HashMap<String, i32>,
     pub selected_camera: Option<String>,
+
+    pub headtracker_thread: Option<thread::JoinHandle<()>>,
+    pub keep_running: sync::Arc<AtomicBool>,
+
+    pub should_exit: bool,
 }

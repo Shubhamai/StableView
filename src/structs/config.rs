@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
-    pub log_filename: String,
     pub ip_addr: (u8, u8, u8, u8),
     pub port: u16,
     pub min_cutoff: f32,
@@ -17,7 +16,6 @@ impl Default for AppConfig {
     fn default() -> Self {
         AppConfig {
             // ? Adding log directory path might lead to un-anonymous logs
-            log_filename: "logs.txt".to_string(),
             ip_addr: (127, 0, 0, 1),
             port: 4242,
             min_cutoff: 0.0025,

@@ -1,6 +1,6 @@
-use std::net::{SocketAddr, UdpSocket};
+use std::net::UdpSocket;
 
 pub struct SocketNetwork {
-    pub address: SocketAddr,
+    pub address: String,
     pub socket_network: UdpSocket,
 }

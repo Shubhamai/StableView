@@ -4,20 +4,15 @@ use crate::structs::{pose::ProcessHeadPose, tddfa::Tddfa};
 use crate::utils::headpose::{calc_pose, gen_point2d};
 
 use opencv::prelude::Mat;
-use std::{
-    thread,
-    time::{Duration, Instant},
-};
 
 impl ProcessHeadPose {
-    pub fn new(image_size: i32, fps: u128) -> Self {
+    pub fn new(image_size: i32) -> Self {
         let tddfa = Tddfa::new(image_size).unwrap();
 
         Self {
             tddfa,
             pts_3d: vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
             face_box: [150., 150., 400., 400.],
-            fps,
         }
     }
 
@@ -53,8 +48,6 @@ impl ProcessHeadPose {
     }
 
     pub fn single_iter(&mut self, frame: &Mat) -> [f32; 6] {
-        let start_time = Instant::now();
-
         let (mut param, mut roi_box) = self
             .tddfa
             .run(frame, self.face_box, &self.pts_3d, CropPolicy::Landmark)
@@ -83,17 +76,13 @@ impl ProcessHeadPose {
         let (centroid, distance) = self.get_coordintes_and_depth(pose, distance, point2d, &roi_box);
 
         let data = [
-            centroid[0] - 300.,
-            -centroid[1] - 300.,
+            centroid[0],
+            -centroid[1],
             distance,
             pose[0],
             -pose[1],
             pose[2],
         ];
-
-        let elapsed_time = start_time.elapsed();
-        let delay_time = ((1000 / self.fps) as f32 - elapsed_time.as_millis() as f32).max(0.);
-        thread::sleep(Duration::from_millis(delay_time.round() as u64));
 
         data
     }
@@ -106,14 +95,20 @@ pub fn test_process_head_pose() {
     use crate::structs::{camera::ThreadedCamera, network::SocketNetwork};
     use std::sync::mpsc;
 
-    let euro_filter = EuroDataFilter::new(0.0025, 0.01);
-    let socket_network = SocketNetwork::new((127, 0, 0, 1), 4242);
+    let _euro_filter = EuroDataFilter::new(0.0025, 0.01);
+    let _socket_network = SocketNetwork::new(
+        "127".to_owned(),
+        "0".to_owned(),
+        "0".to_owned(),
+        "1".to_owned(),
+        "4242".to_owned(),
+    );
 
-    let (tx, rx) = mpsc::channel();
+    let (tx, _rx) = mpsc::channel();
 
     let mut thr_cam = ThreadedCamera::start_camera_thread(tx, 0);
 
-    let mut head_pose = ProcessHeadPose::new(120, 60);
+    let _head_pose = ProcessHeadPose::new(120);
 
     thr_cam.shutdown();
 }

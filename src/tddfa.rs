@@ -19,11 +19,7 @@ use onnxruntime::{
     tensor::OrtOwnedTensor,
     GraphOptimizationLevel,
 };
-use std::{
-    error::Error,
-    ops::Deref,
-    sync::{Arc, Mutex},
-};
+use std::{error::Error, ops::Deref};
 
 use once_cell::sync::Lazy;
 use opencv::{
@@ -32,22 +28,21 @@ use opencv::{
     prelude::{Mat, MatTraitConstManual},
 };
 
-static ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
-    Environment::builder()
-        .with_name("Landmark Detection")
-        .with_log_level(onnxruntime::LoggingLevel::Warning)
-        .build()
-        .unwrap()
-});
-
 impl Tddfa {
     pub fn new(size: i32) -> Result<Self, Box<dyn Error>> {
+        static ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
+            Environment::builder()
+                .with_name("Landmark Detection")
+                .with_log_level(onnxruntime::LoggingLevel::Warning)
+                .build()
+                .unwrap()
+        });
+
         let landmark_model = ENVIRONMENT
             .new_session_builder()?
             .with_optimization_level(GraphOptimizationLevel::All)?
             .with_number_threads(1)?
             .with_model_from_memory(include_bytes!("../assets/mb05_120x120.onnx"))?;
-        let landmark_model = Arc::new(Mutex::new(landmark_model));
 
         let data =
             serde_json::from_slice::<Jsondata>(include_bytes!("../assets/data.json")).unwrap();
@@ -124,8 +119,7 @@ impl Tddfa {
         let model_input = self.get_model_input(input_frame, &roi_box);
 
         // Inference
-        let mut landmark_model = self.landmark_model.try_lock().unwrap(); // * unblocking lock
-        let param: Vec<OrtOwnedTensor<f32, _>> = landmark_model.run(model_input).unwrap();
+        let param: Vec<OrtOwnedTensor<f32, _>> = self.landmark_model.run(model_input).unwrap();
         let param: [f32; 62] = param[0].as_slice().unwrap().try_into().unwrap();
 
         // Rescaling the output by multiplying with standard deviation and adding mean

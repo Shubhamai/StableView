@@ -3,11 +3,10 @@ use std::{borrow::Cow, sync::atomic::Ordering};
 use iced::{
     alignment::{self, Horizontal, Vertical},
     widget::{
-        button, horizontal_space, pick_list, slider, text,
-        text_input, vertical_space,  Column, Container, Row, Text,
+        button, horizontal_space, pick_list, rule, slider, text, text_input, vertical_space,
+        Column, Container, Row, Text,
     },
-
-    Alignment,  Length, Renderer, 
+    Alignment, Length, Renderer,
 };
 
 use crate::{enums::message::Message, structs::app::HeadTracker};
@@ -15,12 +14,32 @@ use crate::{enums::message::Message, structs::app::HeadTracker};
 use super::style::{APP_AUTHORS, APP_NAME, APP_VERSION, HEIGHT_BODY, HEIGHT_FOOTER};
 
 pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
-    let input_min_cutoff = (headtracker.min_cutoff.load(Ordering::SeqCst) * 10000.) as u32;
-    let input_beta = (headtracker.beta.load(Ordering::SeqCst) * 1000.) as u32;
-    let input_ip = "127";
+    let min_cutoff = {
+        if headtracker.min_cutoff.load(Ordering::SeqCst) - 0. < f32::EPSILON {
+            0
+        } else {
+            (1. / headtracker.min_cutoff.load(Ordering::SeqCst)).sqrt() as u32
+        }
+    };
 
-    let min_cutoff_slider = slider(0..=10000, input_min_cutoff, Message::MinCutoffSliderChanged);
-    let beta_slider = slider(0..=1000, input_beta, Message::BetaSliderChanged);
+    let beta = {
+        if headtracker.beta.load(Ordering::SeqCst) - 0. < f32::EPSILON {
+            0
+        } else {
+            (1. / headtracker.beta.load(Ordering::SeqCst)).sqrt() as u32
+        }
+    };
+    let fps = headtracker.fps.load(Ordering::SeqCst);
+
+    let input_ip_0 = headtracker.ip_arr_0.as_str();
+    let input_ip_1 = headtracker.ip_arr_1.as_str();
+    let input_ip_2 = headtracker.ip_arr_2.as_str();
+    let input_ip_3 = headtracker.ip_arr_3.as_str();
+    let port = headtracker.port.as_str();
+
+    let min_cutoff_slider = slider(0..=50, min_cutoff, Message::MinCutoffSliderChanged);
+    let beta_slider = slider(0..=50, beta, Message::BetaSliderChanged);
+    let fps_slider = slider(15..=120, fps, Message::FPSSliderChanged);
 
     let toggle_start = {
         let label = match headtracker.keep_running.load(Ordering::SeqCst) {
@@ -45,25 +64,32 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
             .push(vertical_space(Length::Units(10)))
             .push(Container::new(beta_slider).width(Length::FillPortion(2)))
             .push(vertical_space(Length::Units(30)))
+            .push(text("FPS").size(15))
+            .push(Container::new(fps_slider).width(Length::FillPortion(2)))
+            .push(vertical_space(Length::Units(30)))
             .push(text("IP and Port").size(15))
             .push(Container::new(
                 Row::new()
                     .spacing(5)
                     .push(
-                        text_input("IP", input_ip, Message::InputIP).width(Length::FillPortion(10)),
+                        text_input("127", input_ip_0, Message::InputIP0)
+                            .width(Length::FillPortion(10)),
                     )
                     .push(
-                        text_input("IP", input_ip, Message::InputIP).width(Length::FillPortion(5)),
+                        text_input("0", input_ip_1, Message::InputIP1)
+                            .width(Length::FillPortion(5)),
                     )
                     .push(
-                        text_input("IP", input_ip, Message::InputIP).width(Length::FillPortion(5)),
+                        text_input("0", input_ip_2, Message::InputIP2)
+                            .width(Length::FillPortion(5)),
                     )
                     .push(
-                        text_input("IP", input_ip, Message::InputIP).width(Length::FillPortion(5)),
+                        text_input("1", input_ip_3, Message::InputIP3)
+                            .width(Length::FillPortion(5)),
                     )
                     .push(text("      "))
                     .push(
-                        text_input("IP", input_ip, Message::InputIP).width(Length::FillPortion(15)),
+                        text_input("4242", port, Message::InputPort).width(Length::FillPortion(15)),
                     ),
             ))
             .push(vertical_space(Length::Units(30)))

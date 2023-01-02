@@ -133,12 +133,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_get_extreme() {
-        let result = get_extreme_value(&[1., 2., 3.], Extreme::Max);
-        println!("{result}")
-    }
-
-    #[test]
     fn test_parse_param() {
         let param = [
             0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
@@ -222,9 +216,16 @@ mod tests {
         let roi_box = [1., 2., 3., 4.];
         let size = 120.;
 
-        let _result = similar_transform(pts3d, roi_box, size);
+        let result = similar_transform(pts3d, roi_box, size);
 
-        // ! assert function here
+        assert_eq!(
+            result,
+            vec![
+                vec![0.9833333492279053, 1.0, 1.0166666507720947],
+                vec![3.950000047683716, 3.933333396911621, 3.9166667461395264],
+                vec![0.0, 0.0166666673, 0.03333334]
+            ]
+        );
     }
 
     #[test]

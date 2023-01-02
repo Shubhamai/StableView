@@ -2,10 +2,9 @@ use onnxruntime::{
     ndarray::{ArrayBase, Dim, OwnedRepr},
     session::Session,
 };
-use std::sync::{Arc, Mutex};
 
 pub struct Tddfa {
-    pub landmark_model: Arc<Mutex<Session<'static>>>,
+    pub landmark_model: Session<'static>,
     pub size: i32,
     pub mean_array: [f32; 62],
     pub std_array: [f32; 62],
