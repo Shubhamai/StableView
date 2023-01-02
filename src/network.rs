@@ -17,7 +17,7 @@ impl SocketNetwork {
             port,
         );
 
-        let socket_network = UdpSocket::bind("{ip_arr.0}.{ip_arr.1}.{ip_arr.2}.{ip_arr.3}:{port}")
+        let socket_network = UdpSocket::bind("0.0.0.0:0")
             .expect("failed to bind UDP socket");
 
         Self {
