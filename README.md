@@ -37,7 +37,7 @@
 
 # Status
 
-**3 Jan, 2023**
+**Last Updated - 3 Jan, 2023**
 
 The project is currently in heavy development and will have it's first alpha release soon :)
 
