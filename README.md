@@ -2,7 +2,7 @@
 
 <hr>
 
-<p align="center"> Easy, fast and efficient Head Tracking application using only webcam  </p>
+<p align="center"> Easy, fast and efficient Head Tracking application using only webcam ( <b>in Development, Alpha Release Soon</b> )  </p>
 
 <p align="center">
 <a href="https://github.com/shubhamai/StableView/releases/latest"><img alt="" src="https://badgen.net/badge/Download/Windows/?color=blue&icon=windows&label"/></a> 
