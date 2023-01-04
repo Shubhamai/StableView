@@ -2,7 +2,7 @@
 
 <hr>
 
-<p align="center"> Easy, fast and efficient Head Tracking application using only webcam  </p>
+<p align="center"> Easy, fast and efficient Head Tracking application using only webcam ( <b>in Development, Alpha Release Soon</b> )  </p>
 
 <p align="center">
 <a href="https://github.com/shubhamai/StableView/releases/latest"><img alt="" src="https://badgen.net/badge/Download/Windows/?color=blue&icon=windows&label"/></a> 
@@ -37,7 +37,7 @@
 
 # Status
 
-**3 Jan, 2023**
+**Last Updated - 3 Jan, 2023**
 
 The project is currently in heavy development and will have it's first alpha release soon :)
 
