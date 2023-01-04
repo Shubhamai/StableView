@@ -18,9 +18,11 @@ To set up a development environment, please follow these steps:
    git clone https://github.com/shubhamai/StableView
    ```
 
-3. Run `cargo run` to run the application without any optimizations. To run the application fully optimized, add `--release` to the command, ie. `cargo run --release`
+3. Install [opencv-rust](https://github.com/twistedfall/opencv-rust) on your system. 
 
-4. To build the `.msi` installer for windows -
+4. Run `cargo run` to run the application without any optimizations. To run the application fully optimized, add `--release` to the command, ie. `cargo run --release`
+
+5. To build the `.msi` installer for windows -
    1. First install [cargo-wix](https://github.com/volks73/cargo-wix).
    2. Run `cargo wix`. A new folder will be created in target folder containing the `.msi` file.
 
