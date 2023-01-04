@@ -33,10 +33,7 @@ pub struct HeadTracker {
     pub min_cutoff: sync::Arc<AtomicF32>,
     pub beta: sync::Arc<AtomicF32>,
 
-    pub ip_arr_0: String,
-    pub ip_arr_1: String,
-    pub ip_arr_2: String,
-    pub ip_arr_3: String,
+    pub ip: String,
     pub port: String,
 
     pub fps: sync::Arc<AtomicU32>,

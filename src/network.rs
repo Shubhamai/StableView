@@ -4,24 +4,12 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 
 impl SocketNetwork {
     pub fn new(
-        ip_arr_0: String,
-        ip_arr_1: String,
-        ip_arr_2: String,
-        ip_arr_3: String,
+        ip: String,
         port: String,
     ) -> Self {
-        tracing::info!(
-            "Sending data to {}.{}.{}.{} on port {port}",
-            ip_arr_0,
-            ip_arr_1,
-            ip_arr_2,
-            ip_arr_3
-        );
+        tracing::info!("Sending data to {} on port {}", ip, port);
 
-        let address = format!(
-            "{}.{}.{}.{}:{}",
-            ip_arr_0, ip_arr_1, ip_arr_2, ip_arr_3, port
-        );
+        let address = format!("{}:{}", ip, port);
 
         let socket_network = UdpSocket::bind("0.0.0.0:0").expect("failed to bind UDP socket");
 
@@ -56,10 +44,7 @@ impl SocketNetwork {
 #[test]
 pub fn test_socket_network() {
     let mut socket_network = SocketNetwork::new(
-        "127".to_owned(),
-        "0".to_owned(),
-        "0".to_owned(),
-        "1".to_owned(),
+        "127.0.0.1".to_owned(),
         "4242".to_owned(),
     );
     socket_network.send([1., 2., 3., 4., 5., 6.])

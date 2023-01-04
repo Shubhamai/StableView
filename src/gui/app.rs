@@ -66,11 +66,8 @@ impl Application for HeadTracker {
 
                     let min_cutoff = self.min_cutoff.clone();
                     let beta = self.beta.clone();
-                    let (ip_arr_0, ip_arr_1, ip_arr_2, ip_arr_3, port) = (
-                        self.ip_arr_0.clone(),
-                        self.ip_arr_1.clone(),
-                        self.ip_arr_2.clone(),
-                        self.ip_arr_3.clone(),
+                    let (ip, port) = (
+                        self.ip.clone(),
                         self.port.clone(),
                     );
                     let camera_index = *self
@@ -86,8 +83,7 @@ impl Application for HeadTracker {
                             min_cutoff.load(Ordering::SeqCst),
                             beta.load(Ordering::SeqCst),
                         );
-                        let mut socket_network =
-                            SocketNetwork::new(ip_arr_0, ip_arr_1, ip_arr_2, ip_arr_3, port);
+                        let mut socket_network = SocketNetwork::new(ip, port);
 
                         // Create a channel to communicate between threads
                         let (tx, rx) = mpsc::channel();
@@ -151,10 +147,7 @@ impl Application for HeadTracker {
                 }
             }
             Message::FPSSliderChanged(fps) => self.fps.store(fps, Ordering::SeqCst),
-            Message::InputIP0(ip_arr_0) => self.ip_arr_0 = ip_arr_0,
-            Message::InputIP1(ip_arr_1) => self.ip_arr_1 = ip_arr_1,
-            Message::InputIP2(ip_arr_2) => self.ip_arr_2 = ip_arr_2,
-            Message::InputIP3(ip_arr_3) => self.ip_arr_3 = ip_arr_3,
+            Message::InputIP(ip) => self.ip = ip,
             Message::InputPort(port) => self.port = port,
             Message::Camera(camera_name) => self.selected_camera = Some(camera_name),
             Message::HideCamera(value) => self.hide_camera = value,

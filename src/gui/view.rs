@@ -31,10 +31,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     };
     let fps = headtracker.fps.load(Ordering::SeqCst);
 
-    let input_ip_0 = headtracker.ip_arr_0.as_str();
-    let input_ip_1 = headtracker.ip_arr_1.as_str();
-    let input_ip_2 = headtracker.ip_arr_2.as_str();
-    let input_ip_3 = headtracker.ip_arr_3.as_str();
+    let ip = headtracker.ip.as_str();
     let port = headtracker.port.as_str();
     let hide_camera = headtracker.hide_camera;
 
@@ -71,24 +68,13 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
             .push(Container::new(fps_slider).width(Length::FillPortion(2)))
             .push(vertical_space(Length::Units(30)))
             .push(text("IP and Port").size(15))
+            // ! IPV4 and V6 support for external devices, having only two inputs, ip and port
             .push(Container::new(
                 Row::new()
                     .spacing(5)
                     .push(
-                        text_input("127", input_ip_0, Message::InputIP0)
-                            .width(Length::FillPortion(10)),
-                    )
-                    .push(
-                        text_input("0", input_ip_1, Message::InputIP1)
-                            .width(Length::FillPortion(5)),
-                    )
-                    .push(
-                        text_input("0", input_ip_2, Message::InputIP2)
-                            .width(Length::FillPortion(5)),
-                    )
-                    .push(
-                        text_input("1", input_ip_3, Message::InputIP3)
-                            .width(Length::FillPortion(5)),
+                        text_input("127.0.0.1", ip, Message::InputIP)
+                            .width(Length::FillPortion(70)),
                     )
                     .push(text("      "))
                     .push(
@@ -193,7 +179,7 @@ fn footer() -> Container<'static, Message, Renderer> {
     let footer_row = Row::new()
         .align_items(Alignment::Center)
         .push(Text::new(format!(
-            "{} {} by {} ",
+            "{} v{} by {} ",
             APP_NAME, APP_VERSION, APP_AUTHORS
         )))
         // .push(github_button)

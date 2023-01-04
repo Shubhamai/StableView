@@ -73,14 +73,11 @@ fn main() -> iced::Result {
             min_cutoff: Arc::new(AtomicF32::new(0.0025)),
             beta: Arc::new(AtomicF32::new(0.01)),
 
-            ip_arr_0: "127".to_string(),
-            ip_arr_1: "0".to_string(),
-            ip_arr_2: "0".to_string(),
-            ip_arr_3: "1".to_string(),
+            ip: "127.0.0.1".to_string(),
             port: "4242".to_string(),
 
             fps: Arc::new(AtomicU32::new(60)),
-            camera_list: ThreadedCamera::get_available_cameras().unwrap(),
+            camera_list: ThreadedCamera::get_available_cameras().unwrap(), // ? Checking for new camera every 5 seconds ? 
             selected_camera: ThreadedCamera::get_available_cameras()
                 .unwrap()
                 .keys()

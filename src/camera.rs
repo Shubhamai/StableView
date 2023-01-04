@@ -24,21 +24,26 @@ impl ThreadedCamera {
 
         match available_devices {
             Ok(available_devices) => {
-                for device_info in available_devices {
-                    tracing::info!(
-                        "Detected : {} @ index {}",
-                        device_info.human_name(),
-                        device_info.index()
-                    );
-                    devices_list.insert(
-                        format!("{:<4}", device_info.human_name()),
-                        device_info.index().as_index().unwrap() as i32,
-                    );
+                if available_devices.len() == 0 {
+                    tracing::error!("No Camera devices found. Setting default (Default Cam, 0)",);
+                    devices_list.insert("Default Cam".to_string(), 0);
+                } else {
+                    for device_info in available_devices {
+                        tracing::info!(
+                            "Detected : {} @ index {}",
+                            device_info.human_name(),
+                            device_info.index()
+                        );
+                        devices_list.insert(
+                            format!("{:<4}", device_info.human_name()),
+                            device_info.index().as_index().unwrap() as i32,
+                        );
+                    }
                 }
             }
             Err(error) => {
                 tracing::error!(
-                    "Unable to read camera devices : {:?}. Setting default (Deault Device, 0)",
+                    "Unable to read camera devices : {:?}. Setting default (Default Cam, 0)",
                     error
                 );
                 devices_list.insert("Default Cam".to_string(), 0);
