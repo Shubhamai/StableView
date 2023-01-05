@@ -69,26 +69,7 @@ fn main() -> iced::Result {
             ),
             visible: true,
         },
-        flags: HeadTracker {
-            min_cutoff: Arc::new(AtomicF32::new(0.0025)),
-            beta: Arc::new(AtomicF32::new(0.01)),
-
-            ip: "127.0.0.1".to_string(),
-            port: "4242".to_string(),
-
-            fps: Arc::new(AtomicU32::new(60)),
-            camera_list: ThreadedCamera::get_available_cameras().unwrap(), // ? Checking for new camera every 5 seconds ? 
-            selected_camera: ThreadedCamera::get_available_cameras()
-                .unwrap()
-                .keys()
-                .next()
-                .cloned(),
-            hide_camera: true,
-
-            headtracker_thread: None,
-            run_headtracker: Arc::new(AtomicBool::new(false)),
-            should_exit: false,
-        },
+        flags: HeadTracker::default(),
         default_font: Some(include_bytes!("../assets/fonts/Inter-Regular.ttf")),
         default_text_size: 16,
         text_multithreading: false,

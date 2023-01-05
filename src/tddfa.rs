@@ -1,6 +1,6 @@
 /// Model inference and generating the head pose
 /// Python source - https://github.com/cleardusk/3DDFA_V2/blob/master/TDDFA.py
-// Importing Libraries
+// Importing Modules
 use crate::{
     enums::crop_policy::CropPolicy,
     structs::{data::Jsondata, tddfa::Tddfa},
@@ -44,8 +44,8 @@ impl Tddfa {
             .with_number_threads(1)?
             .with_model_from_memory(include_bytes!("../assets/model/mb05_120x120.onnx"))?;
 
-        let data =
-            serde_json::from_slice::<Jsondata>(include_bytes!("../assets/model/data.json")).unwrap();
+        let data = serde_json::from_slice::<Jsondata>(include_bytes!("../assets/model/data.json"))
+            .unwrap();
 
         let mean_array: [f32; 62] = data.mean.as_slice().try_into().unwrap();
         let std_array: [f32; 62] = data.std.as_slice().try_into().unwrap();
@@ -65,7 +65,7 @@ impl Tddfa {
         })
     }
 
-    fn get_model_input(
+    fn preprocess_input(
         &self,
         input_frame: &Mat,
         roi_box: &[f32; 4],
@@ -116,13 +116,13 @@ impl Tddfa {
             CropPolicy::Landmark => parse_roi_box_from_landmark(ver),
         };
 
-        let model_input = self.get_model_input(input_frame, &roi_box);
+        let model_input = self.preprocess_input(input_frame, &roi_box);
 
         // Inference
         let param: Vec<OrtOwnedTensor<f32, _>> = self.landmark_model.run(model_input).unwrap();
         let param: [f32; 62] = param[0].as_slice().unwrap().try_into().unwrap();
 
-        // Rescaling the output by multiplying with standard deviation and adding mean
+        // Postprocessing - Rescaling the output by multiplying with standard deviation and adding mean
         let processed_param = arr1(&param) * arr1(&self.std_array) + arr1(&self.mean_array);
         let processed_param: [f32; 62] = processed_param.as_slice().unwrap().try_into().unwrap();
         Ok((processed_param, roi_box))

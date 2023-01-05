@@ -3,6 +3,7 @@ use iced_native::Event;
 #[derive(Debug, Clone)]
 pub enum Message {
     Toggle,
+    DefaultSettings,
     MinCutoffSliderChanged(u32),
     BetaSliderChanged(u32),
     FPSSliderChanged(u32),

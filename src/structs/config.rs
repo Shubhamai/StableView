@@ -11,17 +11,3 @@ pub struct AppConfig {
     pub fps: i32,
     pub default_camera_index: i32,
 }
-
-impl Default for AppConfig {
-    fn default() -> Self {
-        AppConfig {
-            // ? Adding log directory path might lead to un-anonymous logs
-            ip_addr: (127, 0, 0, 1),
-            port: 4242,
-            min_cutoff: 0.0025,
-            beta: 0.01,
-            fps: 60,
-            default_camera_index: 0,
-        }
-    }
-}

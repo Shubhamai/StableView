@@ -61,22 +61,19 @@ impl Application for HeadTracker {
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
             Message::Toggle => {
-                if !self.run_headtracker.load(Ordering::SeqCst) {
-                    self.run_headtracker.store(true, Ordering::SeqCst);
+                if !self.headtracker_running.load(Ordering::SeqCst) {
+                    self.headtracker_running.store(true, Ordering::SeqCst);
 
                     let min_cutoff = self.min_cutoff.clone();
                     let beta = self.beta.clone();
-                    let (ip, port) = (
-                        self.ip.clone(),
-                        self.port.clone(),
-                    );
+                    let (ip, port) = (self.ip.clone(), self.port.clone());
                     let camera_index = *self
                         .camera_list
                         .get(self.selected_camera.as_ref().unwrap())
                         .unwrap();
                     let fps = self.fps.clone();
 
-                    let run_headtracker = self.run_headtracker.clone();
+                    let headtracker_running = self.headtracker_running.clone();
 
                     self.headtracker_thread = Some(thread::spawn(move || {
                         let mut euro_filter = EuroDataFilter::new(
@@ -94,7 +91,7 @@ impl Application for HeadTracker {
                         let mut frame = rx.recv().unwrap();
                         let mut data;
 
-                        while run_headtracker.load(Ordering::SeqCst) {
+                        while headtracker_running.load(Ordering::SeqCst) {
                             let start_time = Instant::now();
 
                             frame = match rx.try_recv() {
@@ -122,7 +119,7 @@ impl Application for HeadTracker {
                         thr_cam.shutdown();
                     }));
                 } else {
-                    self.run_headtracker.store(false, Ordering::SeqCst);
+                    self.headtracker_running.store(false, Ordering::SeqCst);
                     self.headtracker_thread
                         .take()
                         .expect("Called stop on non-running thread")
@@ -147,10 +144,17 @@ impl Application for HeadTracker {
                 }
             }
             Message::FPSSliderChanged(fps) => self.fps.store(fps, Ordering::SeqCst),
-            Message::InputIP(ip) => self.ip = ip,
-            Message::InputPort(port) => self.port = port,
+            Message::InputIP(ip) => self.ip = ip, // ! Input validation, four decimal with respective numbers between
+            Message::InputPort(port) => self.port = port, // ! Input validation, only numbers
             Message::Camera(camera_name) => self.selected_camera = Some(camera_name),
             Message::HideCamera(value) => self.hide_camera = value,
+            Message::DefaultSettings => {
+                self.fps = self::HeadTracker::default().fps;
+                self.ip = self::HeadTracker::default().ip;
+                self.port = self::HeadTracker::default().port;
+                self.min_cutoff = self::HeadTracker::default().min_cutoff;
+                self.beta = self::HeadTracker::default().beta;
+            }
             Message::OpenGithub => {
                 #[cfg(target_os = "windows")]
                 std::process::Command::new("explorer")
@@ -206,8 +210,8 @@ impl Application for HeadTracker {
             }
             Message::EventOccurred(event) => {
                 if Event::Window(window::Event::CloseRequested) == event {
-                    if self.run_headtracker.load(Ordering::SeqCst) {
-                        self.run_headtracker.store(false, Ordering::SeqCst);
+                    if self.headtracker_running.load(Ordering::SeqCst) {
+                        self.headtracker_running.store(false, Ordering::SeqCst);
                         self.headtracker_thread
                             .take()
                             .expect("Called stop on non-running thread")

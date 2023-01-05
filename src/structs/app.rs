@@ -1,14 +1,19 @@
+// Importing Modules
 use std::{
     collections::HashMap,
     sync::{
         self,
         atomic::{AtomicBool, AtomicU32, Ordering},
+        Arc,
     },
     thread,
 };
 
-use super::config::AppConfig;
+use crate::gui::style::APP_VERSION;
 
+use super::{camera::ThreadedCamera, config::AppConfig};
+
+// * Adding this to another struct file
 pub struct AtomicF32 {
     storage: AtomicU32,
 }
@@ -43,7 +48,37 @@ pub struct HeadTracker {
     pub hide_camera: bool,
 
     pub headtracker_thread: Option<thread::JoinHandle<()>>,
-    pub run_headtracker: sync::Arc<AtomicBool>,
+    pub headtracker_running: sync::Arc<AtomicBool>,
 
     pub should_exit: bool,
+
+    version: String,
+}
+
+impl Default for HeadTracker {
+    fn default() -> Self {
+        HeadTracker {
+            // ? Adding log directory path might lead to un-anonymous logs
+            min_cutoff: Arc::new(AtomicF32::new(0.0025)),
+            beta: Arc::new(AtomicF32::new(0.01)),
+
+            ip: "127.0.0.1".to_string(),
+            port: "4242".to_string(),
+
+            fps: Arc::new(AtomicU32::new(60)),
+            camera_list: ThreadedCamera::get_available_cameras().unwrap(), // ? Checking for new camera every 5 seconds ?
+            selected_camera: ThreadedCamera::get_available_cameras() // ? Maybe checking for new cameras in main.rs
+                .unwrap()
+                .keys()
+                .next()
+                .cloned(),
+            hide_camera: true,
+
+            headtracker_thread: None,
+            headtracker_running: Arc::new(AtomicBool::new(false)),
+            should_exit: false,
+
+            version: APP_VERSION.to_string(),
+        }
+    }
 }

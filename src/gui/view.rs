@@ -40,7 +40,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let fps_slider = slider(15..=120, fps, Message::FPSSliderChanged).step(1);
 
     let toggle_start = {
-        let label = match headtracker.run_headtracker.load(Ordering::SeqCst) {
+        let label = match headtracker.headtracker_running.load(Ordering::SeqCst) {
             true => "Stop",
             false => "Start",
         };
@@ -142,7 +142,10 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
             .push(Container::new(
                 Row::new()
                     .push(horizontal_space(Length::FillPortion(2)))
-                    .push(button(text("Reset to Default").size(15)).on_press(Message::Toggle))
+                    .push(
+                        button(text("Reset to Default").size(15))
+                            .on_press(Message::DefaultSettings),
+                    )
                     .push(horizontal_space(Length::Units(40))),
             ))
             .push(controls_row.width(Length::FillPortion(50)))

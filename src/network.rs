@@ -3,10 +3,7 @@ use crate::structs::network::SocketNetwork;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 
 impl SocketNetwork {
-    pub fn new(
-        ip: String,
-        port: String,
-    ) -> Self {
+    pub fn new(ip: String, port: String) -> Self {
         tracing::info!("Sending data to {} on port {}", ip, port);
 
         let address = format!("{}:{}", ip, port);
@@ -43,9 +40,6 @@ impl SocketNetwork {
 
 #[test]
 pub fn test_socket_network() {
-    let mut socket_network = SocketNetwork::new(
-        "127.0.0.1".to_owned(),
-        "4242".to_owned(),
-    );
+    let mut socket_network = SocketNetwork::new("127.0.0.1".to_owned(), "4242".to_owned());
     socket_network.send([1., 2., 3., 4., 5., 6.])
 }
