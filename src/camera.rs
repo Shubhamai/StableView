@@ -25,8 +25,8 @@ impl ThreadedCamera {
         match available_devices {
             Ok(available_devices) => {
                 if available_devices.len() == 0 {
-                    tracing::error!("No Camera devices found. Setting default (Default Cam, 0)",);
-                    devices_list.insert("Default Cam".to_string(), 0);
+                    tracing::error!("No Camera devices found. Setting default (Default Camera, 0)",);
+                    devices_list.insert("Default Camera".to_string(), 0);
                 } else {
                     for device_info in available_devices {
                         tracing::warn!(
@@ -43,10 +43,10 @@ impl ThreadedCamera {
             }
             Err(error) => {
                 tracing::error!(
-                    "Unable to read camera devices : {:?}. Setting default (Default Cam, 0)",
+                    "Unable to read camera devices : {:?}. Setting default (Default Camera, 0)",
                     error
                 );
-                devices_list.insert("Default Cam".to_string(), 0);
+                devices_list.insert("Default Camera".to_string(), 0);
             }
         };
 

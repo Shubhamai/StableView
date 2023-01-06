@@ -40,7 +40,6 @@ fn main() {
         "The configuration file path is: {:#?}",
         confy::get_configuration_file_path(APP_NAME, "config").unwrap()
     );
-    tracing::warn!("The logs file name is: {}", "logs.txt");
 
     let mut flags = HeadTracker::default();
     flags.config = flags.load_config();

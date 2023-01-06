@@ -4,7 +4,7 @@ use std::{
     sync::{
         self,
         atomic::{AtomicBool, AtomicU32, Ordering},
-        Arc,
+        Arc, Mutex,
     },
     thread,
 };
@@ -57,7 +57,7 @@ pub struct HeadTracker {
     pub headtracker_running: sync::Arc<AtomicBool>,
 
     pub should_exit: bool,
-    pub error_message: Option<String>,
+    pub error_tracker: Arc<Mutex<String>>,
 
     version: String,
 }
@@ -91,7 +91,7 @@ impl Default for HeadTracker {
             headtracker_running: Arc::new(AtomicBool::new(false)),
 
             should_exit: false,
-            error_message: None,
+            error_tracker: Arc::new(Mutex::new(String::new())),
 
             version: APP_VERSION.to_string(),
         }
@@ -101,12 +101,12 @@ impl Default for HeadTracker {
 impl std::fmt::Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "(min_cutoff : {}, beta: {}, ip: {}, port: {}, fps: {}, selected_camera: {}, hide_camera: {})", 
-        self.min_cutoff.load(Ordering::SeqCst), self.beta.load(Ordering::SeqCst), self.ip,self.port, self.fps.load(Ordering::SeqCst), self.selected_camera.clone().unwrap_or("No Camera".to_string()), self.hide_camera)
+        self.min_cutoff.load(Ordering::SeqCst), self.beta.load(Ordering::SeqCst), self.ip,self.port, self.fps.load(Ordering::SeqCst), self.selected_camera.clone().unwrap(), self.hide_camera)
     }
 }
 
 impl std::fmt::Display for HeadTracker {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "(config: {}, camera_list: {:?}, headtracker_running: {}, should_exit: {}, error_message: {}, version: {})", self.config, self.camera_list, self.headtracker_running.load(Ordering::SeqCst), self.should_exit, self.error_message.clone().unwrap_or("No error message".to_string()), self.version)
+        write!(f, "(config: {}, camera_list: {:?}, headtracker_running: {}, should_exit: {}, version: {})", self.config, self.camera_list, self.headtracker_running.load(Ordering::SeqCst), self.should_exit, self.version)
     }
 }

@@ -8,6 +8,11 @@ use iced::{
     },
     Alignment, Length, Renderer,
 };
+use opencv::{
+    imgcodecs,
+    prelude::{Mat, MatTraitConstManual},
+    types::{VectorOfi32, VectorOfu8},
+};
 
 use crate::{enums::message::Message, structs::app::HeadTracker};
 
@@ -85,14 +90,28 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     )
     .padding(40);
 
+    let image = match hide_camera {
+        true => include_bytes!("../../assets/brand/no_video.png").to_vec(),
+        false => {
+            let mut frame = Mat::default();
+            imgcodecs::imread("./assets/brand/no_video.png", 1)
+                .map(|m| frame = m)
+                .unwrap();
+            let mut encoded_image = VectorOfu8::new();
+            let params = VectorOfi32::new();
+
+            imgcodecs::imencode(".PNG", &frame, &mut encoded_image, &params).unwrap();
+
+            encoded_image.to_vec()
+        }
+    };
+
     let camera_row = Container::new(
         Column::new()
             .push({
-                iced::widget::image::viewer(iced::widget::image::Handle::from_memory(
-                    include_bytes!("../../assets/brand/no_video.png").to_vec(),
-                ))
-                .width(Length::Fill)
-                .height(Length::Units(200))
+                iced::widget::image::viewer(iced::widget::image::Handle::from_memory(image))
+                    .width(Length::Fill)
+                    .height(Length::Units(200))
             })
             .push(vertical_space(Length::Units(32)))
             .push(Container::new(
@@ -143,7 +162,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                 Row::new()
                     .push(horizontal_space(Length::FillPortion(2)))
                     .push(
-                        button(text("Reset to Default").size(15))
+                        button(text("  Reset to Default  ").size(15))
                             .on_press(Message::DefaultSettings),
                     )
                     .push(horizontal_space(Length::Units(40))),
@@ -156,10 +175,13 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                     Row::new()
                         .push(horizontal_space(Length::FillPortion(40)))
                         .push(
-                            text(match &headtracker.error_message {
-                                Some(message) => message,
-                                None => "",
-                            })
+                            text(
+                                //     match &headtracker.error_message {
+                                //     Some(message) => message,
+                                //     None => "",
+                                // }
+                                "Hello",
+                            )
                             .size(15)
                             .horizontal_alignment(Horizontal::Center)
                             .width(Length::FillPortion(10)),

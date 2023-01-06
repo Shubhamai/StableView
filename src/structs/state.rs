@@ -1,3 +1,4 @@
+/// Saving state of the application
 use std::sync::{
     atomic::{AtomicU32, Ordering},
     Arc,
@@ -8,9 +9,9 @@ use crate::{
     structs::app::{AtomicF32, Config, HeadTracker},
 };
 
-// * Saving state of the application
-
 use serde::{Deserialize, Serialize};
+
+use super::camera::ThreadedCamera;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AppConfig {
@@ -34,7 +35,12 @@ impl Default for AppConfig {
 
             fps: 60,
 
-            selected_camera: "Default Camera".to_string(),
+            selected_camera: ThreadedCamera::get_available_cameras()
+                .unwrap()
+                .keys()
+                .next()
+                .cloned()
+                .unwrap(),
 
             hide_camera: true,
         }
@@ -43,7 +49,7 @@ impl Default for AppConfig {
 
 impl HeadTracker {
     pub fn load_config(&mut self) -> Config {
-        let cfg: AppConfig = confy::load(APP_NAME, "config").unwrap(); // ! Error occues when config data types in file does match config data types in code
+        let cfg: AppConfig = confy::load(APP_NAME, "config").unwrap(); // ! Error occurs when config data types in file does match config data types in code
 
         Config {
             min_cutoff: Arc::new(AtomicF32::new(cfg.min_cutoff)),

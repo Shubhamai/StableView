@@ -67,13 +67,16 @@ impl Application for HeadTracker {
                     let camera_index = *self
                         .camera_list
                         .get(self.config.selected_camera.as_ref().unwrap())
-                        .unwrap();
+                        .unwrap(); // ! Error occures when default camera (on app installation) isn't changed
                     let config = self.config.clone();
 
                     let headtracker_running = self.headtracker_running.clone();
+                    // let error_tracker = self.error_tracker.clone();
+
+                    let (tx, rx) = mpsc::channel();
 
                     self.headtracker_thread = Some(thread::spawn(move || {
-                        let mut error_message: String = "".to_owned();
+                        let mut error_message = String::new();
 
                         let mut euro_filter = EuroDataFilter::new(
                             config.min_cutoff.load(Ordering::SeqCst),
@@ -82,7 +85,7 @@ impl Application for HeadTracker {
                         let mut socket_network = SocketNetwork::new(config.ip, config.port);
 
                         // Create a channel to communicate between threads
-                        let (tx, rx) = mpsc::channel();
+
                         let mut thr_cam = ThreadedCamera::start_camera_thread(tx, camera_index);
 
                         let mut head_pose = ProcessHeadPose::new(120);
@@ -171,6 +174,14 @@ impl Application for HeadTracker {
             } // ! Input validation, only numbers
             Message::Camera(camera_name) => {
                 self.config.selected_camera = Some(camera_name);
+
+                // If camera changes while running
+                if self.headtracker_running.load(Ordering::SeqCst) {
+                    // Turn it back off and on again :)
+                    self.update(Message::Toggle);
+                    self.update(Message::Toggle);
+                }
+
                 self.save_config()
             }
             Message::HideCamera(value) => {
