@@ -96,13 +96,7 @@ pub fn test_process_head_pose() {
     use std::sync::mpsc;
 
     let _euro_filter = EuroDataFilter::new(0.0025, 0.01);
-    let _socket_network = SocketNetwork::new(
-        "127".to_owned(),
-        "0".to_owned(),
-        "0".to_owned(),
-        "1".to_owned(),
-        "4242".to_owned(),
-    );
+    let _socket_network = SocketNetwork::new("127.0.0.1".to_owned(), "4242".to_owned());
 
     let (tx, _rx) = mpsc::channel();
 

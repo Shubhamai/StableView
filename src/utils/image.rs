@@ -38,7 +38,7 @@ pub fn crop_img(img: &Mat, roi_box: &[f32; 4]) -> Mat {
     }
 
     let roi = Rect::new(sx, sy, width, height);
-    Mat::roi(img, roi).unwrap() // ! Need to deal with this
+    Mat::roi(img, roi).unwrap() // ! Need to deal with this, when camera disconnects while running, error occures here
 }
 
 #[test]

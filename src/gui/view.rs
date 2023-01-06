@@ -88,8 +88,8 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let camera_row = Container::new(
         Column::new()
             .push({
-                iced::widget::image::viewer(iced::widget::image::Handle::from_path(
-                    "assets/brand/no_video.png",
+                iced::widget::image::viewer(iced::widget::image::Handle::from_memory(
+                    include_bytes!("../../assets/brand/no_video.png").to_vec(),
                 ))
                 .width(Length::Fill)
                 .height(Length::Units(200))
@@ -149,7 +149,25 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                     .push(horizontal_space(Length::Units(40))),
             ))
             .push(controls_row.width(Length::FillPortion(50)))
-            .push(start_button_row.width(Length::FillPortion(50))),
+            .push(start_button_row.width(Length::FillPortion(50)))
+            .push(vertical_space(Length::Units(20)))
+            .push(
+                Container::new(
+                    Row::new()
+                        .push(horizontal_space(Length::FillPortion(40)))
+                        .push(
+                            text(match &headtracker.error_message {
+                                Some(message) => message,
+                                None => "",
+                            })
+                            .size(15)
+                            .horizontal_alignment(Horizontal::Center)
+                            .width(Length::FillPortion(10)),
+                        )
+                        .push(horizontal_space(Length::FillPortion(40))),
+                )
+                .center_x(),
+            ),
     )
     .height(Length::FillPortion(HEIGHT_BODY));
 

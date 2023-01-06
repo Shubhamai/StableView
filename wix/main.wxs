@@ -143,6 +143,25 @@
                           KeyPath='yes'/>
                         </Component>
 
+                        <Component Id='vcruntime1' Guid='*'>
+                          <File
+                            Id='vcruntime1'
+                            Name='vcruntime140_1.dll'
+                            DiskId='1'
+                            Source='assets\dlls\vcruntime140_1.dll'
+                            KeyPath='yes'/>
+                          </Component>
+
+                          <Component Id='concrt' Guid='*'>
+                            <File
+                              Id='concrt'
+                              Name='concrt140.dll'
+                              DiskId='1'
+                              Source='assets\dlls\concrt140.dll'
+                              KeyPath='yes'/>
+                            </Component>
+
+                        
 
                     </Directory>
                 </Directory>
@@ -200,6 +219,7 @@
             <ComponentRef Id='onnx'/>
             <ComponentRef Id='vcruntime'/>
             <ComponentRef Id='vcruntime1'/>
+            <ComponentRef Id='concrt'/>
 
             <Feature
                 Id='Environment'

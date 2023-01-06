@@ -5,7 +5,7 @@ mod enums;
 mod filter;
 mod gui;
 mod network;
-mod pose;
+mod headtracker;
 mod structs;
 mod tddfa;
 mod utils;

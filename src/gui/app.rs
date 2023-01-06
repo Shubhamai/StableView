@@ -76,6 +76,8 @@ impl Application for HeadTracker {
                     let headtracker_running = self.headtracker_running.clone();
 
                     self.headtracker_thread = Some(thread::spawn(move || {
+                        let mut error_message: String = "".to_owned();
+
                         let mut euro_filter = EuroDataFilter::new(
                             min_cutoff.load(Ordering::SeqCst),
                             beta.load(Ordering::SeqCst),
@@ -107,7 +109,13 @@ impl Application for HeadTracker {
                                 Some(beta.load(Ordering::SeqCst)),
                             );
 
-                            socket_network.send(data);
+                            match socket_network.send(data) {
+                                Ok(_) => {}
+                                Err(_) => {
+                                    error_message = "Unable to send data".to_string();
+                                    break;
+                                }
+                            };
 
                             let elapsed_time = start_time.elapsed();
                             let delay_time = ((1000 / fps.load(Ordering::SeqCst)) as f32
@@ -117,14 +125,19 @@ impl Application for HeadTracker {
                         }
 
                         thr_cam.shutdown();
+
+                        headtracker_running.store(false, Ordering::SeqCst);
+                        error_message
                     }));
                 } else {
                     self.headtracker_running.store(false, Ordering::SeqCst);
-                    self.headtracker_thread
-                        .take()
-                        .expect("Called stop on non-running thread")
-                        .join()
-                        .expect("Could not join spawned thread");
+                    Some(
+                        self.headtracker_thread
+                            .take()
+                            .expect("Called stop on non-running thread")
+                            .join()
+                            .expect("Could not join spawned thread"),
+                    );
                 }
             }
             Message::MinCutoffSliderChanged(value) => {
@@ -148,12 +161,26 @@ impl Application for HeadTracker {
             Message::InputPort(port) => self.port = port, // ! Input validation, only numbers
             Message::Camera(camera_name) => self.selected_camera = Some(camera_name),
             Message::HideCamera(value) => self.hide_camera = value,
+
+            // ! Need more asthetic default settings
             Message::DefaultSettings => {
-                self.fps = self::HeadTracker::default().fps;
+                self.fps.store(
+                    self::HeadTracker::default().fps.load(Ordering::SeqCst),
+                    Ordering::SeqCst,
+                );
                 self.ip = self::HeadTracker::default().ip;
                 self.port = self::HeadTracker::default().port;
-                self.min_cutoff = self::HeadTracker::default().min_cutoff;
-                self.beta = self::HeadTracker::default().beta;
+                self.min_cutoff.store(
+                    self::HeadTracker::default()
+                        .min_cutoff
+                        .load(Ordering::SeqCst),
+                    Ordering::SeqCst,
+                );
+                self.beta.store(
+                    self::HeadTracker::default().beta.load(Ordering::SeqCst),
+                    Ordering::SeqCst,
+                );
+                self.hide_camera = self::HeadTracker::default().hide_camera
             }
             Message::OpenGithub => {
                 #[cfg(target_os = "windows")]

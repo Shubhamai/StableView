@@ -47,10 +47,11 @@ pub struct HeadTracker {
     pub selected_camera: Option<String>,
     pub hide_camera: bool,
 
-    pub headtracker_thread: Option<thread::JoinHandle<()>>,
+    pub headtracker_thread: Option<thread::JoinHandle<String>>,
     pub headtracker_running: sync::Arc<AtomicBool>,
 
     pub should_exit: bool,
+    pub error_message: Option<String>,
 
     version: String,
 }
@@ -76,7 +77,9 @@ impl Default for HeadTracker {
 
             headtracker_thread: None,
             headtracker_running: Arc::new(AtomicBool::new(false)),
+
             should_exit: false,
+            error_message: None,
 
             version: APP_VERSION.to_string(),
         }
