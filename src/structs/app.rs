@@ -11,7 +11,7 @@ use std::{
 
 use crate::gui::style::APP_VERSION;
 
-use super::{camera::ThreadedCamera, config::AppConfig};
+use super::{camera::ThreadedCamera, state::AppConfig};
 
 // * Adding this to another struct file
 pub struct AtomicF32 {
@@ -34,18 +34,24 @@ impl AtomicF32 {
     }
 }
 
-pub struct HeadTracker {
-    pub min_cutoff: sync::Arc<AtomicF32>,
-    pub beta: sync::Arc<AtomicF32>,
+#[derive(Clone)] //Serialize, Deserialize, Debug,
+pub struct Config {
+    pub min_cutoff: Arc<AtomicF32>,
+    pub beta: Arc<AtomicF32>,
 
     pub ip: String,
     pub port: String,
 
-    pub fps: sync::Arc<AtomicU32>,
+    pub fps: Arc<AtomicU32>,
 
-    pub camera_list: HashMap<String, i32>,
     pub selected_camera: Option<String>,
     pub hide_camera: bool,
+}
+
+pub struct HeadTracker {
+    pub config: Config,
+
+    pub camera_list: HashMap<String, i32>,
 
     pub headtracker_thread: Option<thread::JoinHandle<String>>,
     pub headtracker_running: sync::Arc<AtomicBool>,
@@ -56,24 +62,30 @@ pub struct HeadTracker {
     version: String,
 }
 
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            // ? Adding log directory path might lead to un-anonymous logs
+            min_cutoff: Arc::new(AtomicF32::new(AppConfig::default().min_cutoff)),
+            beta: Arc::new(AtomicF32::new(AppConfig::default().beta)),
+
+            ip: AppConfig::default().ip,
+            port: AppConfig::default().port,
+
+            fps: Arc::new(AtomicU32::new(AppConfig::default().fps)),
+
+            selected_camera: Some(AppConfig::default().selected_camera), // ? Maybe checking for new cameras in main.rs
+            hide_camera: AppConfig::default().hide_camera,
+        }
+    }
+}
+
 impl Default for HeadTracker {
     fn default() -> Self {
         HeadTracker {
-            // ? Adding log directory path might lead to un-anonymous logs
-            min_cutoff: Arc::new(AtomicF32::new(0.0025)),
-            beta: Arc::new(AtomicF32::new(0.01)),
+            config: Config::default(),
 
-            ip: "127.0.0.1".to_string(),
-            port: "4242".to_string(),
-
-            fps: Arc::new(AtomicU32::new(60)),
             camera_list: ThreadedCamera::get_available_cameras().unwrap(), // ? Checking for new camera every 5 seconds ?
-            selected_camera: ThreadedCamera::get_available_cameras() // ? Maybe checking for new cameras in main.rs
-                .unwrap()
-                .keys()
-                .next()
-                .cloned(),
-            hide_camera: true,
 
             headtracker_thread: None,
             headtracker_running: Arc::new(AtomicBool::new(false)),
@@ -83,5 +95,18 @@ impl Default for HeadTracker {
 
             version: APP_VERSION.to_string(),
         }
+    }
+}
+
+impl std::fmt::Display for Config {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "(min_cutoff : {}, beta: {}, ip: {}, port: {}, fps: {}, selected_camera: {}, hide_camera: {})", 
+        self.min_cutoff.load(Ordering::SeqCst), self.beta.load(Ordering::SeqCst), self.ip,self.port, self.fps.load(Ordering::SeqCst), self.selected_camera.clone().unwrap_or("No Camera".to_string()), self.hide_camera)
+    }
+}
+
+impl std::fmt::Display for HeadTracker {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "(config: {}, camera_list: {:?}, headtracker_running: {}, should_exit: {}, error_message: {}, version: {})", self.config, self.camera_list, self.headtracker_running.load(Ordering::SeqCst), self.should_exit, self.error_message.clone().unwrap_or("No error message".to_string()), self.version)
     }
 }

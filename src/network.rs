@@ -1,13 +1,10 @@
-use crate::structs::network::SocketNetwork;
 /// Deals with sending the data (x,y,depth,yaw,pitch,roll) to opentrack (https://github.com/opentrack/opentrack) using UDP socket
-use std::{
-    io::Error,
-    net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket},
-};
+use crate::structs::network::SocketNetwork;
+use std::{io::Error, net::UdpSocket};
 
 impl SocketNetwork {
     pub fn new(ip: String, port: String) -> Self {
-        tracing::info!("Sending data to {} on port {}", ip, port);
+        tracing::warn!("Sending data to {} on port {}", ip, port);
 
         let address = format!("{}:{}", ip, port);
 

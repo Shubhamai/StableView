@@ -3,8 +3,8 @@ use std::{borrow::Cow, sync::atomic::Ordering};
 use iced::{
     alignment::{self, Horizontal, Vertical},
     widget::{
-        button, horizontal_space, pick_list, rule, slider, text, text_input, toggler,
-        vertical_space, Column, Container, Row, Text,
+        button, horizontal_space, pick_list, slider, text, text_input, toggler, vertical_space,
+        Column, Container, Row, Text,
     },
     Alignment, Length, Renderer,
 };
@@ -15,25 +15,25 @@ use super::style::{APP_AUTHORS, APP_NAME, APP_VERSION, HEIGHT_BODY, HEIGHT_FOOTE
 
 pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let min_cutoff = {
-        if headtracker.min_cutoff.load(Ordering::SeqCst) - 0. < f32::EPSILON {
+        if headtracker.config.min_cutoff.load(Ordering::SeqCst) - 0. < f32::EPSILON {
             0
         } else {
-            (1. / headtracker.min_cutoff.load(Ordering::SeqCst)).sqrt() as u32
+            (1. / headtracker.config.min_cutoff.load(Ordering::SeqCst)).sqrt() as u32
         }
     };
 
     let beta = {
-        if headtracker.beta.load(Ordering::SeqCst) - 0. < f32::EPSILON {
+        if headtracker.config.beta.load(Ordering::SeqCst) - 0. < f32::EPSILON {
             0
         } else {
-            (1. / headtracker.beta.load(Ordering::SeqCst)).sqrt() as u32
+            (1. / headtracker.config.beta.load(Ordering::SeqCst)).sqrt() as u32
         }
     };
-    let fps = headtracker.fps.load(Ordering::SeqCst);
+    let fps = headtracker.config.fps.load(Ordering::SeqCst);
 
-    let ip = headtracker.ip.as_str();
-    let port = headtracker.port.as_str();
-    let hide_camera = headtracker.hide_camera;
+    let ip = headtracker.config.ip.as_str();
+    let port = headtracker.config.port.as_str();
+    let hide_camera = headtracker.config.hide_camera;
 
     let min_cutoff_slider = slider(0..=50, min_cutoff, Message::MinCutoffSliderChanged).step(1);
     let beta_slider = slider(0..=50, beta, Message::BetaSliderChanged).step(1);
@@ -106,7 +106,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                                     .cloned()
                                     .collect::<Vec<String>>(),
                             ),
-                            headtracker.selected_camera.clone(),
+                            headtracker.config.selected_camera.clone(),
                             Message::Camera,
                         )
                         .width(Length::FillPortion(50)),
@@ -177,25 +177,25 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
 }
 
 fn footer() -> Container<'static, Message, Renderer> {
-    // let github_button = button(
-    //     text("Github")
-    //         .size(5)
-    //         .horizontal_alignment(alignment::Horizontal::Center)
-    //         .vertical_alignment(alignment::Vertical::Center),
-    // )
-    // .height(Length::Units(35))
-    // .width(Length::Units(35))
-    // .on_press(Message::OpenGithub);
+    let github_button = button(
+        text("Github")
+            .size(14)
+            .horizontal_alignment(alignment::Horizontal::Center)
+            .vertical_alignment(alignment::Vertical::Center),
+    )
+    .height(Length::Units(35))
+    .width(Length::Units(40))
+    .on_press(Message::OpenGithub);
 
-    // let logs_button = button(
-    //     text("Open Logs")
-    //         .size(5)
-    //         .horizontal_alignment(alignment::Horizontal::Center)
-    //         .vertical_alignment(alignment::Vertical::Center),
-    // )
-    // .height(Length::Units(35))
-    // .width(Length::Units(35))
-    // .on_press(Message::OpenLogs);
+    let logs_button = button(
+        text("Open Logs")
+            .size(14)
+            .horizontal_alignment(alignment::Horizontal::Center)
+            .vertical_alignment(alignment::Vertical::Center),
+    )
+    .height(Length::Units(35))
+    .width(Length::Units(100))
+    .on_press(Message::OpenLogs);
 
     let footer_row = Row::new()
         .align_items(Alignment::Center)
@@ -203,9 +203,8 @@ fn footer() -> Container<'static, Message, Renderer> {
             "{} v{} by {} ",
             APP_NAME, APP_VERSION, APP_AUTHORS
         )))
-        // .push(github_button)
-        // .push(logs_button)
-        ;
+        .push(github_button)
+        .push(logs_button);
 
     Container::new(footer_row)
         .width(Length::Fill)

@@ -37,7 +37,7 @@
 
 # Status
 
-**Last Updated - 3 Jan, 2023**
+**Last Updated - 6 Jan, 2023**
 
 The project is currently in heavy development and will have it's first alpha release soon :)
 
@@ -46,7 +46,7 @@ The project is currently in heavy development and will have it's first alpha rel
 - Todo's :
   - [ ] Release workflow & auto-update.
   - [ ] Error handling & removing all `.expect` and `.unwrap`.
-  - [ ] Saving app state, default states & configuration management.
+  - [x] Saving app state, default states & configuration management.
   - [ ] Adding custom design & styles to the UI.
 
 # Installation

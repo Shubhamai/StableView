@@ -4,29 +4,19 @@ mod camera;
 mod enums;
 mod filter;
 mod gui;
-mod network;
 mod headtracker;
+mod network;
 mod structs;
 mod tddfa;
 mod utils;
 
 use crate::gui::style::{APP_NAME, APP_VERSION};
-use crate::structs::{
-    app::{AtomicF32, HeadTracker},
-    camera::ThreadedCamera,
-    config::AppConfig,
-};
+use crate::structs::app::HeadTracker;
 use iced::{window, Application, Settings};
-use std::sync::{
-    atomic::{AtomicBool, AtomicU32},
-    Arc,
-};
+
 use tracing::Level;
 
-fn main() -> iced::Result {
-    // let cfg: AppConfig = confy::load(APP_NAME, "config").unwrap();
-    // confy::store(APP_NAME, "config", &AppConfig::default()).unwrap();
-
+fn main() {
     let file_appender = tracing_appender::rolling::never(
         // ? Adding organization name
         directories::ProjectDirs::from("rs", "", APP_NAME)
@@ -34,25 +24,30 @@ fn main() -> iced::Result {
             .data_dir()
             .to_str()
             .unwrap(), // * Similar path is also used by confy https://github.com/rust-cli/confy/blob/master/src/lib.rs#L316
-        "logs.txt",
+        "StableView.log",
     );
+
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 
     tracing_subscriber::fmt()
         .with_writer(non_blocking)
         .with_ansi(false)
-        .with_max_level(Level::INFO)
+        .with_max_level(Level::WARN)
         .init(); // ! Need to have only 1 log file which resets daily
 
-    tracing::info!("Version {} on {}", APP_VERSION, std::env::consts::OS);
-    tracing::info!(
+    tracing::warn!("Version {} on {}", APP_VERSION, std::env::consts::OS);
+    tracing::warn!(
         "The configuration file path is: {:#?}",
         confy::get_configuration_file_path(APP_NAME, "config").unwrap()
     );
-    tracing::info!("The logs file name is: {}", "logs.txt");
-    // tracing::info!("Config : {:#?}", cfg);
+    tracing::warn!("The logs file name is: {}", "logs.txt");
 
-    HeadTracker::run(Settings {
+    let mut flags = HeadTracker::default();
+    flags.config = flags.load_config();
+
+    tracing::warn!("Config : {}", flags);
+
+    let settings = Settings {
         id: None,
         window: window::Settings {
             size: (750, 620), // start size
@@ -69,12 +64,16 @@ fn main() -> iced::Result {
             ),
             visible: true,
         },
-        flags: HeadTracker::default(),
+        flags,
         default_font: Some(include_bytes!("../assets/fonts/Inter-Regular.ttf")),
         default_text_size: 16,
         text_multithreading: false,
         antialiasing: false,
         exit_on_close_request: false,
         try_opengles_first: false,
-    })
+    };
+
+    if let Err(e) = HeadTracker::run(settings) {
+        tracing::error!("{}", e);
+    }
 }

@@ -13,7 +13,7 @@ use iced_native::{window, Event};
 use crate::{
     enums::message::Message,
     filter::EuroDataFilter,
-    structs::app::HeadTracker,
+    structs::{app::HeadTracker, state::AppConfig},
     structs::{camera::ThreadedCamera, network::SocketNetwork, pose::ProcessHeadPose},
 };
 
@@ -64,14 +64,11 @@ impl Application for HeadTracker {
                 if !self.headtracker_running.load(Ordering::SeqCst) {
                     self.headtracker_running.store(true, Ordering::SeqCst);
 
-                    let min_cutoff = self.min_cutoff.clone();
-                    let beta = self.beta.clone();
-                    let (ip, port) = (self.ip.clone(), self.port.clone());
                     let camera_index = *self
                         .camera_list
-                        .get(self.selected_camera.as_ref().unwrap())
+                        .get(self.config.selected_camera.as_ref().unwrap())
                         .unwrap();
-                    let fps = self.fps.clone();
+                    let config = self.config.clone();
 
                     let headtracker_running = self.headtracker_running.clone();
 
@@ -79,10 +76,10 @@ impl Application for HeadTracker {
                         let mut error_message: String = "".to_owned();
 
                         let mut euro_filter = EuroDataFilter::new(
-                            min_cutoff.load(Ordering::SeqCst),
-                            beta.load(Ordering::SeqCst),
+                            config.min_cutoff.load(Ordering::SeqCst),
+                            config.beta.load(Ordering::SeqCst),
                         );
-                        let mut socket_network = SocketNetwork::new(ip, port);
+                        let mut socket_network = SocketNetwork::new(config.ip, config.port);
 
                         // Create a channel to communicate between threads
                         let (tx, rx) = mpsc::channel();
@@ -105,8 +102,8 @@ impl Application for HeadTracker {
 
                             data = euro_filter.filter_data(
                                 data,
-                                Some(min_cutoff.load(Ordering::SeqCst)),
-                                Some(beta.load(Ordering::SeqCst)),
+                                Some(config.min_cutoff.load(Ordering::SeqCst)),
+                                Some(config.beta.load(Ordering::SeqCst)),
                             );
 
                             match socket_network.send(data) {
@@ -118,7 +115,7 @@ impl Application for HeadTracker {
                             };
 
                             let elapsed_time = start_time.elapsed();
-                            let delay_time = ((1000 / fps.load(Ordering::SeqCst)) as f32
+                            let delay_time = ((1000 / config.fps.load(Ordering::SeqCst)) as f32
                                 - elapsed_time.as_millis() as f32)
                                 .max(0.);
                             thread::sleep(Duration::from_millis(delay_time.round() as u64));
@@ -142,45 +139,60 @@ impl Application for HeadTracker {
             }
             Message::MinCutoffSliderChanged(value) => {
                 if value == 0 {
-                    self.min_cutoff.store(0., Ordering::SeqCst)
+                    self.config.min_cutoff.store(0., Ordering::SeqCst)
                 } else {
-                    self.min_cutoff
+                    self.config
+                        .min_cutoff
                         .store(1. / ((value * value) as f32), Ordering::SeqCst)
-                }
+                };
+                self.save_config()
             }
             Message::BetaSliderChanged(value) => {
                 if value == 0 {
-                    self.beta.store(0., Ordering::SeqCst)
+                    self.config.beta.store(0., Ordering::SeqCst)
                 } else {
-                    self.beta
+                    self.config
+                        .beta
                         .store(1. / ((value * value) as f32), Ordering::SeqCst)
-                }
+                };
+                self.save_config()
             }
-            Message::FPSSliderChanged(fps) => self.fps.store(fps, Ordering::SeqCst),
-            Message::InputIP(ip) => self.ip = ip, // ! Input validation, four decimal with respective numbers between
-            Message::InputPort(port) => self.port = port, // ! Input validation, only numbers
-            Message::Camera(camera_name) => self.selected_camera = Some(camera_name),
-            Message::HideCamera(value) => self.hide_camera = value,
-
+            Message::FPSSliderChanged(fps) => {
+                self.config.fps.store(fps, Ordering::SeqCst);
+                self.save_config()
+            }
+            Message::InputIP(ip) => {
+                self.config.ip = ip;
+                self.save_config()
+            } // ! Input validation, four decimal with respective numbers between
+            Message::InputPort(port) => {
+                self.config.port = port;
+                self.save_config()
+            } // ! Input validation, only numbers
+            Message::Camera(camera_name) => {
+                self.config.selected_camera = Some(camera_name);
+                self.save_config()
+            }
+            Message::HideCamera(value) => {
+                self.config.hide_camera = value;
+                self.save_config()
+            }
             // ! Need more asthetic default settings
             Message::DefaultSettings => {
-                self.fps.store(
-                    self::HeadTracker::default().fps.load(Ordering::SeqCst),
-                    Ordering::SeqCst,
-                );
-                self.ip = self::HeadTracker::default().ip;
-                self.port = self::HeadTracker::default().port;
-                self.min_cutoff.store(
-                    self::HeadTracker::default()
-                        .min_cutoff
-                        .load(Ordering::SeqCst),
-                    Ordering::SeqCst,
-                );
-                self.beta.store(
-                    self::HeadTracker::default().beta.load(Ordering::SeqCst),
-                    Ordering::SeqCst,
-                );
-                self.hide_camera = self::HeadTracker::default().hide_camera
+                self.config
+                    .min_cutoff
+                    .store(AppConfig::default().min_cutoff, Ordering::SeqCst);
+                self.config
+                    .beta
+                    .store(AppConfig::default().beta, Ordering::SeqCst);
+                self.config
+                    .fps
+                    .store(AppConfig::default().fps, Ordering::SeqCst);
+                self.config.ip = AppConfig::default().ip;
+                self.config.port = AppConfig::default().port;
+                self.config.hide_camera = AppConfig::default().hide_camera;
+
+                self.save_config();
             }
             Message::OpenGithub => {
                 #[cfg(target_os = "windows")]

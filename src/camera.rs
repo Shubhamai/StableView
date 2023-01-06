@@ -29,7 +29,7 @@ impl ThreadedCamera {
                     devices_list.insert("Default Cam".to_string(), 0);
                 } else {
                     for device_info in available_devices {
-                        tracing::info!(
+                        tracing::warn!(
                             "Detected : {} @ index {}",
                             device_info.human_name(),
                             device_info.index()
@@ -88,7 +88,7 @@ impl ThreadedCamera {
     }
 
     pub fn shutdown(&mut self) {
-        tracing::info!("Shutting down camera thread...");
+        tracing::warn!("Shutting down camera thread...");
 
         self.keep_running.store(false, Ordering::SeqCst);
         self.cam_thread
