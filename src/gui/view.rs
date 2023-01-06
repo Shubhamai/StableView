@@ -10,13 +10,14 @@ use iced::{
 };
 use opencv::{
     imgcodecs,
-    prelude::{Mat, MatTraitConstManual},
+    prelude::Mat,
     types::{VectorOfi32, VectorOfu8},
 };
 
 use crate::{enums::message::Message, structs::app::HeadTracker};
 
-use super::style::{APP_AUTHORS, APP_NAME, APP_VERSION, HEIGHT_BODY, HEIGHT_FOOTER};
+use super::style::{HEIGHT_BODY, HEIGHT_FOOTER};
+use crate::consts::{APP_AUTHORS, APP_NAME, APP_VERSION};
 
 pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let min_cutoff = {
@@ -93,15 +94,22 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let image = match hide_camera {
         true => include_bytes!("../../assets/brand/no_video.png").to_vec(),
         false => {
-            let mut frame = Mat::default();
-            imgcodecs::imread("./assets/brand/no_video.png", 1)
-                .map(|m| frame = m)
-                .unwrap();
+            let mut frame;
+            if headtracker.headtracker_running.load(Ordering::SeqCst) {
+                frame = Mat::default();
+                imgcodecs::imread("./assets/brand/no_video.png", 1)
+                    .map(|m| frame = m)
+                    .unwrap();
+            } else {
+                frame = Mat::default();
+                imgcodecs::imread("./assets/brand/no_video.png", 1)
+                    .map(|m| frame = m)
+                    .unwrap();
+            }
+
             let mut encoded_image = VectorOfu8::new();
             let params = VectorOfi32::new();
-
             imgcodecs::imencode(".PNG", &frame, &mut encoded_image, &params).unwrap();
-
             encoded_image.to_vec()
         }
     };

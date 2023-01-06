@@ -19,7 +19,7 @@ use crate::{
 
 use crate::gui::view::run_page;
 
-use super::style::{APP_NAME, APP_REPOSITORY};
+use crate::consts::{APP_NAME, APP_REPOSITORY};
 
 impl Application for HeadTracker {
     type Executor = executor::Default;
@@ -36,7 +36,10 @@ impl Application for HeadTracker {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        iced_native::subscription::events().map(Message::EventOccurred)
+        let ticks = iced::time::every(Duration::from_millis(30)).map(|_| Message::Tick);
+        let runtime_events = iced_native::subscription::events().map(Message::EventOccurred);
+
+        Subscription::batch(vec![runtime_events, ticks])
     }
 
     fn should_exit(&self) -> bool {
@@ -140,6 +143,7 @@ impl Application for HeadTracker {
                     );
                 }
             }
+            Message::Tick => {}
             Message::MinCutoffSliderChanged(value) => {
                 if value == 0 {
                     self.config.min_cutoff.store(0., Ordering::SeqCst)
@@ -268,7 +272,6 @@ impl Application for HeadTracker {
                             .join()
                             .expect("Could not join spawned thread");
                     }
-                    // confy::store(APP_NAME, "config", self.cfg.clone()).unwrap();
                     self.should_exit = true;
                 }
             }

@@ -5,7 +5,7 @@ use std::sync::{
 };
 
 use crate::{
-    gui::style::APP_NAME,
+    consts::APP_NAME,
     structs::app::{AtomicF32, Config, HeadTracker},
 };
 

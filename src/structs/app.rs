@@ -4,12 +4,14 @@ use std::{
     sync::{
         self,
         atomic::{AtomicBool, AtomicU32, Ordering},
-        Arc, Mutex,
+        mpsc, Arc, Mutex,
     },
     thread,
 };
 
-use crate::gui::style::APP_VERSION;
+use opencv::prelude::Mat;
+
+use crate::consts::APP_VERSION;
 
 use super::{camera::ThreadedCamera, state::AppConfig};
 

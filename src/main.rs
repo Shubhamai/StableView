@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod camera;
+mod consts;
 mod enums;
 mod filter;
 mod gui;
@@ -10,8 +11,10 @@ mod structs;
 mod tddfa;
 mod utils;
 
-use crate::gui::style::{APP_NAME, APP_VERSION};
-use crate::structs::app::HeadTracker;
+use crate::{
+    consts::{APP_NAME, APP_VERSION},
+    structs::app::HeadTracker,
+};
 use iced::{window, Application, Settings};
 
 use tracing::Level;
