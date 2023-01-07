@@ -1,4 +1,6 @@
 /// Running camera on a seperate thread and returning the frames
+use crossbeam_channel::Sender;
+
 use opencv::{
     prelude::{Mat, VideoCaptureTrait, VideoCaptureTraitConst},
     videoio,
@@ -7,7 +9,6 @@ use std::{
     sync::{
         self,
         atomic::{AtomicBool, Ordering},
-        mpsc::Sender,
     },
     thread,
 };

@@ -1,5 +1,5 @@
 use std::{
-    sync::{atomic::Ordering, mpsc},
+    sync::atomic::Ordering,
     thread,
     time::{Duration, Instant},
 };
@@ -36,10 +36,19 @@ impl Application for HeadTracker {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        let ticks = iced::time::every(Duration::from_millis(30)).map(|_| Message::Tick);
-        let runtime_events = iced_native::subscription::events().map(Message::EventOccurred);
-
-        Subscription::batch(vec![runtime_events, ticks])
+        match self.config.hide_camera {
+            true => iced_native::subscription::events().map(Message::EventOccurred),
+            false => {
+                if self.headtracker_running.load(Ordering::SeqCst) {
+                    let ticks = iced::time::every(Duration::from_millis(15)).map(|_| Message::Tick);
+                    let runtime_events =
+                        iced_native::subscription::events().map(Message::EventOccurred);
+                    Subscription::batch(vec![runtime_events, ticks])
+                } else {
+                    iced_native::subscription::events().map(Message::EventOccurred)
+                }
+            }
+        }
     }
 
     fn should_exit(&self) -> bool {
@@ -76,7 +85,8 @@ impl Application for HeadTracker {
                     let headtracker_running = self.headtracker_running.clone();
                     // let error_tracker = self.error_tracker.clone();
 
-                    let (tx, rx) = mpsc::channel();
+                    let tx = self.sender.clone();
+                    let rx = self.receiver.clone();
 
                     self.headtracker_thread = Some(thread::spawn(move || {
                         let mut error_message = String::new();
@@ -143,7 +153,12 @@ impl Application for HeadTracker {
                     );
                 }
             }
-            Message::Tick => {}
+            Message::Tick => {
+                self.frame = match self.receiver.try_recv() {
+                    Ok(result) => result,
+                    Err(_) => self.frame.clone(),
+                };
+            }
             Message::MinCutoffSliderChanged(value) => {
                 if value == 0 {
                     self.config.min_cutoff.store(0., Ordering::SeqCst)

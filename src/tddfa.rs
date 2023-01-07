@@ -2,6 +2,7 @@
 /// Python source - https://github.com/cleardusk/3DDFA_V2/blob/master/TDDFA.py
 // Importing Modules
 use crate::{
+    consts::{DATA, MODEL},
     enums::crop_policy::CropPolicy,
     structs::{data::Jsondata, tddfa::Tddfa},
     utils::{
@@ -42,10 +43,9 @@ impl Tddfa {
             .new_session_builder()?
             .with_optimization_level(GraphOptimizationLevel::All)?
             .with_number_threads(1)?
-            .with_model_from_memory(include_bytes!("../assets/model/mb05_120x120.onnx"))?;
+            .with_model_from_memory(MODEL)?;
 
-        let data = serde_json::from_slice::<Jsondata>(include_bytes!("../assets/model/data.json"))
-            .unwrap();
+        let data = serde_json::from_slice::<Jsondata>(DATA).unwrap();
 
         let mean_array: [f32; 62] = data.mean.as_slice().try_into().unwrap();
         let std_array: [f32; 62] = data.std.as_slice().try_into().unwrap();

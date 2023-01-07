@@ -12,7 +12,7 @@ mod tddfa;
 mod utils;
 
 use crate::{
-    consts::{APP_NAME, APP_VERSION},
+    consts::{APP_NAME, APP_VERSION, DEFAULT_FONT, ICON},
     structs::app::HeadTracker,
 };
 use iced::{window, Application, Settings};
@@ -60,14 +60,11 @@ fn main() {
             decorations: true,
             transparent: false,
             always_on_top: false,
-            icon: Some(
-                window::Icon::from_file_data(include_bytes!("../assets/brand/Product.ico"), None)
-                    .unwrap(),
-            ),
+            icon: Some(window::Icon::from_file_data(ICON, None).unwrap()),
             visible: true,
         },
         flags,
-        default_font: Some(include_bytes!("../assets/fonts/Inter-Regular.ttf")),
+        default_font: Some(DEFAULT_FONT),
         default_text_size: 16,
         text_multithreading: false,
         antialiasing: false,

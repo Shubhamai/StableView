@@ -4,14 +4,15 @@ use std::{
     sync::{
         self,
         atomic::{AtomicBool, AtomicU32, Ordering},
-        mpsc, Arc, Mutex,
+        Arc, Mutex,
     },
     thread,
 };
 
-use opencv::prelude::Mat;
+use crossbeam_channel::{unbounded, Receiver, Sender};
+use opencv::{imgcodecs, prelude::Mat};
 
-use crate::consts::APP_VERSION;
+use crate::consts::{APP_VERSION, NO_VIDEO_IMG};
 
 use super::{camera::ThreadedCamera, state::AppConfig};
 
@@ -61,6 +62,10 @@ pub struct HeadTracker {
     pub should_exit: bool,
     pub error_tracker: Arc<Mutex<String>>,
 
+    pub sender: Sender<Mat>,
+    pub receiver: Receiver<Mat>,
+    pub frame: Mat,
+
     version: String,
 }
 
@@ -84,6 +89,11 @@ impl Default for Config {
 
 impl Default for HeadTracker {
     fn default() -> Self {
+        let (sender, receiver) = unbounded::<Mat>(); // ! bounded causes unwanted crashes bounded::<Mat>(1);
+
+        let frame = Mat::from_slice(NO_VIDEO_IMG).unwrap();
+        let frame = imgcodecs::imdecode(&frame, 1).unwrap();
+
         HeadTracker {
             config: Config::default(),
 
@@ -96,6 +106,10 @@ impl Default for HeadTracker {
             error_tracker: Arc::new(Mutex::new(String::new())),
 
             version: APP_VERSION.to_string(),
+
+            sender,
+            receiver,
+            frame,
         }
     }
 }
