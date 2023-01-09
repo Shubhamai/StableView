@@ -40,7 +40,7 @@ impl Application for HeadTracker {
             true => iced_native::subscription::events().map(Message::EventOccurred),
             false => {
                 if self.headtracker_running.load(Ordering::SeqCst) {
-                    let ticks = iced::time::every(Duration::from_millis(15)).map(|_| Message::Tick);
+                    let ticks = iced::time::every(Duration::from_millis(1)).map(|_| Message::Tick);
                     let runtime_events =
                         iced_native::subscription::events().map(Message::EventOccurred);
                     Subscription::batch(vec![runtime_events, ticks])
@@ -114,7 +114,22 @@ impl Application for HeadTracker {
                                 Err(_) => frame.clone(),
                             };
 
-                            data = head_pose.single_iter(&frame);
+                            let out = head_pose.single_iter(&frame).unwrap();
+
+                            // match out {
+                            //     Ok(value) => {
+                            //         data = value;
+                            //     }
+                            //     Err(e) => {
+                            //         println!("An error: {}; skipped.", e);
+                            //         // head_pose.face_box =  [150., 150., 400., 400.];
+                            //         head_pose.pts_3d =
+                            //             vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]];
+                            //         head_pose.face_box = [0., 0., 600., 600.];
+                            //         // headtracker_running.store(false, Ordering::SeqCst);
+                            //         continue;
+                            //     }
+                            // };
 
                             data = euro_filter.filter_data(
                                 data,
@@ -144,13 +159,11 @@ impl Application for HeadTracker {
                     }));
                 } else {
                     self.headtracker_running.store(false, Ordering::SeqCst);
-                    Some(
-                        self.headtracker_thread
-                            .take()
-                            .expect("Called stop on non-running thread")
-                            .join()
-                            .expect("Could not join spawned thread"),
-                    );
+                    self.headtracker_thread
+                        .take()
+                        .expect("Called stop on non-running thread")
+                        .join()
+                        .expect("Could not join spawned thread");
                 }
             }
             Message::Tick => {

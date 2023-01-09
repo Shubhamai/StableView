@@ -143,12 +143,12 @@ pub fn gen_point2d(p: &[[f32; 4]; 3], ver: Vec<Vec<f32>>) -> (Vec<Vec<f32>>, f32
     let mut binding = arr2(&point_3d_homo).dot(&arr2(p).t());
     let mut point_2d = binding.slice_mut(s![.., ..2]);
 
+    point_2d.slice_mut(s![.., 1]).map_inplace(|x| *x = -*x);
     let sliced_ver_mean = get_ndarray(ver, (3, 20))
         .slice_mut(s![..2, ..])
         .mean_axis(Axis(1))
         .expect("Unable to calculate sliced_ver_mean in gen_point2d");
 
-    // point_2d.slice(s![.., 1]).map_inplace(|x| *x = -*x);
     let sliced_point2d_mean = point_2d
         .to_owned()
         .slice_mut(s![..4, ..2])
@@ -324,18 +324,18 @@ mod tests {
         assert_eq!(
             point_2d,
             vec![
-                vec![-16., 109.],
-                vec![19., 1.],
-                vec![37., -88.],
-                vec![1., 19.],
-                vec![-16., 109.],
-                vec![10., 54.],
-                vec![54., -77.],
-                vec![76., -187.],
-                vec![32., -55.],
-                vec![10., 54.]
+                vec![-16.370058, 109.023544],
+                vec![19.456686, 1.5433149],
+                vec![37.370056, -88.023544],
+                vec![1.543314, 19.456684],
+                vec![-16.370058, 109.023544],
+                vec![10.5, 54.5],
+                vec![54.5, -77.5],
+                vec![76.5, -187.5],
+                vec![32.5, -55.5],
+                vec![10.5, 54.5]
             ]
         );
-        assert_eq!(length, 8.956685895029603);
+        assert_eq!(length, 8.956_686);
     }
 }

@@ -32,7 +32,7 @@ impl SocketNetwork {
             unsafe { std::slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * 10) };
 
         // Send data
-        self.socket_network.send_to(&out, &self.address)?;
+        self.socket_network.send_to(out, &self.address)?;
 
         Ok(())
     }

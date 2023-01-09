@@ -47,17 +47,15 @@ impl ProcessHeadPose {
         (centroid, distance)
     }
 
-    pub fn single_iter(&mut self, frame: &Mat) -> [f32; 6] {
-        let (mut param, mut roi_box) = self
-            .tddfa
-            .run(frame, self.face_box, &self.pts_3d, CropPolicy::Landmark)
-            .unwrap();
+    pub fn single_iter(&mut self, frame: &Mat) -> Result<[f32; 6], Box<dyn std::error::Error>> {
+        let (mut param, mut roi_box) =
+            self.tddfa
+                .run(frame, self.face_box, &self.pts_3d, CropPolicy::Landmark)?;
 
         if (roi_box[2] - roi_box[0]).abs() * (roi_box[3] - roi_box[1]).abs() < 2020. {
-            (param, roi_box) = self
-                .tddfa
-                .run(frame, self.face_box, &self.pts_3d, CropPolicy::Box)
-                .unwrap();
+            (param, roi_box) =
+                self.tddfa
+                    .run(frame, self.face_box, &self.pts_3d, CropPolicy::Box)?;
         }
 
         self.pts_3d = self.tddfa.recon_vers(param, roi_box); // ? Commenting this code still seems to output the pose perfectly
@@ -75,16 +73,14 @@ impl ProcessHeadPose {
 
         let (centroid, distance) = self.get_coordintes_and_depth(pose, distance, point2d, &roi_box);
 
-        let data = [
+        Ok([
             centroid[0],
             -centroid[1],
             distance,
             pose[0],
             -pose[1],
             pose[2],
-        ];
-
-        data
+        ])
     }
 }
 
@@ -93,12 +89,11 @@ impl ProcessHeadPose {
 pub fn test_process_head_pose() {
     use crate::filter::EuroDataFilter;
     use crate::structs::{camera::ThreadedCamera, network::SocketNetwork};
-    use std::sync::mpsc;
 
     let _euro_filter = EuroDataFilter::new(0.0025, 0.01);
     let _socket_network = SocketNetwork::new("127.0.0.1".to_owned(), "4242".to_owned());
 
-    let (tx, _rx) = mpsc::channel();
+    let (tx, _rx) = crossbeam_channel::unbounded::<Mat>();
 
     let mut thr_cam = ThreadedCamera::start_camera_thread(tx, 0);
 

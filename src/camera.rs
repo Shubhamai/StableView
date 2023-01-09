@@ -25,7 +25,7 @@ impl ThreadedCamera {
 
         match available_devices {
             Ok(available_devices) => {
-                if available_devices.len() == 0 {
+                if available_devices.is_empty() {
                     tracing::error!("No Camera devices found. Setting default (Default Camera, 0)",);
                     devices_list.insert("Default Camera".to_string(), 0);
                 } else {
@@ -103,9 +103,7 @@ impl ThreadedCamera {
 #[test]
 #[ignore = "Can only test this offline since it requires webcam, run cargo test -- --ignored"]
 pub fn test_threaded_camera() {
-    use sync::mpsc;
-
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = crossbeam_channel::unbounded::<Mat>();
 
     println!("{:?}", ThreadedCamera::get_available_cameras());
 

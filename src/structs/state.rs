@@ -75,8 +75,7 @@ impl HeadTracker {
                 .config
                 .selected_camera
                 .clone()
-                .unwrap_or("No Camera Selected".to_string())
-                .clone(),
+                .unwrap_or_else(|| "No Camera Selected".to_string()),
             hide_camera: self.config.hide_camera,
         };
 

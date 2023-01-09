@@ -45,10 +45,10 @@ impl Tddfa {
             .with_number_threads(1)?
             .with_model_from_memory(MODEL)?;
 
-        let data = serde_json::from_slice::<Jsondata>(DATA).unwrap();
+        let data = serde_json::from_slice::<Jsondata>(DATA)?;
 
-        let mean_array: [f32; 62] = data.mean.as_slice().try_into().unwrap();
-        let std_array: [f32; 62] = data.std.as_slice().try_into().unwrap();
+        let mean_array: [f32; 62] = data.mean.as_slice().try_into()?;
+        let std_array: [f32; 62] = data.std.as_slice().try_into()?;
 
         let u_base_array = get_ndarray(data.u_base, (204, 1));
         let w_shp_base_array = get_ndarray(data.w_shp_base, (204, 40));
@@ -69,12 +69,12 @@ impl Tddfa {
         &self,
         input_frame: &Mat,
         roi_box: &[f32; 4],
-    ) -> Vec<ArrayBase<OwnedRepr<f32>, Dim<[usize; 4]>>> {
+    ) -> Result<Vec<ArrayBase<OwnedRepr<f32>, Dim<[usize; 4]>>>, Box<dyn std::error::Error>> {
         // let mut rgb_frame = Mat::default();
         // imgproc::cvt_color(&input_frame, &mut rgb_frame, imgproc::COLOR_BGR2RGB, 0).unwrap();
 
         // Cropping the image
-        let cropped_image = crop_img(input_frame, roi_box);
+        let cropped_image = crop_img(input_frame, roi_box)?;
 
         // Resizing the frame
         let mut resized_frame = Mat::default();
@@ -88,11 +88,10 @@ impl Tddfa {
             0.0,
             0.0,
             imgproc::INTER_LINEAR, //*INTER_AREA, // https://stackoverflow.com/a/51042104 | Speed -> https://stackoverflow.com/a/44278268
-        )
-        .unwrap(); // ! Error handling here
+        )?; // ! Error handling here
 
-        let vec = Mat::data_typed::<Vec3b>(&resized_frame)
-            .expect("Unable to convert the image to vector");
+        let vec = Mat::data_typed::<Vec3b>(&resized_frame)?;
+            // .expect("Unable to convert the image to vector");
 
         let array = Array4::from_shape_fn(
             (1, 3, self.size as usize, self.size as usize),
@@ -101,7 +100,7 @@ impl Tddfa {
             },
         );
 
-        vec![array]
+        Ok(vec![array])
     }
 
     pub fn run(
@@ -116,15 +115,15 @@ impl Tddfa {
             CropPolicy::Landmark => parse_roi_box_from_landmark(ver),
         };
 
-        let model_input = self.preprocess_input(input_frame, &roi_box);
+        let model_input = self.preprocess_input(input_frame, &roi_box)?;
 
         // Inference
-        let param: Vec<OrtOwnedTensor<f32, _>> = self.landmark_model.run(model_input).unwrap();
-        let param: [f32; 62] = param[0].as_slice().unwrap().try_into().unwrap();
+        let param: Vec<OrtOwnedTensor<f32, _>> = self.landmark_model.run(model_input)?;
+        let param: [f32; 62] = param[0].as_slice().unwrap().try_into()?;
 
         // Postprocessing - Rescaling the output by multiplying with standard deviation and adding mean
         let processed_param = arr1(&param) * arr1(&self.std_array) + arr1(&self.mean_array);
-        let processed_param: [f32; 62] = processed_param.as_slice().unwrap().try_into().unwrap();
+        let processed_param: [f32; 62] = processed_param.as_slice().unwrap().try_into()?;
         Ok((processed_param, roi_box))
     }
 
@@ -158,7 +157,7 @@ pub fn test() {
     let frame =
         Mat::new_rows_cols_with_default(120, 120, CV_8UC3, Scalar::new(255., 0., 0., 0.)).unwrap();
 
-    let face_box = [150., 150., 400., 400.];
+    let face_box = [30., 30., 60., 60.];
     let (param, roi_box) = bfm
         .run(
             &frame,

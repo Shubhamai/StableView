@@ -20,7 +20,7 @@ use crate::consts::{APP_AUTHORS, APP_NAME, APP_VERSION};
 
 pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let min_cutoff = {
-        if headtracker.config.min_cutoff.load(Ordering::SeqCst) - 0. < f32::EPSILON {
+        if (headtracker.config.min_cutoff.load(Ordering::SeqCst) - 0.).abs() < f32::EPSILON {
             0
         } else {
             (1. / headtracker.config.min_cutoff.load(Ordering::SeqCst)).sqrt() as u32
@@ -28,7 +28,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     };
 
     let beta = {
-        if headtracker.config.beta.load(Ordering::SeqCst) - 0. < f32::EPSILON {
+        if (headtracker.config.beta.load(Ordering::SeqCst) - 0.).abs() < f32::EPSILON {
             0
         } else {
             (1. / headtracker.config.beta.load(Ordering::SeqCst)).sqrt() as u32
