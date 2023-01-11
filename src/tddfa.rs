@@ -91,7 +91,7 @@ impl Tddfa {
         )?; // ! Error handling here
 
         let vec = Mat::data_typed::<Vec3b>(&resized_frame)?;
-            // .expect("Unable to convert the image to vector");
+        // .expect("Unable to convert the image to vector");
 
         let array = Array4::from_shape_fn(
             (1, 3, self.size as usize, self.size as usize),
@@ -103,6 +103,7 @@ impl Tddfa {
         Ok(vec![array])
     }
 
+    // ? Many adding generick types of remove two face_box, ver input
     pub fn run(
         &mut self,
         input_frame: &Mat,
@@ -115,6 +116,7 @@ impl Tddfa {
             CropPolicy::Landmark => parse_roi_box_from_landmark(ver),
         };
 
+        // println!("{:?}", roi_box);
         let model_input = self.preprocess_input(input_frame, &roi_box)?;
 
         // Inference
@@ -171,5 +173,13 @@ pub fn test() {
     let (param, roi_box) = bfm
         .run(&frame, face_box, &pts_3d, CropPolicy::Landmark)
         .unwrap();
-    let _pts_3d = bfm.recon_vers(param, roi_box);
+
+    // let roi_box = [150., 150., 400., 400.];
+    // let param = [
+    //     1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.,
+    //     21., 22., 23., 24., 25., 26., 27., 28., 29., 30., 31., 32., 33., 34., 35., 36., 37., 38.,
+    //     39., 40., 41., 42., 43., 44., 45., 46., 47., 48., 49., 50., 51., 52., 53., 54., 55., 56.,
+    //     57., 58., 59., 60., 61., 62.,
+    // ];
+    // let pts_3d = bfm.recon_vers(param, roi_box);
 }

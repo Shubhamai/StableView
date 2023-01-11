@@ -2,7 +2,8 @@
 use crate::enums::crop_policy::CropPolicy;
 use crate::structs::{pose::ProcessHeadPose, tddfa::Tddfa};
 use crate::utils::headpose::{calc_pose, gen_point2d};
-
+use opencv::core::Size;
+use opencv::imgproc;
 use opencv::prelude::Mat;
 
 impl ProcessHeadPose {
@@ -13,6 +14,9 @@ impl ProcessHeadPose {
             tddfa,
             pts_3d: vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
             face_box: [150., 150., 400., 400.],
+            first_iteration: true,
+            param: [0.; 62],
+            roi_box: [150., 150., 400., 400.],
         }
     }
 
@@ -48,19 +52,36 @@ impl ProcessHeadPose {
     }
 
     pub fn single_iter(&mut self, frame: &Mat) -> Result<[f32; 6], Box<dyn std::error::Error>> {
-        let (mut param, mut roi_box) =
-            self.tddfa
-                .run(frame, self.face_box, &self.pts_3d, CropPolicy::Landmark)?;
+        // ! A very tuff bug laying around somewhere here, resulting in out of ordinary roi box values when moving to camera border
 
-        if (roi_box[2] - roi_box[0]).abs() * (roi_box[3] - roi_box[1]).abs() < 2020. {
-            (param, roi_box) =
+        if self.first_iteration {
+            (self.param, self.roi_box) =
                 self.tddfa
                     .run(frame, self.face_box, &self.pts_3d, CropPolicy::Box)?;
+            self.pts_3d = self.tddfa.recon_vers(self.param, self.roi_box);
+
+            (self.param, self.roi_box) =
+                self.tddfa
+                    .run(frame, self.face_box, &self.pts_3d, CropPolicy::Landmark)?;
+            self.pts_3d = self.tddfa.recon_vers(self.param, self.roi_box);
+
+            self.first_iteration = false;
+        } else {
+            (self.param, self.roi_box) =
+                self.tddfa
+                    .run(frame, self.face_box, &self.pts_3d, CropPolicy::Landmark)?;
+
+            if (self.roi_box[2] - self.roi_box[0]).abs() * (self.roi_box[3] - self.roi_box[1]).abs()
+                < 2020.
+            {
+                (self.param, self.roi_box) =
+                    self.tddfa
+                        .run(frame, self.face_box, &self.pts_3d, CropPolicy::Box)?;
+            }
+
+            self.pts_3d = self.tddfa.recon_vers(self.param, self.roi_box); // ? Commenting this code still seems to output the pose perfectly
         }
-
-        self.pts_3d = self.tddfa.recon_vers(param, roi_box); // ? Commenting this code still seems to output the pose perfectly
-
-        let (p, pose) = calc_pose(&param);
+        let (p, pose) = calc_pose(&self.param);
 
         let (point2d, distance) = gen_point2d(
             &p,
@@ -71,7 +92,8 @@ impl ProcessHeadPose {
             ],
         );
 
-        let (centroid, distance) = self.get_coordintes_and_depth(pose, distance, point2d, &roi_box);
+        let (centroid, distance) =
+            self.get_coordintes_and_depth(pose, distance, point2d, &self.roi_box);
 
         Ok([
             centroid[0],
@@ -87,17 +109,67 @@ impl ProcessHeadPose {
 #[test]
 #[ignore = "Can only test this offline since it requires webcam, run cargo test -- --ignored"]
 pub fn test_process_head_pose() {
-    use crate::filter::EuroDataFilter;
-    use crate::structs::{camera::ThreadedCamera, network::SocketNetwork};
+    use crate::structs::camera::ThreadedCamera;
+    use crate::utils::image::crop_img;
+    use crate::utils::visualize::draw_landmark;
+    use opencv::highgui;
+    use opencv::prelude::MatTraitConstManual;
 
-    let _euro_filter = EuroDataFilter::new(0.0025, 0.01);
-    let _socket_network = SocketNetwork::new("127.0.0.1".to_owned(), "4242".to_owned());
-
-    let (tx, _rx) = crossbeam_channel::unbounded::<Mat>();
+    let (tx, rx) = crossbeam_channel::unbounded::<Mat>();
 
     let mut thr_cam = ThreadedCamera::start_camera_thread(tx, 0);
 
-    let _head_pose = ProcessHeadPose::new(120);
+    let mut head_pose = ProcessHeadPose::new(120);
 
+    let window = "video capture";
+    highgui::named_window(window, highgui::WINDOW_AUTOSIZE).unwrap();
+
+    let mut frame = rx.recv().unwrap();
+    let mut data: [f32; 6];
+
+    loop {
+        frame = match rx.try_recv() {
+            Ok(result) => result,
+            Err(_) => frame.clone(),
+        };
+
+        let _data = head_pose.single_iter(&frame).unwrap();
+
+        frame = draw_landmark(
+            frame,
+            vec![
+                head_pose.pts_3d[0][28..48].to_vec(),
+                head_pose.pts_3d[1][28..48].to_vec(),
+                head_pose.pts_3d[2][28..48].to_vec(),
+            ],
+            head_pose.roi_box,
+            (0., 255., 0.),
+            1,
+        );
+
+        if frame.size().unwrap().width > 0 {
+            // let cropped_image = crop_img(&frame, &head_pose.roi_box).unwrap();
+
+            // Resizing the frame
+            // let mut resized_frame = Mat::default();
+            // imgproc::resize(
+            //     &cropped_image,
+            //     &mut resized_frame,
+            //     Size {
+            //         width: 120,
+            //         height: 120,
+            //     },
+            //     0.0,
+            //     0.0,
+            //     imgproc::INTER_LINEAR, //*INTER_AREA, // https://stackoverflow.com/a/51042104 | Speed -> https://stackoverflow.com/a/44278268
+            // ).unwrap(); // ! Error handling here
+
+            highgui::imshow(window, &frame).unwrap();
+        }
+        let key = highgui::wait_key(30).unwrap();
+        if key > 0 && key != 255 {
+            break;
+        }
+    }
     thr_cam.shutdown();
 }

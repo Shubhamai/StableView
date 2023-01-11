@@ -94,8 +94,7 @@ pub fn parse_roi_box_from_landmark(pts: &[Vec<f32>]) -> [f32; 4] {
         center[1] + radius,
     ];
 
-    let llength =
-        ((bbox[3] - bbox[1]).mul_add(bbox[3] - bbox[1], (bbox[2] - bbox[0]).powi(2))).sqrt();
+    let llength = ((bbox[2] - bbox[0]).powi(2) + (bbox[3] - bbox[1]).powi(2)).sqrt();
 
     let center_x = (bbox[2] + bbox[0]) / 2.;
     let center_y = (bbox[3] + bbox[1]) / 2.;

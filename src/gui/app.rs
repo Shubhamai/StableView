@@ -114,22 +114,22 @@ impl Application for HeadTracker {
                                 Err(_) => frame.clone(),
                             };
 
-                            let out = head_pose.single_iter(&frame).unwrap();
+                            let out = head_pose.single_iter(&frame);
 
-                            // match out {
-                            //     Ok(value) => {
-                            //         data = value;
-                            //     }
-                            //     Err(e) => {
-                            //         println!("An error: {}; skipped.", e);
-                            //         // head_pose.face_box =  [150., 150., 400., 400.];
-                            //         head_pose.pts_3d =
-                            //             vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]];
-                            //         head_pose.face_box = [0., 0., 600., 600.];
-                            //         // headtracker_running.store(false, Ordering::SeqCst);
-                            //         continue;
-                            //     }
-                            // };
+                            match out {
+                                Ok(value) => {
+                                    data = value;
+                                }
+                                Err(e) => {
+                                    // println!("An error: {}; skipped.", e);
+                                    // head_pose.face_box =  [150., 150., 400., 400.];
+                                    // head_pose.pts_3d =
+                                    //     vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]];
+                                    // head_pose.face_box = [0., 0., 600., 600.];
+                                    // headtracker_running.store(false, Ordering::SeqCst);
+                                    continue;
+                                }
+                            };
 
                             data = euro_filter.filter_data(
                                 data,

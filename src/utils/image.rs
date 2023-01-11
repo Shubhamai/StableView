@@ -36,7 +36,7 @@ pub fn crop_img(img: &Mat, roi_box: &[f32; 4]) -> Result<Mat, opencv::Error> {
     // if sx > w - 1 {
     //     sx = w - 1;
     // }
-
+    // println!("{} {} {} {}", sx, sy, width, height);
     let roi = Rect::new(sx, sy, width, height);
     Mat::roi(img, roi) // ! Need to deal with this, when camera disconnects while running, error occures here
 }
