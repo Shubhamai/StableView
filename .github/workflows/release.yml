@@ -16,15 +16,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Test
-        run: cargo test --release
-      - name: Build
-        run: cargo build --release
       - name: Install WiX
         run : |
           nuget install WiX
           cargo install cargo-wix
       - name : Installing Opencv, LLVM
         run : choco install llvm opencv
+      - name: Test
+        run: cargo test --release
+      - name: Build
+        run: cargo build --release
       - name: Crate msi installer
         run: cargo wix
