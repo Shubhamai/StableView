@@ -16,7 +16,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
       - name: Install WiX
         run : |
           nuget install WiX
@@ -35,5 +34,6 @@ jobs:
           OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
           OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc15\lib
         run: cargo build --release
+      - uses: Swatinem/rust-cache@v2
       - name: Crate msi installer
         run: cargo wix --nocapture
