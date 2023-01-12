@@ -78,7 +78,7 @@
                             KeyPath='yes'/>
                     </Component>
                     
-                    <Directory Id='Bin' Name='bin'>
+                    <!-- <Directory Id='Bin' Name='bin'> -->
                         <Component Id='Path' Guid='0FF53C28-F348-49F0-B1AB-F2FFA40061C6' Win64='$(var.Win64)' KeyPath='yes'>
                             <Environment
                                 Id='PATH'
@@ -143,15 +143,6 @@
                           KeyPath='yes'/>
                         </Component>
 
-                        <Component Id='vcruntime1' Guid='*'>
-                          <File
-                            Id='vcruntime1'
-                            Name='vcruntime140_1.dll'
-                            DiskId='1'
-                            Source='assets\dlls\vcruntime140_1.dll'
-                            KeyPath='yes'/>
-                          </Component>
-
                           <Component Id='concrt' Guid='*'>
                             <File
                               Id='concrt'
@@ -163,7 +154,7 @@
 
                         
 
-                    </Directory>
+                    <!-- </Directory> -->
                 </Directory>
             </Directory>
 			<Directory Id="ProgramMenuFolder">
@@ -178,7 +169,7 @@
 				<Shortcut Id="AppStartShortcut" 
 					Name="StableView" 
 					Description="Head Tracking application using only webcam"
-					Target="[APPLICATIONFOLDER]bin\stableview.exe"
+					Target="[APPLICATIONFOLDER]\stableview.exe"
 					WorkingDirectory="APPLICATIONROOTDIRECTORY"
 					Icon="SetupIcon"/>
 				<RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
@@ -191,7 +182,7 @@
 				<Shortcut Id="AppDeskShortcut"
 					Name="StableView"
 					Description="Head Tracking application using only webcam"
-					Target="[APPLICATIONFOLDER]bin\stableview.exe"
+					Target="[APPLICATIONFOLDER]\stableview.exe"
 					WorkingDirectory="APPLICATIONROOTDIRECTORY"
 					Icon="SetupIcon"/>
 				<RemoveFolder Id="DesktopFolder" On="uninstall"/>
