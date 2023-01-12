@@ -1,0 +1,43 @@
+name: Release
+
+on :
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+  workflow_dispatch : 
+
+jobs:
+
+  windows:
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install WiX
+        run : |
+          nuget install WiX
+          cargo install cargo-wix
+      - name : Installing Opencv, LLVM
+        run : choco install llvm opencv
+      #- name: Test
+      #  env:
+      #    OPENCV_LINK_LIBS: opencv_world460
+      #    OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
+      #    OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc15\lib
+      #  run: cargo test --release
+      - name: Build
+        env:
+          OPENCV_LINK_LIBS: opencv_world460 
+          OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
+          OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc15\lib
+        run: cargo build --release
+      - uses: Swatinem/rust-cache@v2
+      - name: Crate msi installer
+        env:
+          OPENCV_LINK_LIBS: opencv_world460 
+          OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
+          OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc15\lib
+        run: cargo wix --nocapture
