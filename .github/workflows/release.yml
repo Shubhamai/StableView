@@ -36,4 +36,4 @@ jobs:
           OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc15\lib
         run: cargo build --release
       - name: Crate msi installer
-        run: cargo wix
+        run: cargo wix --nocapture
