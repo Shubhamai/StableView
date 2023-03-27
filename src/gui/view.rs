@@ -54,24 +54,24 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                 .vertical_alignment(Vertical::Center)
                 .horizontal_alignment(Horizontal::Center),
         )
-        .height(Length::Units(40))
-        .width(Length::Units(180))
+        .height(Length::Fixed(40.))
+        .width(Length::Fixed(180.))
         .on_press(Message::Toggle)
     };
 
     let sliders_row = Container::new(
         Column::new()
             .push(text("Filter Settings").size(15))
-            .push(vertical_space(Length::Units(20)))
+            .push(vertical_space(Length::Fixed(20.)))
             .push(text("Speed").size(14))
             .push(Container::new(min_cutoff_slider).width(Length::FillPortion(2)))
-            .push(vertical_space(Length::Units(10)))
+            .push(vertical_space(Length::Fixed(10.)))
             .push(text("Smooth").size(14))
             .push(Container::new(beta_slider).width(Length::FillPortion(2)))
-            .push(vertical_space(Length::Units(30)))
+            .push(vertical_space(Length::Fixed(30.)))
             .push(text("FPS").size(15))
             .push(Container::new(fps_slider).width(Length::FillPortion(2)))
-            .push(vertical_space(Length::Units(30)))
+            .push(vertical_space(Length::Fixed(30.)))
             .push(text("IP and Port").size(15))
             // ! IPV4 and V6 support for external devices, having only two inputs, ip and port
             .push(Container::new(
@@ -86,7 +86,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                         text_input("4242", port, Message::InputPort).width(Length::FillPortion(15)),
                     ),
             ))
-            .push(vertical_space(Length::Units(30))),
+            .push(vertical_space(Length::Fixed(30.))),
     )
     .padding(40);
 
@@ -111,9 +111,9 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
             .push({
                 iced::widget::image::viewer(iced::widget::image::Handle::from_memory(image))
                     .width(Length::Fill)
-                    .height(Length::Units(200))
+                    .height(Length::Fixed(200.))
             })
-            .push(vertical_space(Length::Units(32)))
+            .push(vertical_space(Length::Fixed(32.)))
             .push(Container::new(
                 Row::new()
                     .push(
@@ -157,7 +157,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let body = Container::new(
         Column::new()
             .width(Length::Fill)
-            .push(vertical_space(Length::Units(40)))
+            .push(vertical_space(Length::Fixed(40.)))
             .push(Container::new(
                 Row::new()
                     .push(horizontal_space(Length::FillPortion(2)))
@@ -165,11 +165,11 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                         button(text("  Reset to Default  ").size(15))
                             .on_press(Message::DefaultSettings),
                     )
-                    .push(horizontal_space(Length::Units(40))),
+                    .push(horizontal_space(Length::Fixed(40.))),
             ))
             .push(controls_row.width(Length::FillPortion(50)))
             .push(start_button_row.width(Length::FillPortion(50)))
-            .push(vertical_space(Length::Units(20)))
+            .push(vertical_space(Length::Fixed(20.)))
             .push(
                 Container::new(
                     Row::new()
@@ -201,12 +201,12 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
 fn footer() -> Container<'static, Message, Renderer> {
     let github_button = button(
         text("Github")
-            .size(14)
+            .size(14.)
             .horizontal_alignment(alignment::Horizontal::Center)
             .vertical_alignment(alignment::Vertical::Center),
     )
-    .height(Length::Units(35))
-    .width(Length::Units(40))
+    .height(Length::Fixed(35.))
+    .width(Length::Fixed(40.))
     .on_press(Message::OpenGithub);
 
     let logs_button = button(
@@ -215,8 +215,8 @@ fn footer() -> Container<'static, Message, Renderer> {
             .horizontal_alignment(alignment::Horizontal::Center)
             .vertical_alignment(alignment::Vertical::Center),
     )
-    .height(Length::Units(35))
-    .width(Length::Units(100))
+    .height(Length::Fixed(35.))
+    .width(Length::Fixed(100.))
     .on_press(Message::OpenLogs);
 
     let footer_row = Row::new()

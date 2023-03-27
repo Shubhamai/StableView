@@ -65,7 +65,7 @@ fn main() {
         },
         flags,
         default_font: Some(DEFAULT_FONT),
-        default_text_size: 16,
+        default_text_size: 16.,
         text_multithreading: false,
         antialiasing: false,
         exit_on_close_request: false,

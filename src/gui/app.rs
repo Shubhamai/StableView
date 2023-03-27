@@ -5,8 +5,8 @@ use std::{
 };
 
 use iced::{
-    application, executor, theme, widget::Container, Application, Color, Command, Element, Length,
-    Subscription, Theme,
+    application, executor, theme, widget::Container, window as iced_window, Application, Color,
+    Command, Element, Length, Subscription, Theme,
 };
 use iced_native::{window, Event};
 
@@ -36,24 +36,25 @@ impl Application for HeadTracker {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        match self.config.hide_camera {
-            true => iced_native::subscription::events().map(Message::EventOccurred),
-            false => {
-                if self.headtracker_running.load(Ordering::SeqCst) {
-                    let ticks = iced::time::every(Duration::from_millis(1)).map(|_| Message::Tick);
-                    let runtime_events =
-                        iced_native::subscription::events().map(Message::EventOccurred);
-                    Subscription::batch(vec![runtime_events, ticks])
-                } else {
-                    iced_native::subscription::events().map(Message::EventOccurred)
-                }
-            }
-        }
+        // match self.config.hide_camera {
+        //     true =>
+        iced_native::subscription::events().map(Message::EventOccurred) //,
+                                                                        //     false => {
+                                                                        //         if self.headtracker_running.load(Ordering::SeqCst) {
+                                                                        //             let ticks = iced::time::every(Duration::from_millis(1)).map(|_| Message::Tick);
+                                                                        //             let runtime_events =
+                                                                        //                 iced_native::subscription::events().map(Message::EventOccurred);
+                                                                        //             Subscription::batch(vec![runtime_events, ticks])
+                                                                        //         } else {
+                                                                        //             iced_native::subscription::events().map(Message::EventOccurred)
+                                                                        //         }
+                                                                        //     }
+                                                                        // }
     }
 
-    fn should_exit(&self) -> bool {
-        self.should_exit
-    }
+    // fn should_exit(&self) -> bool {
+    // self.should_exit
+    // }
 
     fn theme(&self) -> Theme {
         Theme::Light
@@ -291,7 +292,7 @@ impl Application for HeadTracker {
                     .unwrap();
             }
             Message::EventOccurred(event) => {
-                if Event::Window(window::Event::CloseRequested) == event {
+                if let Event::Window(window::Event::CloseRequested) = event {
                     if self.headtracker_running.load(Ordering::SeqCst) {
                         self.headtracker_running.store(false, Ordering::SeqCst);
                         self.headtracker_thread
@@ -300,7 +301,8 @@ impl Application for HeadTracker {
                             .join()
                             .expect("Could not join spawned thread");
                     }
-                    self.should_exit = true;
+                    // self.should_exit = true;
+                    std::process::exit(0);
                 }
             }
         }
