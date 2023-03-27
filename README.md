@@ -43,11 +43,9 @@
 
 ![progress gif](assets/updates/jan-03-2023-update.gif)
 
-- Todo's :
-  - [x] Release workflow ~& auto-update~.
-  - [ ] Error handling & removing all `.expect` and `.unwrap`.
-  - [x] Saving app state, default states & configuration management.
-  - [x] Adding custom design & styles to the UI.
+- Todo's & Issues :
+  - [ ] Better Error Handling
+  - [ ] Tracker lagging when camera is not hidden.
 
 # Usage
 
@@ -63,7 +61,7 @@
 
 - Uses your regular old webcam with AI for head tracking. Uses an extremely low CPU (<3%-60fps in Ryzen 5 3600H) and returns high performance.
 - Works with [opentrack](https://github.com/opentrack/opentrack) to run on any modern simulator including Microsoft Flight Simulator, Digital Combat Simulator, Xplane & more.
-- Easy to install and _updates to newer versions with a click (in progress)_.
+- Easy to install :)
 
 # Shoutouts
 
