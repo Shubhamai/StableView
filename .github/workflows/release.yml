@@ -51,4 +51,5 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: target\wix\StableView*.msi
+          files: |
+            target/wix/*.msi
