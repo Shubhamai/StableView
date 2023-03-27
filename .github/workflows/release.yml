@@ -1,12 +1,12 @@
 name: Release
 
-on :
+on:
   push:
-    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
-  workflow_dispatch : 
+    tags:
+      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
+  workflow_dispatch:
 
 jobs:
-
   windows:
     runs-on: windows-latest
 
@@ -15,14 +15,15 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@v3
+      - name: Cargo Cache
+        uses: Swatinem/rust-cache@v2
       - name: Install WiX
-        run : |
+        run: |
           nuget install WiX
           cargo install cargo-wix
-      - name : Installing Opencv, LLVM
-        run : choco install llvm opencv
+      - name: Installing Opencv, LLVM
+        run: choco install llvm opencv
       #- name: Test
       #  env:
       #    OPENCV_LINK_LIBS: opencv_world460
@@ -31,13 +32,18 @@ jobs:
       #  run: cargo test --release
       - name: Build
         env:
-          OPENCV_LINK_LIBS: opencv_world460 
+          OPENCV_LINK_LIBS: opencv_world460
           OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
           OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc15\lib
         run: cargo build --release
       - name: Crate msi installer
         env:
-          OPENCV_LINK_LIBS: opencv_world460 
+          OPENCV_LINK_LIBS: opencv_world460
           OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
           OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc15\lib
         run: cargo wix --nocapture
+      - name: Upload installer
+        uses: actions/upload-artifact@v3
+        with:
+          name: StableView.msi
+          path: target\wix\StableView*.msi

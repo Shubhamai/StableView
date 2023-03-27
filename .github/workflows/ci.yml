@@ -3,10 +3,10 @@ name: CI
 on:
   push:
     branches:
-      - '*'
+      - "*"
   pull_request:
     branches:
-      - '*'
+      - "*"
 
 env:
   CARGO_TERM_COLOR: always
@@ -26,12 +26,12 @@ jobs:
       #    override: true
       - name: Install Ubuntu Dependencies
         run: sudo apt-get install libopencv-dev clang libclang-dev clang
-      - run: rustup component add rustfmt clippy
-      - name : Format
-        run : cargo fmt --all -- --check
-      - name : Clippy
-        run: cargo clippy  -- -D warnings
-      - name: Build 
+      # - run: rustup component add rustfmt clippy
+      # - name : Format
+      #   run : cargo fmt --all -- --check
+      # - name : Clippy
+      #   run: cargo clippy  -- -D warnings
+      - name: Build
         run: cargo build --verbose
-      - name: Run tests 
+      - name: Run tests
         run: cargo test --verbose

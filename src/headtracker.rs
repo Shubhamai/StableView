@@ -2,8 +2,6 @@
 use crate::enums::crop_policy::CropPolicy;
 use crate::structs::{pose::ProcessHeadPose, tddfa::Tddfa};
 use crate::utils::headpose::{calc_pose, gen_point2d};
-use opencv::core::Size;
-use opencv::imgproc;
 use opencv::prelude::Mat;
 
 impl ProcessHeadPose {

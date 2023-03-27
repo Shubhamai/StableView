@@ -1,6 +1,6 @@
 use opencv::{
     core::{Mat, Point, Point2i, Scalar},
-    imgproc::{circle, line, LineTypes, LINE_8},
+    imgproc::{circle, line, LINE_8},
 };
 
 pub fn draw_landmark(
