@@ -16,7 +16,7 @@ use opencv::{
 use crate::{consts::NO_VIDEO_IMG, enums::message::Message, structs::app::HeadTracker};
 
 use super::style::{HEIGHT_BODY, HEIGHT_FOOTER};
-use crate::consts::{APP_AUTHORS, APP_NAME, APP_VERSION};
+use crate::consts::{APP_AUTHORS, APP_NAME, APP_VERSION, ICONS};
 
 pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let min_cutoff = {
@@ -180,7 +180,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                                 //     Some(message) => message,
                                 //     None => "",
                                 // }
-                                "Hello",
+                                "",
                             )
                             .size(15)
                             .horizontal_alignment(Horizontal::Center)
@@ -200,7 +200,8 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
 
 fn footer() -> Container<'static, Message, Renderer> {
     let github_button = button(
-        text("Github")
+        Text::new('\u{48}'.to_string())
+            .font(ICONS)
             .size(14.)
             .horizontal_alignment(alignment::Horizontal::Center)
             .vertical_alignment(alignment::Vertical::Center),
@@ -210,22 +211,24 @@ fn footer() -> Container<'static, Message, Renderer> {
     .on_press(Message::OpenGithub);
 
     let logs_button = button(
-        text("Open Logs")
-            .size(14)
+        Text::new('\u{66}'.to_string())
+            .font(ICONS)
+            .size(14.)
             .horizontal_alignment(alignment::Horizontal::Center)
             .vertical_alignment(alignment::Vertical::Center),
     )
     .height(Length::Fixed(35.))
-    .width(Length::Fixed(100.))
+    .width(Length::Fixed(40.))
     .on_press(Message::OpenLogs);
 
     let footer_row = Row::new()
         .align_items(Alignment::Center)
         .push(Text::new(format!(
-            "{} v{} by {} ",
+            "{} v{} by {}     ",
             APP_NAME, APP_VERSION, APP_AUTHORS
         )))
         .push(github_button)
+        .push(horizontal_space(Length::Fixed(10.)))
         .push(logs_button);
 
     Container::new(footer_row)

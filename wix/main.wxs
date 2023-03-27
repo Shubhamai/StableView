@@ -287,7 +287,7 @@
           about customization.
           The banner BMP dimensions are 493 x 58 pixels.
         -->
-        <!-- <WixVariable Id='WixUIBannerBmp' Value='assets\brand\banner.png'/> -->
+        <WixVariable Id='WixUIBannerBmp' Value='assets\brand\white.png'/>
 
         
         <!--
@@ -297,7 +297,7 @@
           customization.
           The dialog BMP dimensions are 493 x 312 pixels.
         -->
-        <!-- <WixVariable Id='WixUIDialogBmp' Value='assets\brand\Dialog.bmp'/> -->
+        <WixVariable Id='WixUIDialogBmp' Value='assets\brand\white.png'/>
 
     </Product>
 
