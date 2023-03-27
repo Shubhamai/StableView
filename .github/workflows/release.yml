@@ -47,3 +47,8 @@ jobs:
         with:
           name: StableView.msi
           path: target\wix\StableView*.msi
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: target\wix\StableView*.msi
