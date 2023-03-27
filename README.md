@@ -49,11 +49,15 @@
   - [x] Saving app state, default states & configuration management.
   - [x] Adding custom design & styles to the UI.
 
-# Installation
+# Usage
 
-> Visit the [releases page](https://github.com/shubhamai/StableView/releases/latest) and download the latest version on your platform.
+1. Visit the [releases page](https://github.com/shubhamai/StableView/releases/latest) and download the latest version on your platform.
 
-For windows, a `.msi` installer will be provided, simply double-click on the installer and follow the installation steps. After Installing, you can simply run `StableView` from the start menu.
+    For windows, a `.msi` installer will be provided, simply double-click on the installer and follow the installation steps. After Installing, you can simply run `StableView` from the start menu.
+
+2. The application uses opentrack to send the tracking data to respective applications. Please install it from their [Github repo](https://github.com/opentrack/opentrack).
+
+    After installer OpenTrack, select Input as **UDP over network** so that OpenTrack can receive data from StableView and send to required application.
 
 # Features
 
