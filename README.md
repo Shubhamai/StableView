@@ -40,7 +40,6 @@
 
 **Last Updated - 27 March, 2023**
 
-The project is currently in heavy development and will have it's first alpha release soon :)
 
 ![progress gif](assets/updates/jan-03-2023-update.gif)
 
