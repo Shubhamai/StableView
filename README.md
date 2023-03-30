@@ -46,6 +46,8 @@
 - Todo's & Issues :
   - [ ] Better Error Handling
   - [ ] Tracker lagging when camera is not hidden.
+  - [ ] Camera from external link.
+  - [ ] Auto Update ( Hopefully ? ).
 
 # Usage
 
