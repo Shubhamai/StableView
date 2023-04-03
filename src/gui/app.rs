@@ -95,7 +95,7 @@ impl Application for HeadTracker {
 
                     let error_tracker = self.error_tracker.clone();
 
-                    self.headtracker_thread = Some(thread::spawn(move || 'main: {
+                    self.headtracker_thread = Some(thread::spawn(move || {
                         let mut error_message = String::new();
 
                         // Resetting error message
@@ -262,14 +262,18 @@ impl Application for HeadTracker {
                 self.config.port = port;
                 self.save_config()
             } // ! Input validation, only numbers
+
             Message::Camera(camera_name) => {
                 self.config.selected_camera = camera_name;
 
                 // If camera changes while running
                 if self.headtracker_running.load(Ordering::SeqCst) {
                     // Turn it back off and on again :)
-                    self.update(Message::Toggle);
-                    self.update(Message::Toggle);
+                    #[allow(unused_must_use)]
+                    {
+                        self.update(Message::Toggle);
+                        self.update(Message::Toggle);
+                    }
                 }
 
                 self.save_config()

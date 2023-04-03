@@ -3,6 +3,7 @@ use opencv::{
     imgproc::{circle, line, LINE_8},
 };
 
+#[allow(dead_code)]
 pub fn draw_landmark(
     frame: Mat,
     pts_3d: Vec<Vec<f32>>,

@@ -1,7 +1,7 @@
 /// Deals with sending the data (x,y,depth,yaw,pitch,roll) to opentrack (https://github.com/opentrack/opentrack) using UDP socket
 use crate::structs::network::SocketNetwork;
 use anyhow::{Context, Result};
-use std::{io::Error, net::UdpSocket};
+use std::net::UdpSocket;
 
 impl SocketNetwork {
     pub fn new(ip: String, port: String) -> Result<Self> {

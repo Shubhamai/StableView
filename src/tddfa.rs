@@ -20,9 +20,9 @@ use onnxruntime::{
     tensor::OrtOwnedTensor,
     GraphOptimizationLevel,
 };
-use std::{error::Error, ops::Deref};
+use std::ops::Deref;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Result};
 use once_cell::sync::Lazy;
 use opencv::{
     core::{Size, Vec3b},
