@@ -42,23 +42,28 @@
 
 ![progress gif](assets/updates/jan-03-2023-update.gif)
 
-- Todo's :
-  - [x] Release workflow ~& auto-update~.
-  - [x] Error handling & removing all `.expect` and `.unwrap`.
-  - [x] Saving app state, default states & configuration management.
-  - [x] Adding custom design & styles to the UI.
 
-# Installation
+- Todo's & Issues :
+  - [x] Better Error Handling
+  - [ ] Tracker lags when the camera is not hidden.
+  - [ ] Camera from an external link.
+  - [ ] Auto Update ( Hopefully ? ).
 
-> Visit the [releases page](https://github.com/shubhamai/StableView/releases/latest) and download the latest version on your platform.
+# Usage
 
-For windows, a `.msi` installer will be provided, simply double-click on the installer and follow the installation steps. After Installing, you can simply run `StableView` from the start menu.
+1. Visit the [releases page](https://github.com/shubhamai/StableView/releases/latest) and download the latest version on your platform.
+
+    For windows, a `.msi` installer will be provided, simply double-click on the installer and follow the installation steps. After Installing, you can simply run `StableView` from the start menu.
+
+2. The application uses opentrack to send the tracking data to respective applications. Please install it from their [Github repo](https://github.com/opentrack/opentrack).
+
+    After installer OpenTrack, select Input as **UDP over network** so that OpenTrack can receive data from StableView and send to required application.
 
 # Features
 
 - Uses your regular old webcam with AI for head tracking. Uses an extremely low CPU (<3%-60fps in Ryzen 5 3600H) and returns high performance.
 - Works with [opentrack](https://github.com/opentrack/opentrack) to run on any modern simulator including Microsoft Flight Simulator, Digital Combat Simulator, Xplane & more.
-- Easy to install and _updates to newer versions with a click (in progress)_.
+- Easy to install :)
 
 # Shoutouts
 
