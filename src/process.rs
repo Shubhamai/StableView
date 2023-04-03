@@ -2,20 +2,21 @@
 use crate::enums::crop_policy::CropPolicy;
 use crate::structs::{pose::ProcessHeadPose, tddfa::Tddfa};
 use crate::utils::headpose::{calc_pose, gen_point2d};
+use anyhow::{Context, Result};
 use opencv::prelude::Mat;
 
 impl ProcessHeadPose {
-    pub fn new(image_size: i32) -> Self {
-        let tddfa = Tddfa::new(image_size).unwrap();
+    pub fn new(image_size: i32) -> Result<Self> {
+        let tddfa = Tddfa::new(image_size).context("Unable to create tddfa")?;
 
-        Self {
+        Ok(Self {
             tddfa,
             pts_3d: vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
             face_box: [150., 150., 400., 400.],
             first_iteration: true,
             param: [0.; 62],
             roi_box: [150., 150., 400., 400.],
-        }
+        })
     }
 
     fn get_coordintes_and_depth(
@@ -106,7 +107,7 @@ impl ProcessHeadPose {
 
 #[test]
 #[ignore = "Can only test this offline since it requires webcam, run cargo test -- --ignored"]
-pub fn test_process_head_pose() {
+pub fn test_process_head_pose() -> Result<(), Box<dyn std::error::Error>> {
     use crate::structs::camera::ThreadedCamera;
     use crate::utils::image::crop_img;
     use crate::utils::visualize::draw_landmark;
@@ -115,14 +116,14 @@ pub fn test_process_head_pose() {
 
     let (tx, rx) = crossbeam_channel::unbounded::<Mat>();
 
-    let mut thr_cam = ThreadedCamera::start_camera_thread(tx, 0);
+    let mut thr_cam = ThreadedCamera::start_camera_thread(tx, 0, "Test Camera".to_owned())?;
 
     let mut head_pose = ProcessHeadPose::new(120);
 
     let window = "video capture";
-    highgui::named_window(window, highgui::WINDOW_AUTOSIZE).unwrap();
+    highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
 
-    let mut frame = rx.recv().unwrap();
+    let mut frame = rx.recv()?;
     let mut data: [f32; 6];
 
     loop {
@@ -131,7 +132,7 @@ pub fn test_process_head_pose() {
             Err(_) => frame.clone(),
         };
 
-        let _data = head_pose.single_iter(&frame).unwrap();
+        let _data = head_pose.single_iter(&frame)?;
 
         frame = draw_landmark(
             frame,
@@ -145,8 +146,8 @@ pub fn test_process_head_pose() {
             1,
         );
 
-        if frame.size().unwrap().width > 0 {
-            // let cropped_image = crop_img(&frame, &head_pose.roi_box).unwrap();
+        if frame.size()?.width > 0 {
+            // let cropped_image = crop_img(&frame, &head_pose.roi_box)?;
 
             // Resizing the frame
             // let mut resized_frame = Mat::default();
@@ -160,14 +161,15 @@ pub fn test_process_head_pose() {
             //     0.0,
             //     0.0,
             //     imgproc::INTER_LINEAR, //*INTER_AREA, // https://stackoverflow.com/a/51042104 | Speed -> https://stackoverflow.com/a/44278268
-            // ).unwrap(); // ! Error handling here
+            // )?; // ! Error handling here
 
-            highgui::imshow(window, &frame).unwrap();
+            highgui::imshow(window, &frame)?;
         }
-        let key = highgui::wait_key(30).unwrap();
+        let key = highgui::wait_key(30)?;
         if key > 0 && key != 255 {
             break;
         }
     }
     thr_cam.shutdown();
+    Ok(())
 }

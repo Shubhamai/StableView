@@ -9,7 +9,7 @@ pub fn draw_landmark(
     face_box: [f32; 4],
     color: (f64, f64, f64),
     size: i32,
-) -> Mat {
+) -> Result<Mat, opencv::Error> {
     let mut img = frame.clone();
     let n = pts_3d[0].len();
     if n <= 106 {
@@ -22,8 +22,7 @@ pub fn draw_landmark(
                 -1,
                 LINE_8,
                 0,
-            )
-            .unwrap()
+            )?
         }
     } else {
         let sep = 1;
@@ -36,8 +35,7 @@ pub fn draw_landmark(
                 1,
                 LINE_8,
                 0,
-            )
-            .unwrap()
+            )?
         }
     };
 
@@ -57,8 +55,7 @@ pub fn draw_landmark(
         1,
         LINE_8,
         0,
-    )
-    .unwrap();
+    )?;
     line(
         &mut img,
         right_top,
@@ -67,8 +64,7 @@ pub fn draw_landmark(
         1,
         LINE_8,
         0,
-    )
-    .unwrap();
+    )?;
     line(
         &mut img,
         right_bottom,
@@ -77,8 +73,7 @@ pub fn draw_landmark(
         1,
         LINE_8,
         0,
-    )
-    .unwrap();
+    )?;
     line(
         &mut img,
         left_bottom,
@@ -87,8 +82,7 @@ pub fn draw_landmark(
         1,
         LINE_8,
         0,
-    )
-    .unwrap();
+    )?;
 
-    img
+    Ok(img)
 }

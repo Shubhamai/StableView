@@ -47,7 +47,7 @@ pub struct Config {
 
     pub fps: Arc<AtomicU32>,
 
-    pub selected_camera: Option<String>,
+    pub selected_camera: String,
     pub hide_camera: bool,
 }
 
@@ -56,7 +56,7 @@ pub struct HeadTracker {
 
     pub camera_list: HashMap<String, i32>,
 
-    pub headtracker_thread: Option<thread::JoinHandle<String>>,
+    pub headtracker_thread: Option<thread::JoinHandle<()>>,
     pub headtracker_running: sync::Arc<AtomicBool>,
 
     pub should_exit: bool,
@@ -81,7 +81,7 @@ impl Default for Config {
 
             fps: Arc::new(AtomicU32::new(AppConfig::default().fps)),
 
-            selected_camera: Some(AppConfig::default().selected_camera), // ? Maybe checking for new cameras in main.rs
+            selected_camera: AppConfig::default().selected_camera, // ? Maybe checking for new cameras in main.rs
             hide_camera: AppConfig::default().hide_camera,
         }
     }
@@ -91,13 +91,32 @@ impl Default for HeadTracker {
     fn default() -> Self {
         let (sender, receiver) = unbounded::<Mat>(); // ! bounded causes unwanted crashes bounded::<Mat>(1);
 
-        let frame = Mat::from_slice(NO_VIDEO_IMG).unwrap();
-        let frame = imgcodecs::imdecode(&frame, 1).unwrap();
+        let frame = match Mat::from_slice(NO_VIDEO_IMG) {
+            Ok(frame) => frame,
+            Err(e) => {
+                tracing::error!("Error loading NO_VIDEO_IMG: {}", e);
+                Mat::default()
+            }
+        };
+        let frame = match imgcodecs::imdecode(&frame, 1) {
+            Ok(frame) => frame,
+            Err(e) => {
+                tracing::error!("Error decoding NO_VIDEO_IMG: {}", e);
+                Mat::default()
+            }
+        };
 
         HeadTracker {
             config: Config::default(),
 
-            camera_list: ThreadedCamera::get_available_cameras().unwrap(), // ? Checking for new camera every 5 seconds ?
+            // ? Checking for new camera every 5 seconds ?
+            camera_list: match ThreadedCamera::get_available_cameras() {
+                Ok(camera_list) => camera_list,
+                Err(e) => {
+                    tracing::error!("{}", e);
+                    HashMap::new()
+                }
+            },
 
             headtracker_thread: None,
             headtracker_running: Arc::new(AtomicBool::new(false)),
@@ -117,7 +136,7 @@ impl Default for HeadTracker {
 impl std::fmt::Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "(min_cutoff : {}, beta: {}, ip: {}, port: {}, fps: {}, selected_camera: {}, hide_camera: {})", 
-        self.min_cutoff.load(Ordering::SeqCst), self.beta.load(Ordering::SeqCst), self.ip,self.port, self.fps.load(Ordering::SeqCst), self.selected_camera.clone().unwrap(), self.hide_camera)
+        self.min_cutoff.load(Ordering::SeqCst), self.beta.load(Ordering::SeqCst), self.ip,self.port, self.fps.load(Ordering::SeqCst), self.selected_camera.clone(), self.hide_camera)
     }
 }
 

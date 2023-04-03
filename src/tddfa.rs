@@ -22,6 +22,7 @@ use onnxruntime::{
 };
 use std::{error::Error, ops::Deref};
 
+use anyhow::{anyhow, Context, Result};
 use once_cell::sync::Lazy;
 use opencv::{
     core::{Size, Vec3b},
@@ -30,13 +31,19 @@ use opencv::{
 };
 
 impl Tddfa {
-    pub fn new(size: i32) -> Result<Self, Box<dyn Error>> {
+    pub fn new(size: i32) -> Result<Self> {
         static ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
-            Environment::builder()
+            match Environment::builder()
                 .with_name("Landmark Detection")
                 .with_log_level(onnxruntime::LoggingLevel::Warning)
                 .build()
-                .unwrap()
+            {
+                Ok(environment) => environment,
+                Err(error) => {
+                    tracing::error!("Unable to create environment : {:?}", error);
+                    std::process::exit(1);
+                }
+            }
         });
 
         let landmark_model = ENVIRONMENT
@@ -69,9 +76,9 @@ impl Tddfa {
         &self,
         input_frame: &Mat,
         roi_box: &[f32; 4],
-    ) -> Result<Vec<ArrayBase<OwnedRepr<f32>, Dim<[usize; 4]>>>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<ArrayBase<OwnedRepr<f32>, Dim<[usize; 4]>>>> {
         // let mut rgb_frame = Mat::default();
-        // imgproc::cvt_color(&input_frame, &mut rgb_frame, imgproc::COLOR_BGR2RGB, 0).unwrap();
+        // imgproc::cvt_color(&input_frame, &mut rgb_frame, imgproc::COLOR_BGR2RGB, 0)?;
 
         // Cropping the image
         let cropped_image = crop_img(input_frame, roi_box)?;
@@ -91,7 +98,7 @@ impl Tddfa {
         )?; // ! Error handling here
 
         let vec = Mat::data_typed::<Vec3b>(&resized_frame)?;
-        // .expect("Unable to convert the image to vector");
+        // .?("Unable to convert the image to vector");
 
         let array = Array4::from_shape_fn(
             (1, 3, self.size as usize, self.size as usize),
@@ -110,7 +117,7 @@ impl Tddfa {
         face_box: [f32; 4],
         ver: &[Vec<f32>],
         crop_policy: CropPolicy,
-    ) -> Result<([f32; 62], [f32; 4]), Box<dyn Error>> {
+    ) -> Result<([f32; 62], [f32; 4])> {
         let roi_box = match crop_policy {
             CropPolicy::Box => parse_roi_box_from_bbox(face_box),
             CropPolicy::Landmark => parse_roi_box_from_landmark(ver),
@@ -121,11 +128,26 @@ impl Tddfa {
 
         // Inference
         let param: Vec<OrtOwnedTensor<f32, _>> = self.landmark_model.run(model_input)?;
-        let param: [f32; 62] = param[0].as_slice().unwrap().try_into()?;
+        let param: [f32; 62] = match param[0].as_slice() {
+            Some(slice) => slice.try_into()?,
+            None => {
+                tracing::error!("Unable to convert the tensor to slice param");
+                return Err(anyhow!("Unable to convert the tensor to slice param"));
+            }
+        };
 
         // Postprocessing - Rescaling the output by multiplying with standard deviation and adding mean
         let processed_param = arr1(&param) * arr1(&self.std_array) + arr1(&self.mean_array);
-        let processed_param: [f32; 62] = processed_param.as_slice().unwrap().try_into()?;
+        let processed_param: [f32; 62] = match processed_param.as_slice() {
+            Some(slice) => slice.try_into()?,
+            None => {
+                tracing::error!("Unable to convert the tensor to slice processed_param");
+                return Err(anyhow!(
+                    "Unable to convert the tensor to slice processed_param"
+                ));
+            }
+        };
+
         Ok((processed_param, roi_box))
     }
 
@@ -136,7 +158,13 @@ impl Tddfa {
             + (&self.w_shp_base_array.dot(&arr2(&alpha_shp)))
             + (&self.w_exp_base_array.dot(&arr2(&alpha_exp)));
 
-        let pts3d = pts3d.to_shape(((3, 68), Order::ColumnMajor)).unwrap();
+        let pts3d = match pts3d.to_shape(((3, 68), Order::ColumnMajor)) {
+            Ok(pts3d) => pts3d,
+            Err(_) => {
+                tracing::error!("Unable to convert the tensor to shape");
+                return similar_transform(vec![vec![0.0, 1.0, 2.0]; 3], roi_box, self.size as f32);
+            }
+        };
         let pts3d = arr2(&r).dot(&pts3d) + arr2(&offset);
 
         let vec_pts_3d = vec![
@@ -149,30 +177,25 @@ impl Tddfa {
 }
 
 #[test]
-pub fn test() {
+pub fn test() -> Result<(), Box<dyn Error>> {
     use opencv::core::{Scalar, CV_8UC3};
 
     let size = 120;
 
-    let mut bfm = Tddfa::new(size).unwrap();
+    let mut bfm = Tddfa::new(size)?;
 
-    let frame =
-        Mat::new_rows_cols_with_default(120, 120, CV_8UC3, Scalar::new(255., 0., 0., 0.)).unwrap();
+    let frame = Mat::new_rows_cols_with_default(120, 120, CV_8UC3, Scalar::new(255., 0., 0., 0.))?;
 
     let face_box = [30., 30., 60., 60.];
-    let (param, roi_box) = bfm
-        .run(
-            &frame,
-            face_box,
-            &[vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
-            CropPolicy::Box,
-        )
-        .unwrap();
+    let (param, roi_box) = bfm.run(
+        &frame,
+        face_box,
+        &[vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
+        CropPolicy::Box,
+    )?;
     let pts_3d = bfm.recon_vers(param, roi_box);
 
-    let (param, roi_box) = bfm
-        .run(&frame, face_box, &pts_3d, CropPolicy::Landmark)
-        .unwrap();
+    let (param, roi_box) = bfm.run(&frame, face_box, &pts_3d, CropPolicy::Landmark)?;
 
     // let roi_box = [150., 150., 400., 400.];
     // let param = [
@@ -182,4 +205,6 @@ pub fn test() {
     //     57., 58., 59., 60., 61., 62.,
     // ];
     // let pts_3d = bfm.recon_vers(param, roi_box);
+
+    Ok(())
 }

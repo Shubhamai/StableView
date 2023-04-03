@@ -8,7 +8,7 @@ use iced::{
     application, executor, theme, widget::Container, Application, Color, Command, Element, Length,
     Subscription, Theme,
 };
-use iced_native::{window, Event};
+use iced_native::{mouse, window, Event};
 
 use crate::{
     enums::message::Message,
@@ -76,94 +76,152 @@ impl Application for HeadTracker {
                 if !self.headtracker_running.load(Ordering::SeqCst) {
                     self.headtracker_running.store(true, Ordering::SeqCst);
 
-                    let camera_index = *self
-                        .camera_list
-                        .get(self.config.selected_camera.as_ref().unwrap())
-                        .unwrap(); // ! Error occures when default camera (on app installation) isn't changed
+                    let camera_index = match self.camera_list.get(&self.config.selected_camera) {
+                        Some(index) => *index,
+                        // ! Should this be 0 or something else ?
+                        None => {
+                            tracing::error!("Unable to find camera index, setting default to 0");
+                            0
+                        }
+                    };
+                    let camera_name = self.config.selected_camera.clone();
+
                     let config = self.config.clone();
 
                     let headtracker_running = self.headtracker_running.clone();
-                    // let error_tracker = self.error_tracker.clone();
 
                     let tx = self.sender.clone();
                     let rx = self.receiver.clone();
 
-                    self.headtracker_thread = Some(thread::spawn(move || {
+                    let error_tracker = self.error_tracker.clone();
+
+                    self.headtracker_thread = Some(thread::spawn(move || 'main: {
                         let mut error_message = String::new();
 
-                        let mut euro_filter = EuroDataFilter::new(
-                            config.min_cutoff.load(Ordering::SeqCst),
-                            config.beta.load(Ordering::SeqCst),
-                        );
-                        let mut socket_network = SocketNetwork::new(config.ip, config.port);
-
-                        // Create a channel to communicate between threads
-
-                        let mut thr_cam = ThreadedCamera::start_camera_thread(tx, camera_index);
-
-                        let mut head_pose = ProcessHeadPose::new(120);
-
-                        let mut frame = rx.recv().unwrap();
-                        let mut data;
-
-                        while headtracker_running.load(Ordering::SeqCst) {
-                            let start_time = Instant::now();
-
-                            frame = match rx.try_recv() {
-                                Ok(result) => result,
-                                Err(_) => frame.clone(),
-                            };
-
-                            let out = head_pose.single_iter(&frame);
-
-                            match out {
-                                Ok(value) => {
-                                    data = value;
-                                }
-                                Err(_) => {
-                                    // println!("An error: {}; skipped.", e);
-                                    // head_pose.face_box =  [150., 150., 400., 400.];
-                                    // head_pose.pts_3d =
-                                    //     vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]];
-                                    // head_pose.face_box = [0., 0., 600., 600.];
-                                    // headtracker_running.store(false, Ordering::SeqCst);
-                                    continue;
-                                }
-                            };
-
-                            data = euro_filter.filter_data(
-                                data,
-                                Some(config.min_cutoff.load(Ordering::SeqCst)),
-                                Some(config.beta.load(Ordering::SeqCst)),
-                            );
-
-                            match socket_network.send(data) {
-                                Ok(_) => {}
-                                Err(_) => {
-                                    error_message = "Unable to send data".to_string();
-                                    break;
-                                }
-                            };
-
-                            let elapsed_time = start_time.elapsed();
-                            let delay_time = ((1000 / config.fps.load(Ordering::SeqCst)) as f32
-                                - elapsed_time.as_millis() as f32)
-                                .max(0.);
-                            thread::sleep(Duration::from_millis(delay_time.round() as u64));
+                        // Resetting error message
+                        {
+                            let mut error_guard = error_tracker.lock().unwrap();
+                            *error_guard = error_message.clone();
                         }
 
-                        thr_cam.shutdown();
+                        'inner: {
+                            let mut euro_filter = EuroDataFilter::new(
+                                config.min_cutoff.load(Ordering::SeqCst),
+                                config.beta.load(Ordering::SeqCst),
+                            );
 
+                            let mut socket_network =
+                                match SocketNetwork::new(config.ip.clone(), config.port.clone()) {
+                                    Ok(socket) => socket,
+                                    Err(error) => {
+                                        error_message = error.to_string();
+                                        tracing::error!(error_message);
+                                        break 'inner;
+                                    }
+                                };
+
+                            // Create a channel to communicate between threads
+                            let mut thr_cam = match ThreadedCamera::start_camera_thread(
+                                tx,
+                                camera_index,
+                                camera_name,
+                            ) {
+                                Ok(camera) => camera,
+                                Err(error) => {
+                                    error_message = error.to_string();
+                                    tracing::error!(error_message);
+                                    break 'inner;
+                                }
+                            };
+
+                            let mut head_pose = match ProcessHeadPose::new(120) {
+                                Ok(pose) => pose,
+                                Err(error) => {
+                                    error_message = error.to_string();
+                                    tracing::error!(error_message);
+                                    break 'inner;
+                                }
+                            };
+
+                            let mut frame = match rx.recv() {
+                                Ok(result) => result,
+                                Err(error) => {
+                                    error_message =
+                                        format!("Unable to receive image data: {}", error);
+                                    tracing::error!(error_message);
+                                    opencv::core::Mat::default()
+                                }
+                            };
+                            let mut data;
+
+                            while headtracker_running.load(Ordering::SeqCst) {
+                                let start_time = Instant::now();
+
+                                frame = match rx.try_recv() {
+                                    Ok(result) => result,
+                                    Err(_) => frame.clone(),
+                                };
+
+                                let out = head_pose.single_iter(&frame);
+
+                                match out {
+                                    Ok(value) => {
+                                        data = value;
+                                    }
+                                    Err(_) => {
+                                        // println!("An error: {}; skipped.", e);
+                                        // head_pose.face_box =  [150., 150., 400., 400.];
+                                        // head_pose.pts_3d =
+                                        //     vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]];
+                                        // head_pose.face_box = [0., 0., 600., 600.];
+                                        // headtracker_running.store(false, Ordering::SeqCst);
+                                        continue;
+                                    }
+                                };
+
+                                data = euro_filter.filter_data(
+                                    data,
+                                    Some(config.min_cutoff.load(Ordering::SeqCst)),
+                                    Some(config.beta.load(Ordering::SeqCst)),
+                                );
+
+                                match socket_network.send(data) {
+                                    Ok(_) => {}
+                                    Err(_) => {
+                                        error_message = format!(
+                                            "Unable to send data to {}:{}",
+                                            &config.ip, &config.port
+                                        );
+                                        tracing::error!(error_message);
+                                        break;
+                                    }
+                                };
+
+                                let elapsed_time = start_time.elapsed();
+                                let delay_time = ((1000 / config.fps.load(Ordering::SeqCst))
+                                    as f32
+                                    - elapsed_time.as_millis() as f32)
+                                    .max(0.);
+                                thread::sleep(Duration::from_millis(delay_time.round() as u64));
+                            }
+
+                            thr_cam.shutdown();
+                        }
+
+                        let mut error_guard = error_tracker.lock().unwrap();
+                        *error_guard = String::from(error_message);
                         headtracker_running.store(false, Ordering::SeqCst);
-                        error_message
                     }));
                 } else {
                     self.headtracker_running.store(false, Ordering::SeqCst);
-                    self.headtracker_thread
-                        .take()
-                        .expect("Called stop on non-running thread")
-                        .join()
-                        .expect("Could not join spawned thread");
+
+                    match self.headtracker_thread.take() {
+                        Some(thread) => match thread.join() {
+                            Ok(_) => {}
+                            Err(e) => tracing::error!("Could not join spawned thread: {:?}", e),
+                        },
+                        None => tracing::error!("Called stop on non-running thread"),
+                    }
                 }
             }
             Message::Tick => {
@@ -205,7 +263,7 @@ impl Application for HeadTracker {
                 self.save_config()
             } // ! Input validation, only numbers
             Message::Camera(camera_name) => {
-                self.config.selected_camera = Some(camera_name);
+                self.config.selected_camera = camera_name;
 
                 // If camera changes while running
                 if self.headtracker_running.load(Ordering::SeqCst) {
@@ -239,47 +297,35 @@ impl Application for HeadTracker {
             }
             Message::OpenGithub => {
                 #[cfg(target_os = "windows")]
-                std::process::Command::new("explorer")
-                    .arg(APP_REPOSITORY)
-                    .spawn()
-                    .unwrap();
+                let program = "explorer";
                 #[cfg(target_os = "macos")]
-                std::process::Command::new("open")
-                    .arg(APP_REPOSITORY)
-                    .spawn()
-                    .unwrap();
+                let program = "open";
                 #[cfg(target_os = "linux")]
-                std::process::Command::new("xdg-open")
+                let program = "xdg-open";
+
+                match std::process::Command::new(program)
                     .arg(APP_REPOSITORY)
                     .spawn()
-                    .unwrap();
+                {
+                    Ok(_) => {}
+                    Err(e) => {
+                        tracing::error!("Unable to open github repository : {:?}", e);
+
+                        let mut error_guard = self.error_tracker.lock().unwrap();
+                        *error_guard = String::from("Unable to open github repository");
+                    }
+                }
             }
+
             Message::OpenLogs => {
                 #[cfg(target_os = "windows")]
-                std::process::Command::new("explorer")
-                    .arg(
-                        directories::ProjectDirs::from("rs", "", APP_NAME)
-                            .unwrap()
-                            .data_dir()
-                            .to_str()
-                            .unwrap(),
-                    )
-                    .spawn()
-                    .unwrap();
+                let program = "explorer";
                 #[cfg(target_os = "macos")]
-                std::process::Command::new("open")
-                    .arg("-t")
-                    .arg(
-                        directories::ProjectDirs::from("rs", "", APP_NAME)
-                            .unwrap()
-                            .data_dir()
-                            .to_str()
-                            .unwrap(),
-                    )
-                    .spawn()
-                    .unwrap();
+                let program = "open";
                 #[cfg(target_os = "linux")]
-                std::process::Command::new("xdg-open")
+                let program = "xdg-open";
+
+                match std::process::Command::new(program)
                     .arg(
                         directories::ProjectDirs::from("rs", "", APP_NAME)
                             .unwrap()
@@ -288,20 +334,46 @@ impl Application for HeadTracker {
                             .unwrap(),
                     )
                     .spawn()
-                    .unwrap();
+                {
+                    Ok(_) => {}
+                    Err(e) => {
+                        tracing::error!("Unable to open logs directory : {:?}", e);
+
+                        let mut error_guard = self.error_tracker.lock().unwrap();
+                        *error_guard = String::from("Unable to open logs directory");
+                    }
+                }
             }
             Message::EventOccurred(event) => {
                 if let Event::Window(window::Event::CloseRequested) = event {
                     if self.headtracker_running.load(Ordering::SeqCst) {
                         self.headtracker_running.store(false, Ordering::SeqCst);
-                        self.headtracker_thread
-                            .take()
-                            .expect("Called stop on non-running thread")
-                            .join()
-                            .expect("Could not join spawned thread");
+                        match self.headtracker_thread.take() {
+                            Some(thread) => match thread.join() {
+                                Ok(_) => {}
+                                Err(e) => {
+                                    tracing::error!("Could not join spawned thread: {:?}", e);
+                                }
+                            },
+                            None => {
+                                tracing::error!("Called stop on non-running thread");
+                            }
+                        }
                     }
-                    // self.should_exit = true;
                     std::process::exit(0);
+                }
+                if let Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) = event {
+                    let mut error_guard = self.error_tracker.lock().unwrap();
+                    *error_guard = String::new();
+
+                    // Updating camera list
+                    match ThreadedCamera::get_available_cameras() {
+                        Ok(camera_list) => self.camera_list = camera_list,
+                        Err(e) => {
+                            tracing::error!("{}", e);
+                            *error_guard = e.to_string();
+                        }
+                    }
                 }
             }
         }

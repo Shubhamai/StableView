@@ -40,12 +40,11 @@
 
 **Last Updated - 27 March, 2023**
 
-
 ![progress gif](assets/updates/jan-03-2023-update.gif)
 
 - Todo's :
   - [x] Release workflow ~& auto-update~.
-  - [ ] Error handling & removing all `.expect` and `.unwrap`.
+  - [x] Error handling & removing all `.expect` and `.unwrap`.
   - [x] Saving app state, default states & configuration management.
   - [x] Adding custom design & styles to the UI.
 

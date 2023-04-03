@@ -98,7 +98,12 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                 let frame = headtracker.frame.clone();
                 let mut encoded_image = VectorOfu8::new();
                 let params = VectorOfi32::new();
-                imgcodecs::imencode(".PNG", &frame, &mut encoded_image, &params).unwrap();
+                match imgcodecs::imencode(".PNG", &frame, &mut encoded_image, &params) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        tracing::error!("Error encoding image: {}", e);
+                    }
+                }
                 encoded_image.to_vec()
             } else {
                 NO_VIDEO_IMG.to_vec()
@@ -125,7 +130,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                                     .cloned()
                                     .collect::<Vec<String>>(),
                             ),
-                            headtracker.config.selected_camera.clone(),
+                            Some(headtracker.config.selected_camera.clone()),
                             Message::Camera,
                         )
                         .width(Length::FillPortion(50)),
@@ -175,16 +180,10 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                     Row::new()
                         .push(horizontal_space(Length::FillPortion(40)))
                         .push(
-                            text(
-                                //     match &headtracker.error_message {
-                                //     Some(message) => message,
-                                //     None => "",
-                                // }
-                                "",
-                            )
-                            .size(15)
-                            .horizontal_alignment(Horizontal::Center)
-                            .width(Length::FillPortion(10)),
+                            text(headtracker.error_tracker.clone().lock().unwrap())
+                                .size(15)
+                                .horizontal_alignment(Horizontal::Center)
+                                .width(Length::FillPortion(50)),
                         )
                         .push(horizontal_space(Length::FillPortion(40))),
                 )

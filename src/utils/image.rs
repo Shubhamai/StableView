@@ -42,23 +42,24 @@ pub fn crop_img(img: &Mat, roi_box: &[f32; 4]) -> Result<Mat, opencv::Error> {
 }
 
 #[test]
-fn test_crop_img() {
+fn test_crop_img() -> Result<(), opencv::Error> {
     use opencv::{
         core::{Scalar, CV_8UC3},
         prelude::MatTraitConst,
     };
 
-    let frame =
-        Mat::new_rows_cols_with_default(120, 120, CV_8UC3, Scalar::new(255., 0., 0., 0.)).unwrap();
+    let frame = Mat::new_rows_cols_with_default(120, 120, CV_8UC3, Scalar::new(255., 0., 0., 0.))?;
     let roi_box = [50., 60., 100., 120.];
-    let result = crop_img(&frame, &roi_box).unwrap();
+    let result = crop_img(&frame, &roi_box)?;
 
     assert_eq!(result.rows() as f32, roi_box[3] - roi_box[1]);
     assert_eq!(result.cols() as f32, roi_box[2] - roi_box[0]);
 
     let roi_box = [50., 60., 400., 400.];
-    let result = crop_img(&frame, &roi_box).unwrap();
+    let result = crop_img(&frame, &roi_box)?;
 
     assert_eq!(result.rows() as f32, 60.);
     assert_eq!(result.cols() as f32, 70.);
+
+    Ok(())
 }

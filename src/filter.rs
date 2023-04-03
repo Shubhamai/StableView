@@ -38,8 +38,15 @@ impl OneEuroFilter {
     }
 
     fn run(&mut self, x: f32, min_cutoff: Option<f32>, beta: Option<f32>) -> f32 {
-        let min_cutoff = min_cutoff.unwrap_or(self.min_cutoff);
-        let beta = beta.unwrap_or(self.beta);
+        let min_cutoff = match min_cutoff {
+            Some(min_cutoff) => min_cutoff,
+            None => self.min_cutoff,
+        };
+
+        let beta = match beta {
+            Some(beta) => beta,
+            None => self.beta,
+        };
 
         let t_e = 1.; // constant change in time
 

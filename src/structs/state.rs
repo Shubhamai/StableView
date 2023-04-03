@@ -35,12 +35,16 @@ impl Default for AppConfig {
 
             fps: 60,
 
-            selected_camera: ThreadedCamera::get_available_cameras()
-                .unwrap()
-                .keys()
-                .next()
-                .cloned()
-                .unwrap(),
+            selected_camera: match ThreadedCamera::get_available_cameras() {
+                Ok(cameras) => match cameras.keys().next() {
+                    Some(key) => key.clone(),
+                    None => "No Device Found".to_string(),
+                },
+                Err(e) => {
+                    tracing::error!("{e}");
+                    "No Device Found".to_string()
+                }
+            },
 
             hide_camera: true,
         }
@@ -49,7 +53,22 @@ impl Default for AppConfig {
 
 impl HeadTracker {
     pub fn load_config(&mut self) -> Config {
-        let cfg: AppConfig = confy::load(APP_NAME, "config").unwrap(); // ! Error occurs when config data types in file does match config data types in code
+        // ! Error occurs when config data types in file does match config data types in code
+        let cfg: AppConfig = match confy::load(APP_NAME, "config") {
+            Ok(cfg) => cfg,
+            Err(e) => {
+                tracing::error!("Error loading config: {}", e);
+                AppConfig::default()
+            }
+        };
+
+        let selected_camera = match self.camera_list.get(&cfg.selected_camera) {
+            Some(_) => cfg.selected_camera,
+            None => match self.camera_list.keys().next() {
+                Some(key) => key.clone(),
+                None => "No Device Found".to_string(),
+            },
+        };
 
         Config {
             min_cutoff: Arc::new(AtomicF32::new(cfg.min_cutoff)),
@@ -60,7 +79,7 @@ impl HeadTracker {
 
             fps: Arc::new(AtomicU32::new(cfg.fps)),
 
-            selected_camera: Some(cfg.selected_camera),
+            selected_camera,
             hide_camera: cfg.hide_camera,
         }
     }
@@ -71,14 +90,13 @@ impl HeadTracker {
             min_cutoff: self.config.min_cutoff.load(Ordering::SeqCst),
             beta: self.config.beta.load(Ordering::SeqCst),
             fps: self.config.fps.load(Ordering::SeqCst),
-            selected_camera: self
-                .config
-                .selected_camera
-                .clone()
-                .unwrap_or_else(|| "No Camera Selected".to_string()),
+            selected_camera: self.config.selected_camera.clone(),
             hide_camera: self.config.hide_camera,
         };
 
-        confy::store(APP_NAME, "config", config).unwrap();
+        match confy::store(APP_NAME, "config", config) {
+            Ok(_) => tracing::info!("Config saved"),
+            Err(e) => tracing::error!("Error saving config: {}", e),
+        }
     }
 }

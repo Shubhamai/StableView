@@ -5,8 +5,8 @@ mod consts;
 mod enums;
 mod filter;
 mod gui;
-mod headtracker;
 mod network;
+mod process;
 mod structs;
 mod tddfa;
 mod utils;
@@ -19,15 +19,34 @@ use iced::{window, Application, Settings};
 
 use tracing::Level;
 
+use std::{fs, path::Path};
+
 fn main() {
+    // ? Adding organization name
+    let log_filepath = match directories::ProjectDirs::from("rs", "", APP_NAME) {
+        Some(dirs) => dirs,
+        None => {
+            tracing::error!("Could not find project directories");
+            std::process::exit(1);
+        }
+    };
+    let log_filename = "StableView.log";
+
+    match fs::remove_file(log_filepath.data_dir().join(log_filename)) {
+        Ok(_) => tracing::warn!("Removed old log file"),
+        Err(_) => tracing::warn!("No old log file found"),
+    }
+
     let file_appender = tracing_appender::rolling::never(
-        // ? Adding organization name
-        directories::ProjectDirs::from("rs", "", APP_NAME)
-            .unwrap()
-            .data_dir()
-            .to_str()
-            .unwrap(), // * Similar path is also used by confy https://github.com/rust-cli/confy/blob/master/src/lib.rs#L316
-        "StableView.log",
+        // * Similar path is also used by confy https://github.com/rust-cli/confy/blob/master/src/lib.rs#L316
+        match log_filepath.data_dir().to_str() {
+            Some(path) => path,
+            None => {
+                tracing::error!("Could not find project directories");
+                std::process::exit(1);
+            }
+        },
+        log_filename,
     );
 
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
@@ -41,7 +60,13 @@ fn main() {
     tracing::warn!("Version {} on {}", APP_VERSION, std::env::consts::OS);
     tracing::warn!(
         "The configuration file path is: {:#?}",
-        confy::get_configuration_file_path(APP_NAME, "config").unwrap()
+        match confy::get_configuration_file_path(APP_NAME, "config") {
+            Ok(path) => path,
+            Err(e) => {
+                tracing::error!("Error getting config file path: {}", e);
+                Path::new("Could not find config file path").to_path_buf()
+            }
+        }
     );
 
     let mut flags = HeadTracker::default();
@@ -60,7 +85,10 @@ fn main() {
             decorations: true,
             transparent: false,
             always_on_top: false,
-            icon: Some(window::Icon::from_file_data(ICON, None).unwrap()),
+            icon: match window::Icon::from_file_data(ICON, None) {
+                Ok(icon) => Some(icon),
+                Err(_) => None,
+            },
             visible: true,
         },
         flags,
