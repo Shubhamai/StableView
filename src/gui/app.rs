@@ -19,7 +19,7 @@ use crate::{
 
 use crate::gui::view::run_page;
 
-use crate::consts::{APP_NAME, APP_REPOSITORY};
+use crate::consts::APP_NAME;
 
 impl Application for HeadTracker {
     type Executor = executor::Default;
@@ -299,7 +299,7 @@ impl Application for HeadTracker {
 
                 self.save_config();
             }
-            Message::OpenGithub => {
+            Message::OpenURL(url) => {
                 #[cfg(target_os = "windows")]
                 let program = "explorer";
                 #[cfg(target_os = "macos")]
@@ -307,16 +307,13 @@ impl Application for HeadTracker {
                 #[cfg(target_os = "linux")]
                 let program = "xdg-open";
 
-                match std::process::Command::new(program)
-                    .arg(APP_REPOSITORY)
-                    .spawn()
-                {
+                match std::process::Command::new(program).arg(url).spawn() {
                     Ok(_) => {}
                     Err(e) => {
-                        tracing::error!("Unable to open github repository : {:?}", e);
+                        tracing::error!("Unable to open the url : {:?}", e);
 
                         let mut error_guard = self.error_tracker.lock().unwrap();
-                        *error_guard = String::from("Unable to open github repository");
+                        *error_guard = String::from("Unable to open the url");
                     }
                 }
             }

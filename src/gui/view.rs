@@ -16,7 +16,7 @@ use opencv::{
 use crate::{consts::NO_VIDEO_IMG, enums::message::Message, structs::app::HeadTracker};
 
 use super::style::{HEIGHT_BODY, HEIGHT_FOOTER};
-use crate::consts::{APP_AUTHORS, APP_NAME, APP_VERSION, ICONS};
+use crate::consts::{APP_AUTHORS, APP_NAME, APP_REPOSITORY, APP_VERSION, ICONS};
 
 pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let min_cutoff = {
@@ -166,6 +166,17 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
             .push(Container::new(
                 Row::new()
                     .push(horizontal_space(Length::FillPortion(2)))
+                    .push(match &headtracker.release_info {
+                        Some(release_info) => Container::new(
+                            button(
+                                text(format!(" {} now available! ", release_info.tag_name))
+                                    .size(15),
+                            )
+                            .on_press(Message::OpenURL(release_info.html_url.clone())),
+                        ),
+                        None => Container::new(vertical_space(Length::Fixed(40.))),
+                    })
+                    .push(horizontal_space(Length::Fixed(34.)))
                     .push(
                         button(text("  Reset to Default  ").size(15))
                             .on_press(Message::DefaultSettings),
@@ -207,7 +218,7 @@ fn footer() -> Container<'static, Message, Renderer> {
     )
     .height(Length::Fixed(35.))
     .width(Length::Fixed(40.))
-    .on_press(Message::OpenGithub);
+    .on_press(Message::OpenURL(String::from(APP_REPOSITORY)));
 
     let logs_button = button(
         Text::new('\u{66}'.to_string())

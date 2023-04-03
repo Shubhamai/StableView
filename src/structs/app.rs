@@ -12,9 +12,9 @@ use std::{
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use opencv::{imgcodecs, prelude::Mat};
 
-use crate::consts::{APP_VERSION, NO_VIDEO_IMG};
-
-use super::{camera::ThreadedCamera, state::AppConfig};
+use super::{camera::ThreadedCamera, release::Release, state::AppConfig};
+use crate::consts::{APP_GITHUB_API, APP_VERSION, NO_VIDEO_IMG};
+use version_compare::{compare_to, Cmp};
 
 // * Adding this to another struct file
 pub struct AtomicF32 {
@@ -66,7 +66,8 @@ pub struct HeadTracker {
     pub receiver: Receiver<Mat>,
     pub frame: Mat,
 
-    version: String,
+    pub release_info: Option<Release>,
+    pub version: String,
 }
 
 impl Default for Config {
@@ -106,10 +107,36 @@ impl Default for HeadTracker {
             }
         };
 
+        let client = reqwest::blocking::Client::new();
+
+        let response_json = match client
+            .get(APP_GITHUB_API)
+            .header("User-Agent", "rust-app")
+            .send()
+            .and_then(|response| response.json::<Release>())
+        {
+            Ok(release_info) => {
+                if compare_to(&release_info.tag_name[1..], APP_VERSION, Cmp::Gt) == Ok(true) {
+                    tracing::info!(
+                        "New version available: {} (current: {})",
+                        release_info.tag_name,
+                        APP_VERSION
+                    );
+                    Some(release_info)
+                } else {
+                    None
+                }
+            }
+
+            Err(e) => {
+                tracing::info!("Unable to check for new version: {}", e);
+                None
+            }
+        };
+
         HeadTracker {
             config: Config::default(),
 
-            // ? Checking for new camera every 5 seconds ?
             camera_list: match ThreadedCamera::get_available_cameras() {
                 Ok(camera_list) => camera_list,
                 Err(e) => {
@@ -125,6 +152,7 @@ impl Default for HeadTracker {
             error_tracker: Arc::new(Mutex::new(String::new())),
 
             version: APP_VERSION.to_string(),
+            release_info: response_json,
 
             sender,
             receiver,

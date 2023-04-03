@@ -22,7 +22,9 @@ use tracing::Level;
 
 use std::{fs, path::Path};
 
-fn main() {
+use anyhow::Result;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ? Adding organization name
     let log_filepath = match directories::ProjectDirs::from("rs", "", APP_NAME) {
         Some(dirs) => dirs,
@@ -33,7 +35,7 @@ fn main() {
     };
     let log_filename = "StableView.log";
 
-    println!("{:?}", std::env::current_exe().unwrap());
+    // println!("{:?}", std::env::current_exe().unwrap());
 
     match fs::remove_file(log_filepath.data_dir().join(log_filename)) {
         Ok(_) => tracing::warn!("Removed old log file"),
@@ -106,4 +108,6 @@ fn main() {
     if let Err(e) = HeadTracker::run(settings) {
         tracing::error!("{}", e);
     }
+
+    Ok(())
 }

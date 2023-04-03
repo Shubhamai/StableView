@@ -12,7 +12,7 @@ pub enum Message {
     InputPort(String),
     Camera(String),
     HideCamera(bool),
-    OpenGithub,
+    OpenURL(String),
     OpenLogs,
     EventOccurred(Event),
 }
