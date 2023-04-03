@@ -41,8 +41,8 @@ impl SocketNetwork {
 }
 
 #[test]
-pub fn test_socket_network() -> Result<(), Error> {
-    let mut socket_network = SocketNetwork::new("127.0.0.1".to_owned(), "4242".to_owned());
+pub fn test_socket_network() -> Result<()> {
+    let mut socket_network = SocketNetwork::new("127.0.0.1".to_owned(), "4242".to_owned())?;
     socket_network.send([1., 2., 3., 4., 5., 6.])?;
 
     Ok(())

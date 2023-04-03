@@ -177,7 +177,8 @@ impl Tddfa {
 }
 
 #[test]
-pub fn test() -> Result<(), Box<dyn Error>> {
+#[allow(unused_variables)]
+pub fn test() -> Result<()> {
     use opencv::core::{Scalar, CV_8UC3};
 
     let size = 120;

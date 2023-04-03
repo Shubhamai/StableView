@@ -33,6 +33,8 @@ fn main() {
     };
     let log_filename = "StableView.log";
 
+    println!("{:?}", std::env::current_exe().unwrap());
+
     match fs::remove_file(log_filepath.data_dir().join(log_filename)) {
         Ok(_) => tracing::warn!("Removed old log file"),
         Err(_) => tracing::warn!("No old log file found"),

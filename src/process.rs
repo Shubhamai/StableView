@@ -50,7 +50,7 @@ impl ProcessHeadPose {
         (centroid, distance)
     }
 
-    pub fn single_iter(&mut self, frame: &Mat) -> Result<[f32; 6], Box<dyn std::error::Error>> {
+    pub fn single_iter(&mut self, frame: &Mat) -> Result<[f32; 6]> {
         // ! A very tuff bug laying around somewhere here, resulting in out of ordinary roi box values when moving to camera border
 
         if self.first_iteration {
@@ -107,9 +107,10 @@ impl ProcessHeadPose {
 
 #[test]
 #[ignore = "Can only test this offline since it requires webcam, run cargo test -- --ignored"]
-pub fn test_process_head_pose() -> Result<(), Box<dyn std::error::Error>> {
+#[allow(unused_variables)]
+pub fn test_process_head_pose() -> Result<()> {
     use crate::structs::camera::ThreadedCamera;
-    use crate::utils::image::crop_img;
+    // use crate::utils::image::crop_img;
     use crate::utils::visualize::draw_landmark;
     use opencv::highgui;
     use opencv::prelude::MatTraitConstManual;
@@ -118,13 +119,13 @@ pub fn test_process_head_pose() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut thr_cam = ThreadedCamera::start_camera_thread(tx, 0, "Test Camera".to_owned())?;
 
-    let mut head_pose = ProcessHeadPose::new(120);
+    let mut head_pose = ProcessHeadPose::new(120)?;
 
     let window = "video capture";
     highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
 
     let mut frame = rx.recv()?;
-    let mut data: [f32; 6];
+    let mut _data: [f32; 6];
 
     loop {
         frame = match rx.try_recv() {
@@ -132,7 +133,7 @@ pub fn test_process_head_pose() -> Result<(), Box<dyn std::error::Error>> {
             Err(_) => frame.clone(),
         };
 
-        let _data = head_pose.single_iter(&frame)?;
+        _data = head_pose.single_iter(&frame)?;
 
         frame = draw_landmark(
             frame,
@@ -144,7 +145,7 @@ pub fn test_process_head_pose() -> Result<(), Box<dyn std::error::Error>> {
             head_pose.roi_box,
             (0., 255., 0.),
             1,
-        );
+        )?;
 
         if frame.size()?.width > 0 {
             // let cropped_image = crop_img(&frame, &head_pose.roi_box)?;

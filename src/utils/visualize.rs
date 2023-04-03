@@ -1,3 +1,4 @@
+use anyhow::Result;
 use opencv::{
     core::{Mat, Point, Point2i, Scalar},
     imgproc::{circle, line, LINE_8},
@@ -10,7 +11,7 @@ pub fn draw_landmark(
     face_box: [f32; 4],
     color: (f64, f64, f64),
     size: i32,
-) -> Result<Mat, opencv::Error> {
+) -> Result<Mat> {
     let mut img = frame.clone();
     let n = pts_3d[0].len();
     if n <= 106 {
