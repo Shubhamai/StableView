@@ -48,6 +48,7 @@
   - [ ] Tracker lags when the camera is not hidden.
   - [ ] Camera from an external link.
   - [ ] Auto Update ( Hopefully ? ).
+    - [x] Notification added for now.
 
 # Usage
 
