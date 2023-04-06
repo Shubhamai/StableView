@@ -1,7 +1,7 @@
 [package]
 name = "StableView"
 description = "A Head tracking application using only webcam"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 authors = ["Shubhamai"]
 publish = false # To prevent accidental publish on crates.io
