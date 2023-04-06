@@ -24,6 +24,7 @@ pub struct AppConfig {
     pub hide_camera: bool,
 }
 
+// Default values are used when the config file is not found or when there is an error loading the config file
 impl Default for AppConfig {
     fn default() -> Self {
         AppConfig {

@@ -1,3 +1,5 @@
+// Contains new release information
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]

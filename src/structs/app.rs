@@ -37,7 +37,7 @@ impl AtomicF32 {
     }
 }
 
-#[derive(Clone)] //Serialize, Deserialize, Debug,
+#[derive(Clone)]
 pub struct Config {
     pub min_cutoff: Arc<AtomicF32>,
     pub beta: Arc<AtomicF32>,
@@ -51,6 +51,7 @@ pub struct Config {
     pub hide_camera: bool,
 }
 
+// Contains configuration and state of the application and other data
 pub struct HeadTracker {
     pub config: Config,
 
@@ -90,6 +91,7 @@ impl Default for Config {
 
 impl Default for HeadTracker {
     fn default() -> Self {
+        // Setup channels for camera thread to headtracker thread
         let (sender, receiver) = unbounded::<Mat>(); // ! bounded causes unwanted crashes bounded::<Mat>(1);
 
         let frame = match Mat::from_slice(NO_VIDEO_IMG) {
@@ -107,6 +109,7 @@ impl Default for HeadTracker {
             }
         };
 
+        // Check for new version on GitHub
         let client = reqwest::blocking::Client::new();
 
         let response_json = match client

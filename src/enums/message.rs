@@ -1,3 +1,5 @@
+// Events than can be triggered by the user in the GUI
+
 use iced_native::Event;
 
 #[derive(Debug, Clone)]

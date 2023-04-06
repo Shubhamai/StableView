@@ -1,25 +1,31 @@
-use std::{
-    sync::atomic::Ordering,
-    thread,
-    time::{Duration, Instant},
-};
+// Handing the events and updating the state of the application
 
-use iced::{
-    application, executor, theme, widget::Container, Application, Color, Command, Element, Length,
-    Subscription, Theme,
-};
-use iced_native::{mouse, window, Event};
-
+use crate::consts::APP_NAME;
+use crate::gui::view::run_page;
 use crate::{
     enums::message::Message,
     filter::EuroDataFilter,
     structs::{app::HeadTracker, state::AppConfig},
     structs::{camera::ThreadedCamera, network::SocketNetwork, pose::ProcessHeadPose},
 };
+use iced::{
+    application, executor, theme, widget::Container, Application, Color, Command, Element, Length,
+    Subscription, Theme,
+};
+use iced_native::{mouse, window, Event};
+use std::{
+    sync::atomic::Ordering,
+    thread,
+    time::{Duration, Instant},
+};
 
-use crate::gui::view::run_page;
-
-use crate::consts::APP_NAME;
+// Log the error and break the block expression
+macro_rules! trace_error {
+    ($error:expr) => {
+        let error_message = $error.to_string();
+        tracing::error!(error_message);
+    };
+}
 
 impl Application for HeadTracker {
     type Executor = executor::Default;
@@ -36,6 +42,7 @@ impl Application for HeadTracker {
     }
 
     fn subscription(&self) -> Subscription<Message> {
+        // If camera is hidden, only listen for events, otherwise listen for events and ticks to update camera frame in GUI
         match self.config.hide_camera {
             true => iced_native::subscription::events().map(Message::EventOccurred),
             false => {
@@ -50,10 +57,6 @@ impl Application for HeadTracker {
             }
         }
     }
-
-    // fn should_exit(&self) -> bool {
-    // self.should_exit
-    // }
 
     fn theme(&self) -> Theme {
         Theme::Light
@@ -72,10 +75,14 @@ impl Application for HeadTracker {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
+            // Handles the event of the user clicking on the Start/Stop button
             Message::Toggle => {
+                // If headtracker is not  running, clicking the button will run it, otherwise it will stop it
                 if !self.headtracker_running.load(Ordering::SeqCst) {
+                    // Setting headtracker to running
                     self.headtracker_running.store(true, Ordering::SeqCst);
 
+                    // Getting the index of the selected camera
                     let camera_index = match self.camera_list.get(&self.config.selected_camera) {
                         Some(index) => *index,
                         // ! Should this be 0 or something else ?
@@ -84,17 +91,16 @@ impl Application for HeadTracker {
                             0
                         }
                     };
+
+                    // Copying the necessary data to the thread
                     let camera_name = self.config.selected_camera.clone();
-
                     let config = self.config.clone();
-
                     let headtracker_running = self.headtracker_running.clone();
-
                     let tx = self.sender.clone();
                     let rx = self.receiver.clone();
-
                     let error_tracker = self.error_tracker.clone();
 
+                    // Spawning the thread
                     self.headtracker_thread = Some(thread::spawn(move || {
                         let mut error_message = String::new();
 
@@ -105,17 +111,19 @@ impl Application for HeadTracker {
                         }
 
                         'inner: {
+                            // Creating the filter
                             let mut euro_filter = EuroDataFilter::new(
                                 config.min_cutoff.load(Ordering::SeqCst),
                                 config.beta.load(Ordering::SeqCst),
                             );
 
+                            // Creating the network to send data to OpenTrack
                             let mut socket_network =
                                 match SocketNetwork::new(config.ip.clone(), config.port.clone()) {
                                     Ok(socket) => socket,
                                     Err(error) => {
-                                        error_message = error.to_string();
-                                        tracing::error!(error_message);
+                                        // If an error occurs, set the error message and break the block expression
+                                        trace_error!(error);
                                         break 'inner;
                                     }
                                 };
@@ -128,8 +136,8 @@ impl Application for HeadTracker {
                             ) {
                                 Ok(camera) => camera,
                                 Err(error) => {
-                                    error_message = error.to_string();
-                                    tracing::error!(error_message);
+                                    // If an error occurs, set the error message and break the block expression
+                                    trace_error!(error);
                                     break 'inner;
                                 }
                             };
@@ -137,12 +145,13 @@ impl Application for HeadTracker {
                             let mut head_pose = match ProcessHeadPose::new(120) {
                                 Ok(pose) => pose,
                                 Err(error) => {
-                                    error_message = error.to_string();
-                                    tracing::error!(error_message);
+                                    // If an error occurs, set the error message and break the block expression
+                                    trace_error!(error);
                                     break 'inner;
                                 }
                             };
 
+                            // Getting the first frame from the camera, if an error occurs, set the error message and use an empty frame
                             let mut frame = match rx.recv() {
                                 Ok(result) => result,
                                 Err(error) => {
@@ -152,18 +161,24 @@ impl Application for HeadTracker {
                                     opencv::core::Mat::default()
                                 }
                             };
+
+                            // Contains x, y, z, yaw, pitch, roll
                             let mut data;
 
+                            // Looping until headtracker_running is set to false ( ie. user clicks on the Stop button )
                             while headtracker_running.load(Ordering::SeqCst) {
                                 let start_time = Instant::now();
 
+                                // Getting the frame from the camera, if an error occurs, use the previous frame
                                 frame = match rx.try_recv() {
                                     Ok(result) => result,
                                     Err(_) => frame.clone(),
                                 };
 
+                                // Getting the head pose from the frame
                                 let out = head_pose.single_iter(&frame);
 
+                                // If an error occurs, skip the loop
                                 match out {
                                     Ok(value) => {
                                         data = value;
@@ -179,12 +194,14 @@ impl Application for HeadTracker {
                                     }
                                 };
 
+                                // Smoothing and Filtering the data
                                 data = euro_filter.filter_data(
                                     data,
                                     Some(config.min_cutoff.load(Ordering::SeqCst)),
                                     Some(config.beta.load(Ordering::SeqCst)),
                                 );
 
+                                // Sending the data to OpenTrack, if an error occurs, set the error message and break the loop
                                 match socket_network.send(data) {
                                     Ok(_) => {}
                                     Err(_) => {
@@ -197,6 +214,7 @@ impl Application for HeadTracker {
                                     }
                                 };
 
+                                // Calculating the delay time and sleeping for that amount of time, Used to set the fps
                                 let elapsed_time = start_time.elapsed();
                                 let delay_time = ((1000 / config.fps.load(Ordering::SeqCst))
                                     as f32
@@ -208,13 +226,16 @@ impl Application for HeadTracker {
                             thr_cam.shutdown();
                         }
 
+                        // Setting the error message
                         let mut error_guard = error_tracker.lock().unwrap();
                         *error_guard = String::from(error_message);
                         headtracker_running.store(false, Ordering::SeqCst);
                     }));
                 } else {
+                    // If the thread is already running, stop it
                     self.headtracker_running.store(false, Ordering::SeqCst);
 
+                    // Joining the thread
                     match self.headtracker_thread.take() {
                         Some(thread) => match thread.join() {
                             Ok(_) => {}
@@ -224,12 +245,16 @@ impl Application for HeadTracker {
                     }
                 }
             }
+
+            // If camera is set visible, get the frame and show it in the GUI
             Message::Tick => {
                 self.frame = match self.receiver.try_recv() {
                     Ok(result) => result,
                     Err(_) => self.frame.clone(),
                 };
             }
+
+            // Deals with the filter values
             Message::MinCutoffSliderChanged(value) => {
                 if value == 0 {
                     self.config.min_cutoff.store(0., Ordering::SeqCst)
@@ -257,11 +282,11 @@ impl Application for HeadTracker {
             Message::InputIP(ip) => {
                 self.config.ip = ip;
                 self.save_config()
-            } // ! Input validation, four decimal with respective numbers between
+            }
             Message::InputPort(port) => {
                 self.config.port = port;
                 self.save_config()
-            } // ! Input validation, only numbers
+            }
 
             Message::Camera(camera_name) => {
                 self.config.selected_camera = camera_name;
@@ -282,7 +307,7 @@ impl Application for HeadTracker {
                 self.config.hide_camera = value;
                 self.save_config()
             }
-            // ! Need more asthetic default settings
+
             Message::DefaultSettings => {
                 self.config
                     .min_cutoff
@@ -346,6 +371,7 @@ impl Application for HeadTracker {
                 }
             }
             Message::EventOccurred(event) => {
+                // If the user request to close the window, stop the thread ( if running ) and exit the program
                 if let Event::Window(window::Event::CloseRequested) = event {
                     if self.headtracker_running.load(Ordering::SeqCst) {
                         self.headtracker_running.store(false, Ordering::SeqCst);
@@ -363,6 +389,8 @@ impl Application for HeadTracker {
                     }
                     std::process::exit(0);
                 }
+
+                // TODO : Refresh the camera list when use clicks anywhere in the app, need better approach,
                 if let Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) = event {
                     let mut error_guard = self.error_tracker.lock().unwrap();
                     *error_guard = String::new();

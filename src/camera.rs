@@ -17,7 +17,7 @@ use std::collections::HashMap;
 
 use crate::structs::camera::ThreadedCamera;
 
-use anyhow::{Result};
+use anyhow::Result;
 
 impl ThreadedCamera {
     pub fn get_available_cameras() -> Result<HashMap<String, i32>> {

@@ -19,6 +19,7 @@ impl ProcessHeadPose {
         })
     }
 
+    // Get the X,Y,Z coordinates of the head
     fn get_coordintes_and_depth(
         &self,
         pose: [f32; 3],

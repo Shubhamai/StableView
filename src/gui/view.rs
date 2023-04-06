@@ -1,3 +1,5 @@
+// The UI of the application
+
 use std::{borrow::Cow, sync::atomic::Ordering};
 
 use iced::{
@@ -19,6 +21,7 @@ use super::style::{HEIGHT_BODY, HEIGHT_FOOTER};
 use crate::consts::{APP_AUTHORS, APP_NAME, APP_REPOSITORY, APP_VERSION, ICONS};
 
 pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
+    // Convert the min_cutoff and beta values to u32
     let min_cutoff = {
         if (headtracker.config.min_cutoff.load(Ordering::SeqCst) - 0.).abs() < f32::EPSILON {
             0
@@ -40,10 +43,12 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let port = headtracker.config.port.as_str();
     let hide_camera = headtracker.config.hide_camera;
 
+    // Create the sliders
     let min_cutoff_slider = slider(0..=50, min_cutoff, Message::MinCutoffSliderChanged).step(1);
     let beta_slider = slider(0..=50, beta, Message::BetaSliderChanged).step(1);
     let fps_slider = slider(15..=120, fps, Message::FPSSliderChanged).step(1);
 
+    // The main Start/Stop button
     let toggle_start = {
         let label = match headtracker.headtracker_running.load(Ordering::SeqCst) {
             true => "Stop",
@@ -90,7 +95,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     )
     .padding(40);
 
-    // let no_video_img_bytes = NO_VIDEO_IMG;
+    // If camera is set to hidden, show a placeholder image
     let image = match hide_camera {
         true => NO_VIDEO_IMG.to_vec(),
         false => {
@@ -111,6 +116,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
         }
     };
 
+    // Contains camera placeholder, available cameras list and the toggle button to hide the camera
     let camera_row = Container::new(
         Column::new()
             .push({
@@ -166,6 +172,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
             .push(Container::new(
                 Row::new()
                     .push(horizontal_space(Length::FillPortion(2)))
+                    // If there is a new release, show a button to download it/update it
                     .push(match &headtracker.release_info {
                         Some(release_info) => Container::new(
                             button(
@@ -190,6 +197,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                 Container::new(
                     Row::new()
                         .push(horizontal_space(Length::FillPortion(40)))
+                        // If there is an error, show it
                         .push(
                             text(headtracker.error_tracker.clone().lock().unwrap())
                                 .size(15)
@@ -208,6 +216,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     Column::new().spacing(10).push(body).push(footer)
 }
 
+// Shows app version and links to github and logs
 fn footer() -> Container<'static, Message, Renderer> {
     let github_button = button(
         Text::new('\u{48}'.to_string())
