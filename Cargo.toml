@@ -24,7 +24,7 @@ nokhwa = {version = "0.10.3", features = ["input-msmf", "input-v4l"]}
 confy = "0.5.1"
 directories = "5.0.0"
 iced = {version = "0.8.0", features = ["image", "smol"]}
-iced_native = "0.9.1"
+iced_native = "0.10.3"
 onnxruntime = {git = "https://github.com/Shubhamai/onnxruntime-rs"}
 crossbeam-channel = "0.5.6"
 anyhow = "1.0.70"
