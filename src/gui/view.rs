@@ -83,12 +83,15 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                 Row::new()
                     .spacing(5)
                     .push(
-                        text_input("127.0.0.1", ip, Message::InputIP)
+                        text_input("127.0.0.1", ip)
+                            .on_input(Message::InputIP)
                             .width(Length::FillPortion(70)),
                     )
                     .push(text("      "))
                     .push(
-                        text_input("4242", port, Message::InputPort).width(Length::FillPortion(15)),
+                        text_input("4242", port)
+                            .on_input(Message::InputPort)
+                            .width(Length::FillPortion(15)),
                     ),
             ))
             .push(vertical_space(Length::Fixed(30.))),

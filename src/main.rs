@@ -16,7 +16,11 @@ use crate::{
     consts::{APP_NAME, APP_VERSION, DEFAULT_FONT, ICON},
     structs::app::HeadTracker,
 };
-use iced::{window, Application, Settings};
+use iced::{
+    window::{self, PlatformSpecific},
+    Application, Settings,
+};
+use image::ImageFormat;
 
 use tracing::Level;
 
@@ -90,11 +94,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             decorations: true,
             transparent: false,
             always_on_top: false,
-            icon: match window::Icon::from_file_data(ICON, None) {
+            icon: match window::icon::from_file_data(ICON, Some(ImageFormat::Ico)) {
                 Ok(icon) => Some(icon),
                 Err(_) => None,
             },
             visible: true,
+            platform_specific: PlatformSpecific::default(),
         },
         flags,
         default_font: Some(DEFAULT_FONT),

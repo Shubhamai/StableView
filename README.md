@@ -37,13 +37,12 @@
 
 # Status
 
-**Last Updated - 27 March, 2023**
+**Last Updated - 11 May, 2023**
 
-![progress gif](assets/updates/jan-03-2023-update.gif)
+![progress gif](assets/updates/may-12-2023-update.gif)
 
-
-- Todo's & Issues :
-  - [x] Better Error Handling
+- Todo's & Issues (sorted by priority ) :
+  - [ ] Support for PS3 Eye Camera.
   - [ ] Tracker lags when the camera is not hidden.
   - [ ] Camera from an external link.
   - [ ] Auto Update ( Hopefully ? ).
@@ -53,11 +52,11 @@
 
 1. Visit the [releases page](https://github.com/shubhamai/StableView/releases/latest) and download the latest version on your platform.
 
-    For windows, a `.msi` installer will be provided, simply double-click on the installer and follow the installation steps. After Installing, you can simply run `StableView` from the start menu.
+   For windows, a `.msi` installer will be provided, simply double-click on the installer and follow the installation steps. After Installing, you can simply run `StableView` from the start menu.
 
 2. The application uses opentrack to send the tracking data to respective applications. Please install it from their [Github repo](https://github.com/opentrack/opentrack).
 
-    After installer OpenTrack, select Input as **UDP over network** so that OpenTrack can receive data from StableView and send to required application.
+   After installer OpenTrack, select Input as **UDP over network** so that OpenTrack can receive data from StableView and send to required application.
 
 # Features
 
