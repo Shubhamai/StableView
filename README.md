@@ -41,7 +41,7 @@
 
 ![progress gif](assets/updates/may-12-2023-update.gif)
 
-- Todo's & Issues (sorted by priority ) :
+- Todo's & Issues (sorted by priority) :
   - [ ] Support for PS3 Eye Camera.
   - [ ] Tracker lags when the camera is not hidden.
   - [ ] Camera from an external link.
