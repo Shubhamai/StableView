@@ -2496,9 +2496,9 @@ dependencies = [
 
 [[package]]
 name = "opencv"
-version = "0.81.2"
+version = "0.81.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7c7b0274cdeeb7f60b2984874d66e8911bf289dbf5f2e1e8e7d169513000f80"
+checksum = "b3cc546fa0fef8580f81e301b890b6e120554fad16e8a2078581b87dcc73fcbb"
 dependencies = [
  "cc",
  "clang",
