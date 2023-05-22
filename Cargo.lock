@@ -1971,12 +1971,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "maplit"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
-
-[[package]]
 name = "matrixmultiply"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2496,12 +2490,11 @@ dependencies = [
 
 [[package]]
 name = "opencv"
-version = "0.81.3"
+version = "0.82.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3cc546fa0fef8580f81e301b890b6e120554fad16e8a2078581b87dcc73fcbb"
+checksum = "e53f8da5fbcabdcadc76b476454c574ea348cbc37a7ae5fb96dabebb124cf473"
 dependencies = [
  "cc",
- "clang",
  "dunce",
  "jobserver",
  "libc",
@@ -2516,14 +2509,13 @@ dependencies = [
 
 [[package]]
 name = "opencv-binding-generator"
-version = "0.62.0"
+version = "0.65.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "462723fd0259e83523a162fe7ec7cbb136d883cb548168811805b0e42cf9917c"
+checksum = "b4a3f509dbff59446a1fa91174352b74bd490bcf47ebe51e5d1456a3c960a9f2"
 dependencies = [
  "clang",
  "clang-sys",
  "dunce",
- "maplit",
  "once_cell",
  "percent-encoding",
  "regex",
