@@ -50,13 +50,11 @@
 
 # Usage
 
-1. Visit the [releases page](https://github.com/shubhamai/StableView/releases/latest) and download the latest version on your platform.
-
-   For windows, a `.msi` installer will be provided, simply double-click on the installer and follow the installation steps. After Installing, you can simply run `StableView` from the start menu.
+1. Visit the [releases page](https://github.com/shubhamai/StableView/releases/latest) and download the latest version on your platform. For Windows, a `.msi` installer will be provided, simply double-click on the installer and follow the installation steps. After Installing, you can simply run `StableView` from the start menu.
 
 2. The application uses opentrack to send the tracking data to respective applications. Please install it from their [Github repo](https://github.com/opentrack/opentrack).
 
-   After installer OpenTrack, select Input as **UDP over network** so that OpenTrack can receive data from StableView and send to required application.
+   After installing OpenTrack, select Input as **UDP over network** so that OpenTrack can receive data from StableView and send it to the required application.
 
 # Features
 
@@ -66,9 +64,9 @@
 
 # Shoutouts
 
-- Thanks to the authors of the paper [3DDFA_V2 : Towards Fast, Accurate and Stable 3D Dense Face Alignment](https://paperswithcode.com/paper/towards-fast-accurate-and-stable-3d-dense-1), without them, this application wouldn't have been possible, majority of the model inference code is based on their work. Thanks [Jianzhu Guo](https://guojianzhu.com), [Xiangyu Zhu](http://www.cbsr.ia.ac.cn/users/xiangyuzhu/), [Yang Yang](http://www.cbsr.ia.ac.cn/users/yyang/main.htm), Fan Yang, [Zhen Lei](http://www.cbsr.ia.ac.cn/users/zlei/) and [Stan Z. Li](https://scholar.google.com/citations?user=Y-nyLGIAAAAJ).
+- Thanks to the authors of the paper [3DDFA_V2 : Towards Fast, Accurate and Stable 3D Dense Face Alignment](https://paperswithcode.com/paper/towards-fast-accurate-and-stable-3d-dense-1), without them, this application wouldn't have been possible, the majority of the model inference code is based on their work. Thanks, [Jianzhu Guo](https://guojianzhu.com), [Xiangyu Zhu](http://www.cbsr.ia.ac.cn/users/xiangyuzhu/), [Yang Yang](http://www.cbsr.ia.ac.cn/users/yyang/main.htm), Fan Yang, [Zhen Lei](http://www.cbsr.ia.ac.cn/users/zlei/) and [Stan Z. Li](https://scholar.google.com/citations?user=Y-nyLGIAAAAJ).
 - [Sniffer](https://github.com/GyulyVGC/sniffnet/) for GUI inspirations, code structure, readme, etc.
-- [ChatGPT](https://openai.com/blog/chatgpt/) for assisting me to convert some of the python code to rust.
+- [ChatGPT](https://openai.com/blog/chatgpt/) for assisting me to convert some of the Python code to Rust.
 - Product Icon from [Leonardo Yip](https://unsplash.com/@yipleonardo) on [Unsplash](https://unsplash.com/photos/rn-NLirHQPY).
 
 ## Bug Report
