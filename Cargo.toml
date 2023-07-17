@@ -28,7 +28,7 @@ iced_native = "0.10.3"
 image = "0.24.6"
 onnxruntime = {git = "https://github.com/Shubhamai/onnxruntime-rs"}
 crossbeam-channel = "0.5.6"
-anyhow = "1.0.70"
+anyhow = "1.0.72"
 reqwest = { version = "0.11.18", features = ["blocking", "json"] }
 version-compare = "0.1"
 
