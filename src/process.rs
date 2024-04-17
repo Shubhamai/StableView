@@ -1,9 +1,16 @@
+use std::ops::Deref;
+
 /// Processing the head pose (filters, etc.) and generating the x,y,z of the head.
 use crate::enums::crop_policy::CropPolicy;
 use crate::structs::{pose::ProcessHeadPose, tddfa::Tddfa};
 use crate::utils::headpose::{calc_pose, gen_point2d};
+use crate::utils::image::crop_img;
 use anyhow::{Context, Result};
+use onnxruntime::ndarray::{Array3, Array4};
+use opencv::core::{MatTraitConstManual, Scalar, Size, ToOutputArray, Vec3b};
+use opencv::imgproc::{self, rectangle, LINE_4};
 use opencv::prelude::Mat;
+use opencv::prelude::MatTraitConst;
 
 impl ProcessHeadPose {
     pub fn new(image_size: i32) -> Result<Self> {
@@ -79,7 +86,21 @@ impl ProcessHeadPose {
                         .run(frame, self.face_box, &self.pts_3d, CropPolicy::Box)?;
             }
 
-            self.pts_3d = self.tddfa.recon_vers(self.param, self.roi_box); // ? Commenting this code still seems to output the pose perfectly
+            // make sure the roi_box is not out of the frame
+            if self.roi_box[0] < 0. {
+                self.roi_box[0] = 0.;
+            }
+            if self.roi_box[1] < 0. {
+                self.roi_box[1] = 0.;
+            }
+            if self.roi_box[2] > frame.size()?.width as f32 {
+                self.roi_box[2] = frame.size()?.width as f32;
+            }
+            if self.roi_box[3] > frame.size()?.height as f32 {
+                self.roi_box[3] = frame.size()?.height as f32;
+            }
+
+            self.pts_3d = self.tddfa.recon_vers(self.param, self.roi_box);
         }
         let (p, pose) = calc_pose(&self.param);
 
@@ -114,8 +135,23 @@ pub fn test_process_head_pose() -> Result<()> {
     // use crate::utils::image::crop_img;
     use crate::utils::visualize::draw_landmark;
     use opencv::highgui;
-    use opencv::prelude::MatTraitConstManual;
 
+    use rust_faces::{
+        BlazeFaceParams, FaceDetection, FaceDetectorBuilder, InferParams, Provider, ToArray3,
+        ToRgb8,
+    };
+    let face_detector =
+        FaceDetectorBuilder::new(FaceDetection::BlazeFace640(BlazeFaceParams::default()))
+            .download()
+            .infer_params(InferParams {
+                provider: Provider::OrtCuda(0),
+                intra_threads: Some(5),
+                ..Default::default()
+            })
+            .build()
+            .expect("Fail to load the face detector.");
+
+  
     let (tx, rx) = crossbeam_channel::unbounded::<Mat>();
 
     let mut thr_cam = ThreadedCamera::start_camera_thread(tx, 0, "Test Camera".to_owned())?;
@@ -128,11 +164,47 @@ pub fn test_process_head_pose() -> Result<()> {
     let mut frame = rx.recv()?;
     let mut _data: [f32; 6];
 
+    let mut frame_no = 0;
     loop {
         frame = match rx.try_recv() {
             Ok(result) => result,
             Err(_) => frame.clone(),
         };
+
+        // bgr to rgb on new frame
+        let mut bgr_frame = Mat::default();
+        imgproc::cvt_color(&frame, &mut bgr_frame, imgproc::COLOR_BGR2RGB, 0)?;
+
+        // let cropped_image = crop_img(&bgr_frame, &[150., 150., 400., 400.])?;
+
+        // Resizing the frame
+        let mut resized_frame = Mat::default();
+        imgproc::resize(
+            &bgr_frame,
+            &mut resized_frame,
+            Size {
+                width: 120,
+                height: 120,
+            },
+            0.0,
+            0.0,
+            imgproc::INTER_LINEAR, //*INTER_AREA, // https://stackoverflow.com/a/51042104 | Speed -> https://stackoverflow.com/a/44278268
+        )?; // ! Error handling here
+
+        let vec = Mat::data_typed::<Vec3b>(&resized_frame)?;
+
+        // use the shape [height, width, channels] instead of [channels, height, width].
+        let array = Array3::from_shape_fn((120, 120, 3), |(y, x, c)| {
+            Vec3b::deref(&vec[x + y * 120])[c]
+        });
+        
+
+        let mut faces = vec![];
+        // rrun detection every 10 frames
+        if frame_no % 10 == 0 {
+            faces = face_detector.detect(array.view().into_dyn()).unwrap();
+        }
+
 
         _data = head_pose.single_iter(&frame)?;
 
@@ -147,6 +219,36 @@ pub fn test_process_head_pose() -> Result<()> {
             (0., 255., 0.),
             1,
         )?;
+
+        // add bbox of face detection
+        for face in faces {
+            let rect = face.rect;
+
+            // convert the rect from 120x120 to 640x480
+            let rect = opencv::core::Rect::new(
+                (rect.x * 5.33) as i32,
+                (rect.y * 4.) as i32,
+                (rect.width * 5.33) as i32,
+                (rect.height * 4.) as i32,
+            );
+
+            let landmarks = face.landmarks.unwrap();
+            let confidence = face.confidence;
+
+            // println!("Face detected: {:?}", rect);
+            // println!("Confidence: {}", confidence);
+            // println!("Landmarks: {:?}", landmarks);
+
+            imgproc::rectangle(
+                &mut frame,
+                rect,
+                opencv::core::Scalar::from((0.0, 255.0, 0.0)),
+                2,
+                imgproc::LINE_4,
+                0,
+            )?;
+
+        }
 
         if frame.size()?.width > 0 {
             // let cropped_image = crop_img(&frame, &head_pose.roi_box)?;
@@ -171,6 +273,8 @@ pub fn test_process_head_pose() -> Result<()> {
         if key > 0 && key != 255 {
             break;
         }
+
+        frame_no += 1;
     }
     thr_cam.shutdown();
     Ok(())

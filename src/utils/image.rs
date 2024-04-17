@@ -4,6 +4,7 @@ use opencv::{
     core::{Mat, Rect},
     prelude::MatTraitConstManual,
 };
+use opencv::prelude::MatTraitConst;
 
 pub fn crop_img(img: &Mat, roi_box: &[f32; 4]) -> Result<Mat, opencv::Error> {
     let h = img.size()?.height;
@@ -38,7 +39,8 @@ pub fn crop_img(img: &Mat, roi_box: &[f32; 4]) -> Result<Mat, opencv::Error> {
     // }
     // println!("{} {} {} {}", sx, sy, width, height);
     let roi = Rect::new(sx, sy, width, height);
-    Mat::roi(img, roi) // ! Need to deal with this, when camera disconnects while running, error occures here
+    // Ok(Mat::roi(img, roi)?.clone_pointee()) // ! Need to deal with this, when camera disconnects while running, error occures here
+    Mat::roi(img, roi)
 }
 
 #[test]
