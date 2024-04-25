@@ -6,3 +6,4 @@ pub mod pose;
 pub mod release;
 pub mod state;
 pub mod tddfa;
+pub mod face;
