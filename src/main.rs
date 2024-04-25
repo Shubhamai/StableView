@@ -10,6 +10,7 @@ mod network;
 mod process;
 mod structs;
 mod tddfa;
+mod face;
 mod utils;
 
 use crate::{

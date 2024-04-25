@@ -2,6 +2,7 @@ use std::ops::Deref;
 
 /// Processing the head pose (filters, etc.) and generating the x,y,z of the head.
 use crate::enums::crop_policy::CropPolicy;
+use crate::structs::face::FaceDetect;
 use crate::structs::{pose::ProcessHeadPose, tddfa::Tddfa};
 use crate::utils::headpose::{calc_pose, gen_point2d};
 use crate::utils::image::crop_img;
@@ -15,9 +16,11 @@ use opencv::prelude::MatTraitConst;
 impl ProcessHeadPose {
     pub fn new(image_size: i32) -> Result<Self> {
         let tddfa = Tddfa::new(image_size).context("Unable to create tddfa")?;
+        let face_detector = FaceDetect::new();
 
         Ok(Self {
             tddfa,
+            face_detector,
             pts_3d: vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
             face_box: [150., 150., 400., 400.],
             first_iteration: true,
@@ -61,16 +64,18 @@ impl ProcessHeadPose {
     pub fn single_iter(&mut self, frame: &Mat) -> Result<[f32; 6]> {
         // ! A very tuff bug laying around somewhere here, resulting in out of ordinary roi box values when moving to camera border
 
+        let mut return_data = [0.; 6];
+
         if self.first_iteration {
             (self.param, self.roi_box) =
                 self.tddfa
                     .run(frame, self.face_box, &self.pts_3d, CropPolicy::Box)?;
-            self.pts_3d = self.tddfa.recon_vers(self.param, self.roi_box);
+            self.pts_3d = self.tddfa.recon_vers(self.param, self.face_box);
 
             (self.param, self.roi_box) =
                 self.tddfa
                     .run(frame, self.face_box, &self.pts_3d, CropPolicy::Landmark)?;
-            self.pts_3d = self.tddfa.recon_vers(self.param, self.roi_box);
+            self.pts_3d = self.tddfa.recon_vers(self.param, self.face_box);
 
             self.first_iteration = false;
         } else {
@@ -116,14 +121,31 @@ impl ProcessHeadPose {
         let (centroid, distance) =
             self.get_coordintes_and_depth(pose, distance, point2d, &self.roi_box);
 
-        Ok([
+        // detect any faces, if there are no faces, return the previous values
+        let faces = self.face_detector.detect(frame.clone());
+
+        if faces.is_empty() {
+            return Ok(return_data);
+        }
+
+        // update the face box with a little bit of bigger box
+        self.face_box = [
+            faces[0].rect.x as f32 - 50.,
+            faces[0].rect.y as f32 - 50.,
+            faces[0].rect.x as f32 + faces[0].rect.width as f32 + 50.,
+            faces[0].rect.y as f32 + faces[0].rect.height as f32 + 50.,
+        ];
+
+        return_data = [
             centroid[0],
             -centroid[1],
             distance,
             pose[0],
             -pose[1],
             pose[2],
-        ])
+        ];
+
+        Ok(return_data)
     }
 }
 
@@ -140,18 +162,20 @@ pub fn test_process_head_pose() -> Result<()> {
         BlazeFaceParams, FaceDetection, FaceDetectorBuilder, InferParams, Provider, ToArray3,
         ToRgb8,
     };
-    let face_detector =
-        FaceDetectorBuilder::new(FaceDetection::BlazeFace640(BlazeFaceParams::default()))
-            .download()
-            .infer_params(InferParams {
-                provider: Provider::OrtCuda(0),
-                intra_threads: Some(5),
-                ..Default::default()
-            })
-            .build()
-            .expect("Fail to load the face detector.");
+    let face_detector = FaceDetectorBuilder::new(FaceDetection::BlazeFace320(BlazeFaceParams {
+        score_threshold: 0.5,
+        target_size: 320,
+        ..Default::default()
+    }))
+    .download()
+    .infer_params(InferParams {
+        provider: Provider::OrtCuda(0),
+        intra_threads: Some(5),
+        ..Default::default()
+    })
+    .build()
+    .expect("Fail to load the face detector.");
 
-  
     let (tx, rx) = crossbeam_channel::unbounded::<Mat>();
 
     let mut thr_cam = ThreadedCamera::start_camera_thread(tx, 0, "Test Camera".to_owned())?;
@@ -197,14 +221,12 @@ pub fn test_process_head_pose() -> Result<()> {
         let array = Array3::from_shape_fn((120, 120, 3), |(y, x, c)| {
             Vec3b::deref(&vec[x + y * 120])[c]
         });
-        
 
         let mut faces = vec![];
         // rrun detection every 10 frames
         if frame_no % 10 == 0 {
             faces = face_detector.detect(array.view().into_dyn()).unwrap();
         }
-
 
         _data = head_pose.single_iter(&frame)?;
 
@@ -247,7 +269,6 @@ pub fn test_process_head_pose() -> Result<()> {
                 imgproc::LINE_4,
                 0,
             )?;
-
         }
 
         if frame.size()?.width > 0 {
