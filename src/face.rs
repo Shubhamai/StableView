@@ -13,7 +13,6 @@ use rust_faces::{
 
 use anyhow::{anyhow, Result};
 
-use crate::consts::FACE_DETECTOR_MODEL;
 use crate::structs::face::FaceDetect;
 
 impl FaceDetect {
