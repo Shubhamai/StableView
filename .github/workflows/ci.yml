@@ -31,13 +31,13 @@ jobs:
         run: dotnet tool install --global wix
 
       - name: Install WiX
-        run: |
-          cargo install cargo-wix
+        run: cargo install cargo-wix
 
       - name: Installing Opencv, LLVM
         run: choco install llvm opencv
       
       - name: Test
+
         env:
            OPENCV_LINK_LIBS: opencv_world460
            OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
