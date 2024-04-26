@@ -18,10 +18,17 @@ jobs:
       - uses: actions/checkout@v3
       - name: Cargo Cache
         uses: Swatinem/rust-cache@v2
+
+      
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+
       - name: Install WiX
-        run: |
-          nuget install WiX
-          cargo install cargo-wix
+        run: dotnet tool install --global wix
+
+      - name: Install WiX
+        run: cargo install cargo-wix
+          
       - name: Installing Opencv, LLVM
         run: choco install llvm opencv
       #- name: Test

@@ -37,20 +37,17 @@
 
 # Status
 
-**Last Updated - 11 May, 2023**
+**Last Updated - 26 April, 2024**
 
 ![progress gif](assets/updates/may-12-2023-update.gif)
 
-- Todo's & Issues (sorted by priority) :
-  - [ ] Support for PS3 Eye Camera.
-  - [ ] Tracker lags when the camera is not hidden.
-  - [ ] Camera from an external link.
-  - [ ] Auto Update ( Hopefully ? ).
-    - [x] Notification added for now.
+- Recent Updates
+  - [x] Automatically resets when face is not detected - https://github.com/Shubhamai/StableView/discussions/68
 
 # Usage
 
 1. Visit the [releases page](https://github.com/shubhamai/StableView/releases/latest) and download the latest version on your platform. For Windows, a `.msi` installer will be provided, simply double-click on the installer and follow the installation steps. After Installing, you can simply run `StableView` from the start menu.
+   - Make sure you have internet connectivity while installing the application as it downloads the model weights for the first time.
 
 2. The application uses opentrack to send the tracking data to respective applications. Please install it from their [Github repo](https://github.com/opentrack/opentrack).
 

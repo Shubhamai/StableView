@@ -12,25 +12,28 @@ readme = "README.md"
 
 
 [dependencies]
-opencv =  {version = "0.84.5"}
+opencv =  {version = "0.88.5"} # 0.89.0
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-once_cell = "1.18.0"
+once_cell = "1.16.0"
 rand = "0.8.5"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 tracing-appender = "0.2.2"
-nokhwa = {version = "0.10.4", features = ["input-msmf", "input-v4l"]}
+nokhwa = {version = "0.10.3", features = ["input-msmf", "input-v4l"]}
 confy = "0.5.1"
 directories = "5.0.0"
-iced = {version = "0.10.0", features = ["image", "smol"]}
+iced = {version = "0.9.0", features = ["image", "smol"]}
 iced_native = "0.10.3"
-image = "0.24.7"
-onnxruntime = {git = "https://github.com/Shubhamai/onnxruntime-rs"}
+image = "0.24.6"
+onnxruntime = {git = "https://github.com/nbigaouette/onnxruntime-rs"}
 crossbeam-channel = "0.5.6"
-anyhow = "1.0.72"
-reqwest = { version = "0.11.18", features = ["blocking", "json"] }
+anyhow = "1.0.70"
+reqwest = { version = "0.11.6", features = ["blocking", "json"] }
 version-compare = "0.1"
+# opencv-binding-generator = "0.85.0"
+# od_opencv = "0.1.5"
+rust-faces =  {git = "https://github.com/Shubhamai/rust-faces"}
 
 [profile.release]
 debug = 0
