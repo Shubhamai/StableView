@@ -42,7 +42,7 @@
 ![progress gif](assets/updates/may-12-2023-update.gif)
 
 - Recent Updates
-- [x] Automatically resets when face is not detected - https://github.com/Shubhamai/StableView/discussions/68
+  - [x] Automatically resets when face is not detected - https://github.com/Shubhamai/StableView/discussions/68
 
 # Usage
 
