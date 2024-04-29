@@ -21,7 +21,7 @@ tracing = "0.1"
 tracing-subscriber = "0.3"
 tracing-appender = "0.2.2"
 nokhwa = {version = "0.10.3", features = ["input-msmf", "input-v4l"]}
-confy = "0.5.1"
+confy = "0.6.1"
 directories = "5.0.0"
 iced = {version = "0.9.0", features = ["image", "smol"]}
 iced_native = "0.10.3"
