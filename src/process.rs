@@ -16,7 +16,7 @@ use opencv::prelude::MatTraitConst;
 impl ProcessHeadPose {
     pub fn new(image_size: i32) -> Result<Self> {
         let tddfa = Tddfa::new(image_size).context("Unable to create tddfa")?;
-        let face_detector = FaceDetect::new();
+        let face_detector = FaceDetect::new()?;
 
         Ok(Self {
             tddfa,
@@ -24,6 +24,7 @@ impl ProcessHeadPose {
             pts_3d: vec![vec![1., 2., 3.], vec![4., 5., 6.], vec![7., 8., 9.]],
             face_box: [150., 150., 400., 400.],
             first_iteration: true,
+            frame_count: 0,
             param: [0.; 62],
             roi_box: [150., 150., 400., 400.],
         })
@@ -63,6 +64,8 @@ impl ProcessHeadPose {
 
     pub fn single_iter(&mut self, frame: &Mat) -> Result<[f32; 6]> {
         // ! A very tuff bug laying around somewhere here, resulting in out of ordinary roi box values when moving to camera border
+
+        self.frame_count += 1;
 
         let mut return_data = [0.; 6];
 
@@ -122,19 +125,44 @@ impl ProcessHeadPose {
             self.get_coordintes_and_depth(pose, distance, point2d, &self.roi_box);
 
         // detect any faces, if there are no faces, return the previous values
-        let faces = self.face_detector.detect(frame.clone());
-
-        if faces.is_empty() {
+        if self.frame_count % 10 == 0 {
+            self.frame_count = 0;
+            
             return Ok(return_data);
-        }
+            // match self.face_detector.detect(frame.clone()) {
+            //     Ok(faces) => {
+            //         if faces.is_empty() {
+            //             return Ok(return_data);
+            //         }
 
-        // update the face box with a little bit of bigger box
-        self.face_box = [
-            faces[0].rect.x as f32 - 50.,
-            faces[0].rect.y as f32 - 50.,
-            faces[0].rect.x as f32 + faces[0].rect.width as f32 + 50.,
-            faces[0].rect.y as f32 + faces[0].rect.height as f32 + 50.,
-        ];
+            //         // update the face box with a little bit of bigger box
+            //         // self.face_box = [
+            //         //     faces[0].rect.x as f32 - 50.,
+            //         //     faces[0].rect.y as f32 - 50.,
+            //         //     faces[0].rect.x as f32 + faces[0].rect.width as f32 + 50.,
+            //         //     faces[0].rect.y as f32 + faces[0].rect.height as f32 + 50.,
+            //         // ];
+            //     }
+            //     Err(e) => {
+            //         tracing::error!("Error detecting faces: {:?}", e);
+            //         println!("Error detecting faces: {:?}", e);
+            //     }
+            // }
+
+            //     if faces.is_empty() {
+            //         return Ok(return_data);
+            //     }
+
+            //     // update the face box with a little bit of bigger box
+            //     // self.face_box = [
+            //     //     faces[0].rect.x as f32 - 50.,
+            //     //     faces[0].rect.y as f32 - 50.,
+            //     //     faces[0].rect.x as f32 + faces[0].rect.width as f32 + 50.,
+            //     //     faces[0].rect.y as f32 + faces[0].rect.height as f32 + 50.,
+            //     // ];
+
+            
+        }
 
         return_data = [
             centroid[0],
