@@ -40,7 +40,15 @@ pub fn crop_img(img: &Mat, roi_box: &[f32; 4]) -> Result<Mat, opencv::Error> {
     // println!("{} {} {} {}", sx, sy, width, height);
     let roi = Rect::new(sx, sy, width, height);
     // Ok(Mat::roi(img, roi)?.clone_pointee()) // ! Need to deal with this, when camera disconnects while running, error occures here
-    Mat::roi(img, roi)
+    let result = Mat::roi(img, roi);
+
+    match result {
+        Ok(mat) => Ok(mat.try_clone().unwrap()),
+        Err(e) => {
+            tracing::error!("Error cropping image: {}", e);
+            Ok(Mat::default())
+        }
+    }
 }
 
 #[test]

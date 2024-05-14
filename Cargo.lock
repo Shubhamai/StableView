@@ -958,17 +958,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "derive_destructure2"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64b697ac90ff296f0fc031ee5a61c7ac31fb9fff50e3fb32873b09223613fc0c"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.60",
-]
-
-[[package]]
 name = "directories"
 version = "4.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2139,20 +2128,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jobslot"
-version = "0.2.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0303fc691930667d6fd0b2cd194f9d6b37be3d890e0b89cf4a34e27231f35c4f"
-dependencies = [
- "cfg-if",
- "derive_destructure2",
- "getrandom",
- "libc",
- "scopeguard",
- "windows-sys 0.52.0",
-]
-
-[[package]]
 name = "jpeg-decoder"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2806,13 +2781,13 @@ dependencies = [
 
 [[package]]
 name = "opencv"
-version = "0.88.9"
+version = "0.91.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1adf831acddcefe251e825b01d84bbd1142a6977e3ec1ba02edfbdbc17e863af"
+checksum = "e64b5a733be752a917aa27981c1100fbc7836cf2cfe3fb06f5cac691339837b7"
 dependencies = [
  "cc",
  "dunce",
- "jobslot",
+ "jobserver",
  "libc",
  "num-traits",
  "once_cell",
@@ -2821,13 +2796,14 @@ dependencies = [
  "semver",
  "shlex 1.3.0",
  "vcpkg",
+ "windows 0.56.0",
 ]
 
 [[package]]
 name = "opencv-binding-generator"
-version = "0.84.0"
+version = "0.89.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e842c276fd00b26100de550e2b47f6ded4f06213c62f0575cb7242aecde2efd"
+checksum = "81af1298c489597ffdbadc7710673ec26f8a2440228992681ffa3b8f00233bd9"
 dependencies = [
  "clang",
  "clang-sys",
@@ -4950,6 +4926,59 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e745dab35a0c4c77aa3ce42d595e13d2003d6902d6b08c9ef5fc326d08da12b"
 dependencies = [
  "windows-targets 0.42.2",
+]
+
+[[package]]
+name = "windows"
+version = "0.56.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1de69df01bdf1ead2f4ac895dc77c9351aefff65b2f3db429a343f9cbf05e132"
+dependencies = [
+ "windows-core",
+ "windows-targets 0.52.5",
+]
+
+[[package]]
+name = "windows-core"
+version = "0.56.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4698e52ed2d08f8658ab0c39512a7c00ee5fe2688c65f8c0a4f06750d729f2a6"
+dependencies = [
+ "windows-implement",
+ "windows-interface",
+ "windows-result",
+ "windows-targets 0.52.5",
+]
+
+[[package]]
+name = "windows-implement"
+version = "0.56.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f6fc35f58ecd95a9b71c4f2329b911016e6bec66b3f2e6a4aad86bd2e99e2f9b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.60",
+]
+
+[[package]]
+name = "windows-interface"
+version = "0.56.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08990546bf4edef8f431fa6326e032865f27138718c587dc21bc0265bbcb57cc"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.60",
+]
+
+[[package]]
+name = "windows-result"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "749f0da9cc72d82e600d8d2e44cadd0b9eedb9038f71a1c58556ac1c5791813b"
+dependencies = [
+ "windows-targets 0.52.5",
 ]
 
 [[package]]
