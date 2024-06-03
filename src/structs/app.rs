@@ -10,7 +10,7 @@ use std::{
 };
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
-use opencv::{imgcodecs, prelude::Mat};
+use opencv::{core::MatTraitConst, imgcodecs, prelude::Mat};
 
 use super::{camera::ThreadedCamera, release::Release, state::AppConfig};
 use crate::consts::{APP_GITHUB_API, APP_VERSION, NO_VIDEO_IMG};
@@ -95,7 +95,7 @@ impl Default for HeadTracker {
         let (sender, receiver) = unbounded::<Mat>(); // ! bounded causes unwanted crashes bounded::<Mat>(1);
 
         let frame = match Mat::from_slice(NO_VIDEO_IMG) {
-            Ok(frame) => frame,
+            Ok(frame) => frame.try_clone().unwrap(),
             Err(e) => {
                 tracing::error!("Error loading NO_VIDEO_IMG: {}", e);
                 Mat::default()

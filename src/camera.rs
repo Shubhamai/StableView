@@ -36,9 +36,9 @@ impl ThreadedCamera {
             Ok(available_devices) => {
                 if available_devices.is_empty() {
                     tracing::error!(
-                        "No Camera devices found. Setting default (No Device Found, 0)",
+                        "No Camera devices found. Setting default (No Device Found, -1)",
                     );
-                    devices_list.insert("No Device Found".to_string(), 0);
+                    devices_list.insert("No Device Found".to_string(), -1);
                 } else {
                     for device_info in available_devices {
                         tracing::warn!(
@@ -47,12 +47,12 @@ impl ThreadedCamera {
                             device_info.index()
                         );
                         devices_list.insert(
-                            format!("{:<4}", device_info.human_name()),
+                            format!("{:<4} {}", device_info.human_name(), device_info.index()),
                             match device_info.index().as_index() {
                                 Ok(index) => index as i32,
                                 Err(error) => {
-                                    tracing::error!("Unable to get camera index : {:?}", error);
-                                    devices_list.insert("No Device Found".to_string(), 0);
+                                    tracing::error!("Unable to get camera index : {:?}, adding (No Device Found, -1)", error);
+                                    devices_list.insert("No Device Found".to_string(), -1);
                                     return Ok(devices_list);
                                 }
                             },

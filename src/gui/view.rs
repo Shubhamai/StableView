@@ -14,6 +14,7 @@ use opencv::{
     imgcodecs,
     types::{VectorOfi32, VectorOfu8},
 };
+use opencv::prelude::VectorToVec;
 
 use crate::{consts::NO_VIDEO_IMG, enums::message::Message, structs::app::HeadTracker};
 
