@@ -10,14 +10,16 @@ use crate::{
 };
 use iced::{
     application, executor, theme, widget::Container, Application, Color, Command, Element, Length,
-    Subscription, Theme,
+    Theme,
 };
-use iced_native::{mouse, window, Event};
+use iced::{mouse, window};
 use std::{
     sync::atomic::Ordering,
     thread,
     time::{Duration, Instant},
 };
+use iced::Subscription;
+use iced::event::{self, Event};
 
 // Log the error and break the block expression
 macro_rules! trace_error {
@@ -44,15 +46,15 @@ impl Application for HeadTracker {
     fn subscription(&self) -> Subscription<Message> {
         // If camera is hidden, only listen for events, otherwise listen for events and ticks to update camera frame in GUI
         match self.config.hide_camera {
-            true => iced_native::subscription::events().map(Message::EventOccurred),
+            true => event::listen().map(Message::EventOccurred),
             false => {
                 if self.headtracker_running.load(Ordering::SeqCst) {
                     let ticks = iced::time::every(Duration::from_millis(1)).map(|_| Message::Tick);
                     let runtime_events =
-                        iced_native::subscription::events().map(Message::EventOccurred);
+                    event::listen().map(Message::EventOccurred);
                     Subscription::batch(vec![runtime_events, ticks])
                 } else {
-                    iced_native::subscription::events().map(Message::EventOccurred)
+                    event::listen().map(Message::EventOccurred)
                 }
             }
         }
@@ -62,16 +64,16 @@ impl Application for HeadTracker {
         Theme::Light
     }
 
-    fn style(&self) -> theme::Application {
-        fn dark_background(_theme: &Theme) -> application::Appearance {
-            application::Appearance {
-                background_color: Color::from_rgb8(245, 245, 245),
-                text_color: Color::BLACK,
-            }
-        }
+    // fn style(&self) -> theme::Application {
+    //     fn dark_background(_theme: &Theme) -> application::Appearance {
+    //         application::Appearance {
+    //             background_color: Color::from_rgb8(245, 245, 245),
+    //             text_color: Color::BLACK,
+    //         }
+    //     }
 
-        theme::Application::from(dark_background as fn(&Theme) -> _)
-    }
+    //     theme::Application::from(dark_background as fn(&Theme) -> _)
+    // }
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
@@ -372,7 +374,7 @@ impl Application for HeadTracker {
             }
             Message::EventOccurred(event) => {
                 // If the user request to close the window, stop the thread ( if running ) and exit the program
-                if let Event::Window(window::Event::CloseRequested) = event {
+                if let Event::Window(_, window::Event::CloseRequested) = event {
                     if self.headtracker_running.load(Ordering::SeqCst) {
                         self.headtracker_running.store(false, Ordering::SeqCst);
                         match self.headtracker_thread.take() {

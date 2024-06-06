@@ -6,20 +6,24 @@ use iced::{
     alignment::{self, Horizontal, Vertical},
     widget::{
         button, horizontal_space, pick_list, slider, text, text_input, toggler, vertical_space,
-        Column, Container, Row, Text,
+        Column, Container, Row, Space, Text,
     },
     Alignment, Length, Renderer,
 };
+use opencv::prelude::VectorToVec;
 use opencv::{
     imgcodecs,
     types::{VectorOfi32, VectorOfu8},
 };
-use opencv::prelude::VectorToVec;
 
-use crate::{consts::NO_VIDEO_IMG, enums::message::Message, structs::app::HeadTracker};
+use crate::{
+    consts::{ICONS, NO_VIDEO_IMG},
+    enums::message::Message,
+    structs::app::HeadTracker,
+};
 
 use super::style::{HEIGHT_BODY, HEIGHT_FOOTER};
-use crate::consts::{APP_AUTHORS, APP_NAME, APP_REPOSITORY, APP_VERSION, ICONS};
+use crate::consts::{APP_AUTHORS, APP_NAME, APP_REPOSITORY, APP_VERSION};
 
 pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     // Convert the min_cutoff and beta values to u32
@@ -45,9 +49,10 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let hide_camera = headtracker.config.hide_camera;
 
     // Create the sliders
-    let min_cutoff_slider = slider(0..=50, min_cutoff, Message::MinCutoffSliderChanged).step(1);
-    let beta_slider = slider(0..=50, beta, Message::BetaSliderChanged).step(1);
-    let fps_slider = slider(15..=120, fps, Message::FPSSliderChanged).step(1);
+    let min_cutoff_slider =
+        slider(0..=50, min_cutoff, Message::MinCutoffSliderChanged).step(1 as u32);
+    let beta_slider = slider(0..=50, beta, Message::BetaSliderChanged).step(1 as u32);
+    let fps_slider = slider(15..=120, fps, Message::FPSSliderChanged).step(1 as u32);
 
     // The main Start/Stop button
     let toggle_start = {
@@ -68,16 +73,16 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let sliders_row = Container::new(
         Column::new()
             .push(text("Filter Settings").size(15))
-            .push(vertical_space(Length::Fixed(20.)))
+            .push(Space::with_height(Length::Fixed(20.)))
             .push(text("Speed").size(14))
             .push(Container::new(min_cutoff_slider).width(Length::FillPortion(2)))
-            .push(vertical_space(Length::Fixed(10.)))
+            .push(Space::with_height(Length::Fixed(10.)))
             .push(text("Smooth").size(14))
             .push(Container::new(beta_slider).width(Length::FillPortion(2)))
-            .push(vertical_space(Length::Fixed(30.)))
+            .push(Space::with_height(Length::Fixed(30.)))
             .push(text("FPS").size(15))
             .push(Container::new(fps_slider).width(Length::FillPortion(2)))
-            .push(vertical_space(Length::Fixed(30.)))
+            .push(Space::with_height(Length::Fixed(30.)))
             .push(text("IP and Port").size(15))
             // ! IPV4 and V6 support for external devices, having only two inputs, ip and port
             .push(Container::new(
@@ -95,7 +100,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                             .width(Length::FillPortion(15)),
                     ),
             ))
-            .push(vertical_space(Length::Fixed(30.))),
+            .push(Space::with_height(Length::Fixed(30.))),
     )
     .padding(40);
 
@@ -128,7 +133,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                     .width(Length::Fill)
                     .height(Length::Fixed(200.))
             })
-            .push(vertical_space(Length::Fixed(32.)))
+            .push(Space::with_height(Length::Fixed(32.)))
             .push(Container::new(
                 Row::new()
                     .push(
@@ -145,7 +150,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                         )
                         .width(Length::FillPortion(50)),
                     )
-                    .push(horizontal_space(Length::FillPortion(10)))
+                    .push(Space::with_width(Length::FillPortion(10)))
                     .push(
                         toggler("Hide Cam".to_string(), hide_camera, Message::HideCamera)
                             .size(24)
@@ -172,10 +177,10 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
     let body = Container::new(
         Column::new()
             .width(Length::Fill)
-            .push(vertical_space(Length::Fixed(40.)))
+            .push(Space::with_height(Length::Fixed(40.)))
             .push(Container::new(
                 Row::new()
-                    .push(horizontal_space(Length::FillPortion(2)))
+                    .push(Space::with_width(Length::FillPortion(2)))
                     // If there is a new release, show a button to download it/update it
                     .push(match &headtracker.release_info {
                         Some(release_info) => Container::new(
@@ -185,22 +190,22 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                             )
                             .on_press(Message::OpenURL(release_info.html_url.clone())),
                         ),
-                        None => Container::new(vertical_space(Length::Fixed(40.))),
+                        None => Container::new(Space::with_height(Length::Fixed(40.))),
                     })
-                    .push(horizontal_space(Length::Fixed(34.)))
+                    .push(Space::with_width(Length::Fixed(34.)))
                     .push(
                         button(text("  Reset to Default  ").size(15))
                             .on_press(Message::DefaultSettings),
                     )
-                    .push(horizontal_space(Length::Fixed(40.))),
+                    .push(Space::with_width(Length::Fixed(40.))),
             ))
             .push(controls_row.width(Length::FillPortion(50)))
             .push(start_button_row.width(Length::FillPortion(50)))
-            .push(vertical_space(Length::Fixed(20.)))
+            .push(Space::with_height(Length::Fixed(20.)))
             .push(
                 Container::new(
                     Row::new()
-                        .push(horizontal_space(Length::FillPortion(40)))
+                        .push(Space::with_width(Length::FillPortion(40)))
                         // If there is an error, show it
                         .push(
                             text(headtracker.error_tracker.clone().lock().unwrap())
@@ -208,7 +213,7 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
                                 .horizontal_alignment(Horizontal::Center)
                                 .width(Length::FillPortion(50)),
                         )
-                        .push(horizontal_space(Length::FillPortion(40))),
+                        .push(Space::with_width(Length::FillPortion(40))),
                 )
                 .center_x(),
             ),
@@ -221,27 +226,25 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
 }
 
 // Shows app version and links to github and logs
-fn footer() -> Container<'static, Message, Renderer> {
+fn footer() -> Container<'static, Message, iced::Theme, Renderer> {
     let github_button = button(
-        Text::new('\u{48}'.to_string())
-            .font(ICONS)
-            .size(14.)
+        Text::new("GitHub")
+            .size(12.)
             .horizontal_alignment(alignment::Horizontal::Center)
             .vertical_alignment(alignment::Vertical::Center),
     )
     .height(Length::Fixed(35.))
-    .width(Length::Fixed(40.))
+    .width(Length::Fixed(80.))
     .on_press(Message::OpenURL(String::from(APP_REPOSITORY)));
 
     let logs_button = button(
-        Text::new('\u{66}'.to_string())
-            .font(ICONS)
-            .size(14.)
+        Text::new("Logs")
+            .size(12.)
             .horizontal_alignment(alignment::Horizontal::Center)
             .vertical_alignment(alignment::Vertical::Center),
     )
     .height(Length::Fixed(35.))
-    .width(Length::Fixed(40.))
+    .width(Length::Fixed(80.))
     .on_press(Message::OpenLogs);
 
     let footer_row = Row::new()
@@ -251,7 +254,7 @@ fn footer() -> Container<'static, Message, Renderer> {
             APP_NAME, APP_VERSION, APP_AUTHORS
         )))
         .push(github_button)
-        .push(horizontal_space(Length::Fixed(10.)))
+        .push(Space::with_width(Length::Fixed(10.)))
         .push(logs_button);
 
     Container::new(footer_row)

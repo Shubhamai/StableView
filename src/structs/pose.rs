@@ -6,7 +6,6 @@ pub struct ProcessHeadPose {
     pub pts_3d: Vec<Vec<f32>>,
     pub face_box: [f32; 4],
     pub first_iteration: bool,
-    pub frame_count: u8,
     pub param: [f32; 62],
     pub roi_box: [f32; 4],
 }

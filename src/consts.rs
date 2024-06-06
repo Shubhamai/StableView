@@ -9,12 +9,10 @@ pub const APP_GITHUB_API: &str =
 
 pub const MODEL: &[u8] = include_bytes!("../assets/model/mb05_120x120.onnx");
 pub const DATA: &[u8] = include_bytes!("../assets/model/data.json");
+pub const BLAZE_FACE_MODEL: &[u8] = include_bytes!("../assets/model/blazeface-320.onnx");
 
 pub const ICON: &[u8] = include_bytes!("../assets/brand/Product.ico");
-pub const DEFAULT_FONT: &[u8] = include_bytes!("../assets/fonts/Inter-Regular.ttf");
+pub const INTER_FONT: &[u8] = include_bytes!("../assets/fonts/Inter-Regular.ttf");
 pub const NO_VIDEO_IMG: &[u8] = include_bytes!("../assets/brand/no_video.png");
 
-pub const ICONS: Font = Font::External {
-    name: "icons",
-    bytes: include_bytes!("../assets/fonts/icons.ttf"),
-};
+pub const ICONS: &[u8] = include_bytes!("../assets/fonts/icons.ttf");
