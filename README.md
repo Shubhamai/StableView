@@ -37,12 +37,13 @@
 
 # Status
 
-**Last Updated - 26 April, 2024**
+**Last Updated - 6 June, 2024**
 
 ![progress gif](assets/updates/may-12-2023-update.gif)
 
 - Recent Updates
-  - [x] Automatically resets when face is not detected - https://github.com/Shubhamai/StableView/discussions/68
+  - [x] Supporting Linux and Apple Silicon
+  - [x] Fixing bug causing reduced performance #78
 
 # Usage
 
