@@ -54,6 +54,23 @@
 
    After installing OpenTrack, select Input as **UDP over network** so that OpenTrack can receive data from StableView and send it to the required application.
 
+### Linux
+
+Run the following command in the terminal inside the folder:
+
+```bash
+LD_LIBRARY_PATH=. ./StableView
+```
+
+### MacOS ( Apple Silicon )
+
+Run the following command in the terminal inside the folder:
+
+```bash
+DYLD_FALLBACK_LIBRARY_PATH=. ./StableView
+```
+
+
 # Features
 
 - Uses your regular old webcam with AI for head tracking. Uses an extremely low CPU (<3%-60fps in Ryzen 5 3600H) and returns high performance.
