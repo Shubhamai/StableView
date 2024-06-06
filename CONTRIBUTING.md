@@ -18,13 +18,20 @@ To set up a development environment, please follow these steps:
    git clone https://github.com/shubhamai/StableView
    ```
 
-3. Install [opencv-rust](https://github.com/twistedfall/opencv-rust) on your system. 
+3. Install [opencv-rust](https://github.com/twistedfall/opencv-rust) on your system.
 
 4. Run `cargo run` to run the application without any optimizations. To run the application fully optimized, add `--release` to the command, ie. `cargo run --release`
 
 5. To build the `.msi` installer for windows -
-   1. First install [cargo-wix](https://github.com/volks73/cargo-wix).
-   2. Run `cargo wix`. A new folder will be created in target folder containing the `.msi` file.
+   1. Install [WiX Toolset v3.14.1](https://github.com/wixtoolset/wix3/releases/).
+   2. Install [cargo-wix](https://github.com/volks73/cargo-wix).
+   3. Run `cargo wix`. A new folder will be created in `target` folder containing the `.msi` file.
+
+### Apple Silicon 
+
+To build stableview on apple silicon
+
+`sudo ORT_LIB_LOCATION=./assets/onnx_osx ORT_STRATEGY=system DYLD_FALLBACK_LIBRARY_PATH=./assets/onnx_osx/lib cargo run --release`
 
 ## Issues and feature requests
 
