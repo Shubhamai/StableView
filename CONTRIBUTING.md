@@ -27,9 +27,11 @@ To set up a development environment, please follow these steps:
    2. Install [cargo-wix](https://github.com/volks73/cargo-wix).
    3. Run `cargo wix`. A new folder will be created in `target` folder containing the `.msi` file.
 
-### Apple Silicon 
+### Apple Silicon
 
 To build stableview on apple silicon
+
+1. Download `onnxruntime-osx-arm64-1.18.0.tgz` from [ONNX Runtime v1.18.0](https://github.com/microsoft/onnxruntime/releases/tag/v1.18.0) and unzip it to `assets/onnx_osx` folder.
 
 `sudo ORT_LIB_LOCATION=./assets/onnx_osx ORT_STRATEGY=system DYLD_FALLBACK_LIBRARY_PATH=./assets/onnx_osx/lib cargo run --release`
 
