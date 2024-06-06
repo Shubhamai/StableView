@@ -17,9 +17,10 @@ use crate::{
     consts::{APP_NAME, APP_VERSION, ICON, INTER_FONT},
     structs::app::HeadTracker,
 };
+use consts::ICONS_FONT;
 use iced::{
     window::{self, settings::PlatformSpecific, Level},
-    Application, Font, Settings, Size,
+    Application, Settings, Size,
 };
 use image::ImageFormat;
 
@@ -106,7 +107,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         default_font: iced::font::Font::with_name("Inter-Regular"),
         fonts: vec![
             std::borrow::Cow::Borrowed(INTER_FONT),
-            std::borrow::Cow::Borrowed(ICON),
+            std::borrow::Cow::Borrowed(ICONS_FONT),
         ],
         default_text_size: iced::Pixels(13.),
         antialiasing: false,

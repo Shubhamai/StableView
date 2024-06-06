@@ -1,18 +1,12 @@
-use std::ops::Deref;
 
 /// Processing the head pose (filters, etc.) and generating the x,y,z of the head.
 use crate::enums::crop_policy::CropPolicy;
 use crate::structs::face::FaceDetect;
 use crate::structs::{pose::ProcessHeadPose, tddfa::Tddfa};
 use crate::utils::headpose::{calc_pose, gen_point2d};
-use crate::utils::image::crop_img;
 use anyhow::{Context, Result};
-use onnxruntime::ndarray::{Array3, Array4};
-use opencv::core::{MatTraitConstManual, Scalar, Size, ToOutputArray, Vec3b};
-use opencv::imgproc::{self, LINE_4};
 use opencv::prelude::Mat;
 use opencv::prelude::MatTraitConst;
-use rand::Rng;
 
 impl ProcessHeadPose {
     pub fn new(image_size: i32) -> Result<Self> {

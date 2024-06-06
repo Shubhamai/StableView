@@ -1,5 +1,3 @@
-use iced::Font;
-
 pub const APP_NAME: &str = env!("CARGO_PKG_NAME");
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const APP_REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
@@ -15,4 +13,4 @@ pub const ICON: &[u8] = include_bytes!("../assets/brand/Product.ico");
 pub const INTER_FONT: &[u8] = include_bytes!("../assets/fonts/Inter-Regular.ttf");
 pub const NO_VIDEO_IMG: &[u8] = include_bytes!("../assets/brand/no_video.png");
 
-pub const ICONS: &[u8] = include_bytes!("../assets/fonts/icons.ttf");
+pub const ICONS_FONT: &[u8] = include_bytes!("../assets/fonts/icons.ttf");

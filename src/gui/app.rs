@@ -9,7 +9,7 @@ use crate::{
     structs::{camera::ThreadedCamera, network::SocketNetwork, pose::ProcessHeadPose},
 };
 use iced::{
-    application, executor, theme, widget::Container, Application, Color, Command, Element, Length,
+    executor,  widget::Container, Application,  Command, Element, Length,
     Theme,
 };
 use iced::{mouse, window};

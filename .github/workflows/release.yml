@@ -39,15 +39,15 @@ jobs:
       #  run: cargo test --release
       - name: Build
         env:
-          OPENCV_LINK_LIBS: opencv_world460
+          OPENCV_LINK_LIBS: opencv_world490
           OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
-          OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc15\lib
+          OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc16\lib
         run: cargo build --release
       - name: Crate msi installer
         env:
-          OPENCV_LINK_LIBS: opencv_world460
+          OPENCV_LINK_LIBS: opencv_world490
           OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
-          OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc15\lib
+          OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc16\lib
         run: cargo wix --nocapture
       - name: Upload installer
         uses: actions/upload-artifact@v3

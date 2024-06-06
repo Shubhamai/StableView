@@ -5,22 +5,13 @@ use std::{borrow::Cow, sync::atomic::Ordering};
 use iced::{
     alignment::{self, Horizontal, Vertical},
     widget::{
-        button, horizontal_space, pick_list, slider, text, text_input, toggler, vertical_space,
-        Column, Container, Row, Space, Text,
+        button, pick_list, slider, text, text_input, toggler, Column, Container, Row, Space, Text,
     },
     Alignment, Length, Renderer,
 };
-use opencv::prelude::VectorToVec;
-use opencv::{
-    imgcodecs,
-    types::{VectorOfi32, VectorOfu8},
-};
+use opencv::{core::VectorToVec, imgcodecs};
 
-use crate::{
-    consts::{ICONS, NO_VIDEO_IMG},
-    enums::message::Message,
-    structs::app::HeadTracker,
-};
+use crate::{consts::NO_VIDEO_IMG, enums::message::Message, structs::app::HeadTracker};
 
 use super::style::{HEIGHT_BODY, HEIGHT_FOOTER};
 use crate::consts::{APP_AUTHORS, APP_NAME, APP_REPOSITORY, APP_VERSION};
@@ -110,8 +101,8 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
         false => {
             if headtracker.headtracker_running.load(Ordering::SeqCst) {
                 let frame = headtracker.frame.clone();
-                let mut encoded_image = VectorOfu8::new();
-                let params = VectorOfi32::new();
+                let mut encoded_image = opencv::core::Vector::<u8>::new();
+                let params = opencv::core::Vector::<i32>::new();
                 match imgcodecs::imencode(".PNG", &frame, &mut encoded_image, &params) {
                     Ok(_) => {}
                     Err(e) => {
@@ -228,23 +219,25 @@ pub fn run_page(headtracker: &HeadTracker) -> Column<Message> {
 // Shows app version and links to github and logs
 fn footer() -> Container<'static, Message, iced::Theme, Renderer> {
     let github_button = button(
-        Text::new("GitHub")
+        Text::new('\u{48}'.to_string())
+            .font(iced::font::Font::with_name("Glyphter"))
             .size(12.)
             .horizontal_alignment(alignment::Horizontal::Center)
             .vertical_alignment(alignment::Vertical::Center),
     )
     .height(Length::Fixed(35.))
-    .width(Length::Fixed(80.))
+    .width(Length::Fixed(40.))
     .on_press(Message::OpenURL(String::from(APP_REPOSITORY)));
 
     let logs_button = button(
-        Text::new("Logs")
+        Text::new('\u{66}'.to_string())
+            .font(iced::font::Font::with_name("Glyphter"))
             .size(12.)
             .horizontal_alignment(alignment::Horizontal::Center)
             .vertical_alignment(alignment::Vertical::Center),
     )
     .height(Length::Fixed(35.))
-    .width(Length::Fixed(80.))
+    .width(Length::Fixed(40.))
     .on_press(Message::OpenLogs);
 
     let footer_row = Row::new()

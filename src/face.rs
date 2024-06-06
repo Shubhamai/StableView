@@ -1,3 +1,5 @@
+// FROM https://github.com/rustybuilder/rust-faces
+
 use std::ops::Deref;
 
 use onnxruntime::environment::Environment;
@@ -76,37 +78,6 @@ impl Nms {
 
         nms_faces
     }
-
-    /// Suppress non-maxima faces.
-    ///
-    /// # Arguments
-    ///
-    /// * `faces` - Faces to suppress.
-    ///
-    /// # Returns
-    ///
-    /// * `Vec<Face>` - Suppressed faces.
-    pub fn suppress_non_maxima_min(&self, mut faces: Vec<Face>) -> Vec<Face> {
-        faces.sort_by(|a, b| a.confidence.partial_cmp(&b.confidence).unwrap());
-
-        let mut faces_map = HashMap::new();
-        faces.iter().rev().enumerate().for_each(|(i, face)| {
-            faces_map.insert(i, face);
-        });
-
-        let mut nms_faces = Vec::with_capacity(faces.len());
-        let mut count = 0;
-        while !faces_map.is_empty() {
-            if let Some((_, face)) = faces_map.remove_entry(&count) {
-                nms_faces.push(face.clone());
-                //faces_map.retain(|_, face2| face.rect.iou(&face2.rect) < self.iou_threshold);
-                faces_map.retain(|_, face2| face.rect.iou_min(&face2.rect) < self.iou_threshold);
-            }
-            count += 1;
-        }
-
-        nms_faces
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -176,18 +147,6 @@ impl PriorBoxes {
         let y_start = cy - height / 2.0;
         Rect::at(x_start, y_start).ending_at(width + x_start, height + y_start)
     }
-
-    pub fn decode_landmark(
-        &self,
-        prior: &(f32, f32, f32, f32),
-        landmark: (f32, f32),
-    ) -> (f32, f32) {
-        let (anchor_cx, anchor_cy, s_kx, s_ky) = prior;
-        let (x, y) = landmark;
-        let x = anchor_cx + x * self.variances.0 * s_kx;
-        let y = anchor_cy + y * self.variances.0 * s_ky;
-        (x, y)
-    }
 }
 
 use std::fmt::Display;
@@ -212,16 +171,6 @@ pub struct RectPosition {
 }
 
 impl RectPosition {
-    /// Makes a rectangle with the given size.
-    pub fn with_size(&self, width: f32, height: f32) -> Rect {
-        Rect {
-            x: self.x,
-            y: self.y,
-            width,
-            height,
-        }
-    }
-
     /// Makes a rectangle with the given end point.
     pub fn ending_at(&self, x: f32, y: f32) -> Rect {
         Rect {
@@ -249,82 +198,6 @@ impl Rect {
         self.y + self.height
     }
 
-    /// Unites two rectangles.
-    ///
-    /// # Arguments
-    ///
-    /// * `other` - Other rectangle to unite with.
-    ///
-    /// # Returns
-    ///
-    /// * `Rect` - United rectangle.
-    pub fn union(&self, other: &Rect) -> Rect {
-        let left = self.x.min(other.x);
-        let right = self.right().max(other.right());
-        let top = self.y.min(other.y);
-        let bottom = self.bottom().max(other.bottom());
-
-        Rect {
-            x: left,
-            y: top,
-            width: right - left,
-            height: bottom - top,
-        }
-    }
-
-    /// Intersects two rectangles.
-    ///
-    /// # Arguments
-    ///
-    /// * `other` - Other rectangle to intersect with.
-    ///
-    /// # Returns
-    ///
-    /// * `Rect` - Intersected rectangle.
-    pub fn intersection(&self, other: &Rect) -> Rect {
-        let left = self.x.max(other.x);
-        let right = self.right().min(other.right());
-        let top = self.y.max(other.y);
-        let bottom = self.bottom().min(other.bottom());
-
-        Rect {
-            x: left,
-            y: top,
-            width: right - left,
-            height: bottom - top,
-        }
-    }
-
-    /// Clamps the rectangle to the given rect.
-    /// If the rectangle is larger than the given size, it will be shrunk.
-    ///
-    /// # Arguments
-    ///
-    /// * `width` - Width to clamp to.
-    /// * `height` - Height to clamp to.
-    pub fn clamp(&self, width: f32, height: f32) -> Rect {
-        let left = self.x.max(0.0);
-        let right = self.right().min(width);
-        let top = self.y.max(0.0);
-        let bottom = self.bottom().min(height);
-
-        Rect {
-            x: left,
-            y: top,
-            width: right - left,
-            height: bottom - top,
-        }
-    }
-
-    /// Calculates the intersection over union of two rectangles.
-    ///
-    /// # Arguments
-    ///
-    /// * `other` - Other rectangle to calculate the intersection over union with.
-    ///
-    /// # Returns
-    ///
-    /// * `f32` - Intersection over union.
     pub fn iou(&self, other: &Rect) -> f32 {
         let left = self.x.max(other.x);
         let right = (self.right()).min(other.right());
@@ -338,28 +211,6 @@ impl Rect {
         intersection / (area_self + area_other - intersection)
     }
 
-    /// Calculates the intersection over union of two rectangles.
-    ///
-    /// # Arguments
-    ///
-    /// * `other` - Other rectangle to calculate the intersection over union with.
-    ///
-    /// # Returns
-    ///
-    /// * `f32` - Intersection over union.
-    pub fn iou_min(&self, other: &Rect) -> f32 {
-        let left = self.x.max(other.x);
-        let right = (self.right()).min(other.right());
-        let top = self.y.max(other.y);
-        let bottom = (self.bottom()).min(other.bottom());
-
-        let intersection = (right - left).max(0.0) * (bottom - top).max(0.0);
-        let area_self = self.width * self.height;
-        let area_other = other.width * other.height;
-
-        intersection / area_self.min(area_other)
-    }
-
     /// Scales the rectangle.
     pub fn scale(&self, x_scale: f32, y_scale: f32) -> Rect {
         Rect {
@@ -368,11 +219,6 @@ impl Rect {
             width: self.width * x_scale,
             height: self.height * y_scale,
         }
-    }
-
-    /// Gets the rectangle as a tuple of (x, y, width, height).
-    pub fn to_xywh(&self) -> (f32, f32, f32, f32) {
-        (self.x, self.y, self.width, self.height)
     }
 }
 
