@@ -4,26 +4,25 @@
 mod camera;
 mod consts;
 mod enums;
+mod face;
 mod filter;
 mod gui;
 mod network;
 mod process;
 mod structs;
 mod tddfa;
-mod face;
 mod utils;
 
 use crate::{
-    consts::{APP_NAME, APP_VERSION, DEFAULT_FONT, ICON},
+    consts::{APP_NAME, APP_VERSION, ICON, INTER_FONT},
     structs::app::HeadTracker,
 };
+use consts::ICONS_FONT;
 use iced::{
-    window::{self, PlatformSpecific},
-    Application, Settings,
+    window::{self, settings::PlatformSpecific, Level},
+    Application, Settings, Size,
 };
 use image::ImageFormat;
-
-use tracing::Level;
 
 use std::{fs, path::Path};
 
@@ -64,7 +63,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
         .with_writer(non_blocking)
         .with_ansi(false)
-        .with_max_level(Level::WARN)
+        .with_max_level(tracing::Level::WARN)
         .init(); // ! Need to have only 1 log file which resets daily
 
     tracing::warn!("Version {} on {}", APP_VERSION, std::env::consts::OS);
@@ -87,28 +86,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let settings = Settings {
         id: None,
         window: window::Settings {
-            size: (750, 620), // start size
+            size: Size::new(750., 620.), // start size
             position: window::Position::Centered,
-            min_size: Some((750, 620)), // min size allowed
+            min_size: Some(Size::new(750., 620.)),
             max_size: None,
             resizable: true,
             decorations: true,
             transparent: false,
-            always_on_top: false,
             icon: match window::icon::from_file_data(ICON, Some(ImageFormat::Ico)) {
                 Ok(icon) => Some(icon),
                 Err(_) => None,
             },
             visible: true,
             platform_specific: PlatformSpecific::default(),
+            exit_on_close_request: true,
+            level: Level::Normal,
+        
         },
         flags,
-        default_font: Some(DEFAULT_FONT),
-        default_text_size: 16.,
-        text_multithreading: false,
+        default_font: iced::font::Font::with_name("Inter-Regular"),
+        fonts: vec![
+            std::borrow::Cow::Borrowed(INTER_FONT),
+            std::borrow::Cow::Borrowed(ICONS_FONT),
+        ],
+        default_text_size: iced::Pixels(13.),
         antialiasing: false,
-        exit_on_close_request: false,
-        try_opengles_first: false,
     };
 
     if let Err(e) = HeadTracker::run(settings) {

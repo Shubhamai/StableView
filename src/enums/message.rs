@@ -1,6 +1,6 @@
 // Events than can be triggered by the user in the GUI
 
-use iced_native::Event;
+use iced::event::{Event};
 
 #[derive(Debug, Clone)]
 pub enum Message {

@@ -1,9 +1,6 @@
 /// Utility function for processing image
 /// Python source - https://github.com/cleardusk/3DDFA/blob/d5c1f6a647a89070b1f9ea4e88c910b743a1a87a/utils/inference.py#L20
-use opencv::{
-    core::{Mat, Rect},
-    prelude::MatTraitConstManual,
-};
+use opencv::core::{Mat, Rect};
 use opencv::prelude::MatTraitConst;
 
 pub fn crop_img(img: &Mat, roi_box: &[f32; 4]) -> Result<Mat, opencv::Error> {

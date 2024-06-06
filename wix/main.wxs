@@ -101,9 +101,9 @@
                         <Component Id='opencv' Guid='*'>
                           <File
                             Id='opencv'
-                            Name='opencv_world460.dll'
+                            Name='opencv_world490.dll'
                             DiskId='1'
-                            Source='assets\dlls\opencv_world460.dll'
+                            Source='assets\dlls\opencv_world490.dll'
                             KeyPath='yes'/>
                           </Component>
   

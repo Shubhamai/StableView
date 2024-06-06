@@ -1,5 +1,5 @@
-use rust_faces::FaceDetector;
+use onnxruntime::session::Session;
 
 pub struct FaceDetect {
-    pub face_detector: Box<dyn FaceDetector>,
+    pub face_detector: Session<'static>,
 }
