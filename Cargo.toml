@@ -30,7 +30,7 @@ onnxruntime = {git = "https://github.com/nbigaouette/onnxruntime-rs"}
 crossbeam-channel = "0.5.6"
 anyhow = "1.0.70"
 reqwest = { version = "0.11.6", features = ["blocking", "json"] }
-version-compare = "0.1"
+version-compare = "0.2"
 itertools = "0.13.0"
 
 [profile.release]
